@@ -33,7 +33,7 @@ int main()
 
 		time_t now;
 		time(&now);
-		if (now > last_time)
+		if (now > last_time && vb.HasConnection())
 		{
 			for (size_t i = 0; i < vb.GetRegistrations().size(); i++)
 			{

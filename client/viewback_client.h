@@ -29,6 +29,8 @@ public:
 
 	void Update();
 
+	bool HasConnection();
+
 	inline const std::vector<CViewbackDataRegistration>& GetRegistrations() const { return m_aDataRegistrations; }
 	inline const std::vector<CViewbackDataList>& GetData() const { return m_aData; }
 

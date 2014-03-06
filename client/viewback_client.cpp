@@ -59,7 +59,10 @@ void CViewbackClient::Update()
 		m_aUnhandledMessages.clear();
 
 		for (size_t i = 0; i < aData.size(); i++)
-			StashData(&aData[i].data());
+		{
+			if (aData[i].has_data())
+				StashData(&aData[i].data());
+		}
 	}
 	else
 	{
@@ -77,6 +80,11 @@ void CViewbackClient::Update()
 				VBPrintf("Failed.\n");
 		}
 	}
+}
+
+bool CViewbackClient::HasConnection()
+{
+	return CViewbackDataThread::IsConnected();
 }
 
 vb_data_type_t CViewbackClient::TypeForHandle(size_t iHandle)
