@@ -121,11 +121,14 @@ int vb_data_send_int(vb_data_handle_t handle, int value);
 int vb_data_send_float(vb_data_handle_t handle, float value);
 int vb_data_send_vector(vb_data_handle_t handle, float x, float y, float z);
 
-/* Planned
-void vb_console_append(const char* text, unsigned char r, unsigned char g, unsigned char b);
-void vb_console_status(const char* text);
-void vb_console_register_command_callback(vb_command_callback cmd);
+/*
+	Any text that goes to your console can also be piped into Viewback for
+	display in the monitor.
 */
+int vb_console_append(const char* text);
+
+//void vb_console_status(const char* text);
+//void vb_console_register_command_callback(vb_command_callback cmd);
 
 #ifdef __cplusplus
 }

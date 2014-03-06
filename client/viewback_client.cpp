@@ -9,8 +9,10 @@
 
 using namespace std;
 
-bool CViewbackClient::Initialize()
+bool CViewbackClient::Initialize(ConsoleOutputCallback pfnConsoleOutput)
 {
+	m_pfnConsoleOutput = pfnConsoleOutput;
+
 	return CViewbackServersThread::Run();
 }
 
@@ -18,18 +20,18 @@ void CViewbackClient::Update()
 {
 	if (CViewbackDataThread::IsConnected())
 	{
-		vector<Packet> aData = CViewbackDataThread::GetData();
+		vector<Packet> aPackets = CViewbackDataThread::GetData();
 
 		// Look for a data registration packet.
-		for (size_t i = 0; i < aData.size(); i++)
+		for (size_t i = 0; i < aPackets.size(); i++)
 		{
-			if (aData[i].data_registrations_size())
+			if (aPackets[i].data_registrations_size())
 			{
-				m_aDataRegistrations.resize(aData[i].data_registrations_size());
-				m_aData.resize(aData[i].data_registrations_size());
-				for (int j = 0; j < aData[i].data_registrations_size(); j++)
+				m_aDataRegistrations.resize(aPackets[i].data_registrations_size());
+				m_aData.resize(aPackets[i].data_registrations_size());
+				for (int j = 0; j < aPackets[i].data_registrations_size(); j++)
 				{
-					auto& oRegistrationProtobuf = aData[i].data_registrations(j);
+					auto& oRegistrationProtobuf = aPackets[i].data_registrations(j);
 
 					VBAssert(oRegistrationProtobuf.has_handle());
 					VBAssert(oRegistrationProtobuf.has_field_name());
@@ -42,11 +44,11 @@ void CViewbackClient::Update()
 					oRegistration.m_eDataType = oRegistrationProtobuf.type();
 				}
 
-				VBPrintf("Installed %d registrations.\n", aData[i].data_registrations_size());
+				VBPrintf("Installed %d registrations.\n", aPackets[i].data_registrations_size());
 
-				for (int j = 0; j < aData[i].data_labels_size(); j++)
+				for (int j = 0; j < aPackets[i].data_labels_size(); j++)
 				{
-					auto& oLabelProtobuf = aData[i].data_labels(j);
+					auto& oLabelProtobuf = aPackets[i].data_labels(j);
 
 					VBAssert(oLabelProtobuf.has_handle());
 					VBAssert(oLabelProtobuf.has_field_name());
@@ -56,7 +58,7 @@ void CViewbackClient::Update()
 					oRegistration.m_asLabels[oLabelProtobuf.value()] = oLabelProtobuf.field_name();
 				}
 
-				VBPrintf("Installed %d labels.\n", aData[i].data_labels_size());
+				VBPrintf("Installed %d labels.\n", aPackets[i].data_labels_size());
 			}
 		}
 
@@ -64,22 +66,25 @@ void CViewbackClient::Update()
 		{
 			// We somehow don't have any data registrations yet, so stash these messages for later.
 			// It might be possible if the server sends some messages between when the client connects and when it requests registrations.
-			for (size_t i = 0; i < aData.size(); i++)
-				m_aUnhandledMessages.push_back(aData[i]);
+			for (size_t i = 0; i < aPackets.size(); i++)
+				m_aUnhandledMessages.push_back(aPackets[i]);
 
 			return;
 		}
 
 		// If we've been saving any messages, stick them onto the beginning here.
 		if (m_aUnhandledMessages.size())
-			aData.insert(aData.begin(), m_aUnhandledMessages.begin(), m_aUnhandledMessages.end());
+			aPackets.insert(aPackets.begin(), m_aUnhandledMessages.begin(), m_aUnhandledMessages.end());
 
 		m_aUnhandledMessages.clear();
 
-		for (size_t i = 0; i < aData.size(); i++)
+		for (size_t i = 0; i < aPackets.size(); i++)
 		{
-			if (aData[i].has_data())
-				StashData(&aData[i].data());
+			if (aPackets[i].has_data())
+				StashData(&aPackets[i].data());
+
+			if (aPackets[i].has_console_output() && m_pfnConsoleOutput)
+				m_pfnConsoleOutput(aPackets[i].console_output().c_str());
 		}
 	}
 	else

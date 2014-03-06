@@ -115,6 +115,37 @@ int main()
 		if (!vb_data_send_int(vb_player, player))
 			success = false;
 
+		if (rand() % 2 == 0)
+		{
+			const char* output;
+			switch (rand() % 5)
+			{
+			case 0:
+				output = ("] sv_cheats 1\n");
+				break;
+
+			case 1:
+				output = ("Reticulating splines.\n");
+				break;
+
+			case 2:
+				output = ("Player \"GabeN\" connected (127.103.92.1)\n");
+				break;
+
+			case 3:
+				output = ("Player \"CliffyB\" connected (127.63.210.1)\n");
+				break;
+
+			case 4:
+				output = ("Player \"gooseman\" connected (127.45.150.1)\n");
+				break;
+			}
+
+			printf("Sending console output: %s", output);
+			if (!vb_console_append(output))
+				printf("Couldn't append console output.\n");
+		}
+
 		if (!success)
 			printf("Could not send data\n");
 	}

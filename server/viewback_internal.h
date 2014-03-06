@@ -45,8 +45,11 @@ struct Packet {
 	struct DataRegistration* _data_registrations;
 	int                      _data_labels_repeated_len;
 	struct DataLabel*        _data_labels;
+	int            _console_output_len;
+	const char*    _console_output;
 };
 
+void Packet_initialize(struct Packet* packet);
 void Packet_initialize_data(struct Packet* packet, struct Data* data, vb_data_type_t type);
 void Packet_initialize_registrations(struct Packet* packet, struct DataRegistration* data_reg, size_t registrations, struct DataLabel* data_labels, size_t labels);
 size_t Packet_get_message_size(struct Packet *_Packet);

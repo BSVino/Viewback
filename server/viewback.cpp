@@ -520,6 +520,31 @@ int vb_data_send_vector(vb_data_handle_t handle, float x, float y, float z)
 	return 1;
 }
 
+int vb_console_append(const char* text)
+{
+	if (!VB->server_active)
+		return 0;
+
+	struct Packet packet;
+	Packet_initialize(&packet);
+
+	packet._console_output = text;
+	packet._console_output_len = strlen(text);
+
+	size_t message_predicted_length = Packet_get_message_size(&packet);
+	void* message = Packet_alloca(message_predicted_length);
+
+	size_t message_actual_length = vb_write_length_prepended_message(&packet, message, message_predicted_length, &Packet_serialize);
+
+	if (!message_actual_length)
+		return 0;
+
+	vb_send_to_all(message, message_actual_length);
+
+	return 1;
+}
+
+
 
 
 
@@ -763,7 +788,19 @@ int Packet_write(struct Packet *_Packet, void *_buffer, int offset)
 		offset = DataLabel_write_with_tag(&_Packet->_data_labels[data_labels_cnt], _buffer, offset, 3);
 	}
 
+	if (_Packet->_console_output_len && _Packet->_console_output && _Packet->_console_output[0])
+	{
+		offset = write_raw_varint32((4 << 3) + 2, _buffer, offset);
+		offset = write_raw_varint32(_Packet->_console_output_len, _buffer, offset);
+		offset = write_raw_bytes(_Packet->_console_output, _Packet->_console_output_len, _buffer, offset);
+	}
+
 	return offset;
+}
+
+void Packet_initialize(struct Packet* packet)
+{
+	memset(packet, 0, sizeof(struct Packet));
 }
 
 void Packet_initialize_data(struct Packet* packet, struct Data* data, vb_data_type_t type)
@@ -886,6 +923,13 @@ size_t Packet_get_message_size(struct Packet *_Packet)
 			// Add on the size for each string.
 			size += _Packet->_data_labels[i]._field_name_len;
 		}
+	}
+
+	if (_Packet->_console_output_len)
+	{
+		size += 1; // One byte for field number and wire type.
+		size += 4; // 4 bytes to support really long strings.
+		size += _Packet->_console_output_len;
 	}
 
 	return size;

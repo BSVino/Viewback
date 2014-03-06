@@ -24,10 +24,12 @@ public:
 	std::vector<VBVector3> m_aVectorData;
 };
 
+typedef void(*ConsoleOutputCallback)(const char*);
+
 class CViewbackClient
 {
 public:
-	bool Initialize();
+	bool Initialize(ConsoleOutputCallback pfnConsoleOutput);
 
 	void Update();
 
@@ -49,4 +51,6 @@ private:
 
 	std::vector<CViewbackDataRegistration> m_aDataRegistrations;
 	std::vector<CViewbackDataList> m_aData;
+
+	ConsoleOutputCallback m_pfnConsoleOutput;
 };

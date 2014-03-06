@@ -493,19 +493,34 @@ class Packet : public ::google::protobuf::Message {
   inline ::google::protobuf::RepeatedPtrField< ::DataLabel >*
       mutable_data_labels();
 
+  // optional string console_output = 4;
+  inline bool has_console_output() const;
+  inline void clear_console_output();
+  static const int kConsoleOutputFieldNumber = 4;
+  inline const ::std::string& console_output() const;
+  inline void set_console_output(const ::std::string& value);
+  inline void set_console_output(const char* value);
+  inline void set_console_output(const char* value, size_t size);
+  inline ::std::string* mutable_console_output();
+  inline ::std::string* release_console_output();
+  inline void set_allocated_console_output(::std::string* console_output);
+
   // @@protoc_insertion_point(class_scope:Packet)
  private:
   inline void set_has_data();
   inline void clear_has_data();
+  inline void set_has_console_output();
+  inline void clear_has_console_output();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
   ::Data* data_;
   ::google::protobuf::RepeatedPtrField< ::DataRegistration > data_registrations_;
   ::google::protobuf::RepeatedPtrField< ::DataLabel > data_labels_;
+  ::std::string* console_output_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(3 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
 
   friend void  protobuf_AddDesc_protobuf_2fdata_2eproto();
   friend void protobuf_AssignDesc_protobuf_2fdata_2eproto();
@@ -980,6 +995,76 @@ Packet::data_labels() const {
 inline ::google::protobuf::RepeatedPtrField< ::DataLabel >*
 Packet::mutable_data_labels() {
   return &data_labels_;
+}
+
+// optional string console_output = 4;
+inline bool Packet::has_console_output() const {
+  return (_has_bits_[0] & 0x00000008u) != 0;
+}
+inline void Packet::set_has_console_output() {
+  _has_bits_[0] |= 0x00000008u;
+}
+inline void Packet::clear_has_console_output() {
+  _has_bits_[0] &= ~0x00000008u;
+}
+inline void Packet::clear_console_output() {
+  if (console_output_ != &::google::protobuf::internal::kEmptyString) {
+    console_output_->clear();
+  }
+  clear_has_console_output();
+}
+inline const ::std::string& Packet::console_output() const {
+  return *console_output_;
+}
+inline void Packet::set_console_output(const ::std::string& value) {
+  set_has_console_output();
+  if (console_output_ == &::google::protobuf::internal::kEmptyString) {
+    console_output_ = new ::std::string;
+  }
+  console_output_->assign(value);
+}
+inline void Packet::set_console_output(const char* value) {
+  set_has_console_output();
+  if (console_output_ == &::google::protobuf::internal::kEmptyString) {
+    console_output_ = new ::std::string;
+  }
+  console_output_->assign(value);
+}
+inline void Packet::set_console_output(const char* value, size_t size) {
+  set_has_console_output();
+  if (console_output_ == &::google::protobuf::internal::kEmptyString) {
+    console_output_ = new ::std::string;
+  }
+  console_output_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* Packet::mutable_console_output() {
+  set_has_console_output();
+  if (console_output_ == &::google::protobuf::internal::kEmptyString) {
+    console_output_ = new ::std::string;
+  }
+  return console_output_;
+}
+inline ::std::string* Packet::release_console_output() {
+  clear_has_console_output();
+  if (console_output_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = console_output_;
+    console_output_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+inline void Packet::set_allocated_console_output(::std::string* console_output) {
+  if (console_output_ != &::google::protobuf::internal::kEmptyString) {
+    delete console_output_;
+  }
+  if (console_output) {
+    set_has_console_output();
+    console_output_ = console_output;
+  } else {
+    clear_has_console_output();
+    console_output_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  }
 }
 
 

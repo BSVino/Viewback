@@ -7,6 +7,11 @@
 
 #include <stdio.h>
 
+void ConsoleOutput(const char* pszOutput)
+{
+	printf("Console output: %s", pszOutput);
+}
+
 int main()
 {
 #ifdef _WIN32
@@ -21,7 +26,7 @@ int main()
 
 	CViewbackClient vb;
 
-	if (!vb.Initialize())
+	if (!vb.Initialize(&ConsoleOutput))
 		return 1;
 
 	time_t last_time;
