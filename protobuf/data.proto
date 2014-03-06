@@ -1,0 +1,35 @@
+// Any changes to this file must be added to viewback.c manually.
+// The embedded protobuf generator that was used to generate this code
+// wasn't quite ready for prime time so I manually imported its generated
+// code into Viewback.
+
+// For protobuf-embedded-c
+//@max_string_length=32
+//@max_repeated_length=100
+
+enum vb_data_type_t {
+	VB_DATATYPE_NONE   = 0;
+	VB_DATATYPE_INT    = 1;
+	VB_DATATYPE_FLOAT  = 2;
+	VB_DATATYPE_VECTOR = 3;
+}
+
+message Data {
+	optional uint32 handle       = 1;
+	optional uint32 data_int     = 3;
+	optional float data_float    = 4;
+	optional float data_float_x  = 5;
+	optional float data_float_y  = 6;
+	optional float data_float_z  = 7;
+}
+
+message DataDescription {
+	optional string field_name   = 1;
+	optional vb_data_type_t type = 2;
+	optional uint32 handle       = 3;
+}
+
+message Packet {
+	optional Data            data = 1;
+	repeated DataDescription data_descriptions = 2;
+}
