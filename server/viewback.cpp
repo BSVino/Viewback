@@ -62,7 +62,7 @@ int vb_config_install(vb_config_t* config, void* memory, size_t memory_size)
 	if (memory_size < vb_config_get_memory_required(config))
 		return 0;
 
-	if (VB->server_active)
+	if (VB && VB->server_active)
 		return 0;
 
 	VB = (vb_t*)memory;
@@ -357,10 +357,6 @@ void vb_send_to_all(void* message, size_t message_length)
 			VBPrintf("Error sending to %d, disconnected.\n", VB->connections[i].socket);
 			VB->connections[i].socket = VB_INVALID_SOCKET;
 		}
-		else
-		{
-			VBPrintf("Sent %d bytes to %d (msg length %d).\n", bytes_sent, VB->connections[i].socket, message_length);
-		}
 	}
 }
 
@@ -596,7 +592,13 @@ int Data_write_with_tag(struct Data *_Data, void *_buffer, int offset, int tag)
 	return offset;
 }
 
-int DataDescription_write(struct DataDescription *_DataDescription, void *_buffer, int offset) {
+int DataDescription_write(struct DataDescription *_DataDescription, void *_buffer, int offset)
+{
+	VBAssert(_DataDescription->_field_name_len);
+	VBAssert(_DataDescription->_field_name);
+	VBAssert(_DataDescription->_field_name[0]);
+	VBAssert(_DataDescription->_type);
+
 	/* Write content of each message element.*/
 	/* Write the optional attribute only if it is different than the default value. */
 	if (_DataDescription->_field_name_len != 1 || _DataDescription->_field_name[0] != '0')
@@ -605,20 +607,13 @@ int DataDescription_write(struct DataDescription *_DataDescription, void *_buffe
 		offset = write_raw_varint32(_DataDescription->_field_name_len, _buffer, offset);
 		offset = write_raw_bytes(_DataDescription->_field_name, _DataDescription->_field_name_len, _buffer, offset);
 	}
-	
+
 	/* Write the optional attribute only if it is different than the default value. */
-	if (_DataDescription->_type != 0)
-	{
-		offset = vb_data_type_t_write_with_tag(&_DataDescription->_type, _buffer, offset, 2);
-	}
-	
-	/* Write the optional attribute only if it is different than the default value. */
-	if(_DataDescription->_handle != 0)
-	{
-		offset = write_raw_varint32((3<<3)+0, _buffer, offset);
-		offset = write_raw_varint32(_DataDescription->_handle, _buffer, offset);
-	}
-	
+	offset = vb_data_type_t_write_with_tag(&_DataDescription->_type, _buffer, offset, 2);
+
+	offset = write_raw_varint32((3<<3)+0, _buffer, offset);
+	offset = write_raw_varint32(_DataDescription->_handle, _buffer, offset);
+
 	return offset;
 }
 
@@ -685,6 +680,15 @@ void Packet_initialize_registrations(struct Packet* packet, struct DataDescripti
 	packet->_data_descriptions_repeated_len = registrations;
 
 	memset(data_reg, 0, sizeof(struct DataDescription) * registrations);
+
+	VBAssert(registrations == VB->next_registration);
+	for (int i = 0; i < registrations; i++)
+	{
+		data_reg[i]._field_name = VB->registrations[i].name;
+		data_reg[i]._field_name_len = strlen(VB->registrations[i].name);
+		data_reg[i]._handle = i;
+		data_reg[i]._type = VB->registrations[i].type;
+	}
 }
 
 size_t Packet_get_message_size(struct Packet *_Packet)
@@ -724,21 +728,23 @@ size_t Packet_get_message_size(struct Packet *_Packet)
 	{
 		int i;
 
-		size += 1; // One byte for the field number and wire type.
-		size += 1; // One byte for the length of DataDescription, which is going to be max 50 or so.
-
-		size += 1; // One byte for "type" field number and wire type.
-		size += 2; // Two bytes in case we ever get a lot of types.
-
-		size += 1; // One byte for "handle" field number and wire type.
-		size += 4; // 4 bytes to support a ton of handles.
-
-		size += 1; // One byte for "name" field number and wire type.
-		size += 4; // 4 bytes to support really long strings.
-
-		// Add on the size for each string.
 		for (i = 0; i < _Packet->_data_descriptions_repeated_len; i++)
+		{
+			size += 1; // One byte for the field number and wire type.
+			size += 1; // One byte for the length of DataDescription, which is going to be max 50 or so.
+
+			size += 1; // One byte for "type" field number and wire type.
+			size += 2; // Two bytes in case we ever get a lot of types.
+
+			size += 1; // One byte for "handle" field number and wire type.
+			size += 4; // 4 bytes to support a ton of handles.
+
+			size += 1; // One byte for "name" field number and wire type.
+			size += 4; // 4 bytes to support really long strings.
+
+			// Add on the size for each string.
 			size += _Packet->_data_descriptions[i]._field_name_len;
+		}
 	}
 
 	return size;

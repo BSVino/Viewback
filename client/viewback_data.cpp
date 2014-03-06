@@ -98,11 +98,6 @@ void CViewbackDataThread::Pump()
 		Packet packet;
 		packet.ParseFromArray(&pMsgBuf[iCurrentPacket] + sizeof(size_t), iPacketSize);
 
-		if (packet.data_descriptions_size())
-			VBPrintf("Received a data registration packet, %u bytes read.\n", iPacketSize);
-		else if (packet.has_data())
-			VBPrintf("Received a data packet, %u bytes read, handle %d.\n", iPacketSize, packet.data().handle());
-
 		m_aMessages.push_back(packet);
 
 		// Fast forward past the packet size and the packet itself.
