@@ -23,23 +23,32 @@ struct Data {
 	float          _data_float_z;
 };
 
-struct DataDescription {
+struct DataRegistration {
 	int            _field_name_len;
 	const char*    _field_name;
 	vb_data_type_t _type;
 	unsigned long  _handle;
 };
 
+struct DataLabel {
+	unsigned long  _handle;
+	int            _value;
+	int            _field_name_len;
+	const char*    _field_name;
+};
+
 #define MAX_REPEATED_LENGTH 100
 
 struct Packet {
-	struct Data*            _data;
-	int                     _data_descriptions_repeated_len;
-	struct DataDescription* _data_descriptions;
+	struct Data*             _data;
+	int                      _data_registrations_repeated_len;
+	struct DataRegistration* _data_registrations;
+	int                      _data_labels_repeated_len;
+	struct DataLabel*        _data_labels;
 };
 
 void Packet_initialize_data(struct Packet* packet, struct Data* data, vb_data_type_t type);
-void Packet_initialize_registrations(struct Packet* packet, struct DataDescription* data_reg, size_t num_registrations);
+void Packet_initialize_registrations(struct Packet* packet, struct DataRegistration* data_reg, size_t registrations, struct DataLabel* data_labels, size_t labels);
 size_t Packet_get_message_size(struct Packet *_Packet);
 size_t Packet_serialize(struct Packet *_Packet, void *_buffer, size_t length);
 
@@ -53,6 +62,13 @@ typedef struct
 	const char*    name;
 	vb_data_type_t type;
 } vb_data_registration_t;
+
+typedef struct
+{
+	vb_data_handle_t handle;
+	int              value;
+	const char*      name;
+} vb_data_label_t;
 
 typedef struct
 {
@@ -71,6 +87,9 @@ typedef struct
 
 	vb_data_registration_t* registrations;
 	int                     next_registration;
+
+	vb_data_label_t* labels;
+	int              next_label;
 
 	vb_connection_t*        connections;
 

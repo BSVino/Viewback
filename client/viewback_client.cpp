@@ -1,9 +1,13 @@
 #include "viewback_client.h"
 
+#include <sstream>
+
 #include "../server/viewback_shared.h"
 
 #include "viewback_servers.h"
 #include "viewback_data.h"
+
+using namespace std;
 
 bool CViewbackClient::Initialize()
 {
@@ -14,31 +18,45 @@ void CViewbackClient::Update()
 {
 	if (CViewbackDataThread::IsConnected())
 	{
-		std::vector<Packet> aData = CViewbackDataThread::GetData();
+		vector<Packet> aData = CViewbackDataThread::GetData();
 
 		// Look for a data registration packet.
 		for (size_t i = 0; i < aData.size(); i++)
 		{
-			if (aData[i].data_descriptions_size())
+			if (aData[i].data_registrations_size())
 			{
-				m_aDataRegistrations.resize(aData[i].data_descriptions_size());
-				m_aData.resize(aData[i].data_descriptions_size());
-				for (int j = 0; j < aData[i].data_descriptions_size(); j++)
+				m_aDataRegistrations.resize(aData[i].data_registrations_size());
+				m_aData.resize(aData[i].data_registrations_size());
+				for (int j = 0; j < aData[i].data_registrations_size(); j++)
 				{
-					auto& oRegistrationProtobuf = aData[i].data_descriptions(j);
-					auto& oRegistration = m_aDataRegistrations[oRegistrationProtobuf.handle()];
+					auto& oRegistrationProtobuf = aData[i].data_registrations(j);
 
 					VBAssert(oRegistrationProtobuf.has_handle());
 					VBAssert(oRegistrationProtobuf.has_field_name());
 					VBAssert(oRegistrationProtobuf.has_type());
 					VBAssert(oRegistrationProtobuf.handle() == j);
 
+					auto& oRegistration = m_aDataRegistrations[oRegistrationProtobuf.handle()];
 					oRegistration.m_iHandle = oRegistrationProtobuf.handle();
 					oRegistration.m_sFieldName = oRegistrationProtobuf.field_name();
 					oRegistration.m_eDataType = oRegistrationProtobuf.type();
 				}
 
-				VBPrintf("Installed %d registrations.\n", aData[i].data_descriptions_size());
+				VBPrintf("Installed %d registrations.\n", aData[i].data_registrations_size());
+
+				for (int j = 0; j < aData[i].data_labels_size(); j++)
+				{
+					auto& oLabelProtobuf = aData[i].data_labels(j);
+
+					VBAssert(oLabelProtobuf.has_handle());
+					VBAssert(oLabelProtobuf.has_field_name());
+					VBAssert(oLabelProtobuf.has_value());
+
+					auto& oRegistration = m_aDataRegistrations[oLabelProtobuf.handle()];
+					oRegistration.m_asLabels[oLabelProtobuf.value()] = oLabelProtobuf.field_name();
+				}
+
+				VBPrintf("Installed %d labels.\n", aData[i].data_labels_size());
 			}
 		}
 
@@ -90,6 +108,24 @@ bool CViewbackClient::HasConnection()
 vb_data_type_t CViewbackClient::TypeForHandle(size_t iHandle)
 {
 	return m_aDataRegistrations[iHandle].m_eDataType;
+}
+
+bool CViewbackClient::HasLabel(size_t iHandle, int iValue)
+{
+	auto& it = m_aDataRegistrations[iHandle].m_asLabels.find(iValue);
+	if (it == m_aDataRegistrations[iHandle].m_asLabels.end())
+		return false;
+	else
+		return true;
+}
+
+string CViewbackClient::GetLabelForValue(size_t iHandle, int iValue)
+{
+	auto& it = m_aDataRegistrations[iHandle].m_asLabels.find(iValue);
+	if (it == m_aDataRegistrations[iHandle].m_asLabels.end())
+		return static_cast<ostringstream*>(&(ostringstream() << iValue))->str();
+	else
+		return it->second;
 }
 
 void CViewbackClient::StashData(const Data* pData)

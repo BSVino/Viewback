@@ -17,7 +17,8 @@ int main()
 
 	vb_config_t config;
 	vb_config_initialize(&config);
-	config.num_data_registrations = 3;
+	config.num_data_registrations = 4;
+	config.num_data_labels = 4;
 
 	size_t memory_required = vb_config_get_memory_required(&config);
 
@@ -34,13 +35,23 @@ int main()
 		return 1;
 	}
 
-	vb_data_handle_t vb_keydown, vb_health, vb_mousepos;
+	vb_data_handle_t vb_keydown, vb_player, vb_health, vb_mousepos;
 
 	if (!vb_data_register("Key down", VB_DATATYPE_INT, &vb_keydown) ||
+		!vb_data_register("Player", VB_DATATYPE_INT, &vb_player) ||
 		!vb_data_register("Health", VB_DATATYPE_FLOAT, &vb_health) ||
 		!vb_data_register("Mouse", VB_DATATYPE_VECTOR, &vb_mousepos))
 	{
 		printf("Couldn't register data events\n");
+		return 1;
+	}
+
+	if (!vb_data_label(vb_player, 0, "Dead") ||
+		!vb_data_label(vb_player, 1, "Alive") ||
+		!vb_data_label(vb_player, 2, "Transient") ||
+		!vb_data_label(vb_player, 3, "Philosophical"))
+	{
+		printf("Couldn't register labels\n");
 		return 1;
 	}
 
@@ -56,6 +67,7 @@ int main()
 	srand((int)initial_time);
 
 	int key_down = 0;
+	int player = 0;
 	float health = 100;
 	float mouse_x = 0;
 	float mouse_y = 0;
@@ -80,11 +92,18 @@ int main()
 		mouse_x += ((float)(rand()%100)/50-1)*10;
 		mouse_y += ((float)(rand()%100)/50-1)*10;
 
-		key_down = rand()%2;
+		key_down = rand() % 2;
+		player = rand() % 4;
 
 		printf("Key down: %d\n", key_down);
 		printf("Health: %f\n", health);
 		printf("Mouse: <%f, %f>\n", mouse_x, mouse_y);
+
+		const char* label;
+		if (vb_data_get_label(vb_player, player, &label))
+			printf("Player is %s\n", label);
+		else
+			printf("Player state: %d\n", player);
 
 		bool success = true;
 		if (!vb_data_send_int(vb_keydown, key_down))
@@ -93,12 +112,11 @@ int main()
 			success = false;
 		if (!vb_data_send_vector(vb_mousepos, mouse_x, mouse_y, 0))
 			success = false;
+		if (!vb_data_send_int(vb_player, player))
+			success = false;
 
 		if (!success)
-		{
 			printf("Could not send data\n");
-			break;
-		}
 	}
 
 	vb_server_shutdown();

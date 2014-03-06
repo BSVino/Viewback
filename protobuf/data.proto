@@ -23,13 +23,20 @@ message Data {
 	optional float data_float_z  = 7;
 }
 
-message DataDescription {
+message DataRegistration {
 	optional string field_name   = 1;
 	optional vb_data_type_t type = 2;
 	optional uint32 handle       = 3;
 }
 
+message DataLabel {
+	optional uint32 handle     = 1;
+	optional uint32 value      = 2;
+	optional string field_name = 3;
+}
+
 message Packet {
-	optional Data            data = 1;
-	repeated DataDescription data_descriptions = 2;
+	optional Data             data = 1;
+	repeated DataRegistration data_registrations = 2;
+	repeated DataLabel        data_labels = 3;
 }

@@ -33,7 +33,8 @@ void protobuf_AssignDesc_protobuf_2fdata_2eproto();
 void protobuf_ShutdownFile_protobuf_2fdata_2eproto();
 
 class Data;
-class DataDescription;
+class DataRegistration;
+class DataLabel;
 class Packet;
 
 enum vb_data_type_t {
@@ -191,14 +192,14 @@ class Data : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class DataDescription : public ::google::protobuf::Message {
+class DataRegistration : public ::google::protobuf::Message {
  public:
-  DataDescription();
-  virtual ~DataDescription();
+  DataRegistration();
+  virtual ~DataRegistration();
 
-  DataDescription(const DataDescription& from);
+  DataRegistration(const DataRegistration& from);
 
-  inline DataDescription& operator=(const DataDescription& from) {
+  inline DataRegistration& operator=(const DataRegistration& from) {
     CopyFrom(from);
     return *this;
   }
@@ -212,17 +213,17 @@ class DataDescription : public ::google::protobuf::Message {
   }
 
   static const ::google::protobuf::Descriptor* descriptor();
-  static const DataDescription& default_instance();
+  static const DataRegistration& default_instance();
 
-  void Swap(DataDescription* other);
+  void Swap(DataRegistration* other);
 
   // implements Message ----------------------------------------------
 
-  DataDescription* New() const;
+  DataRegistration* New() const;
   void CopyFrom(const ::google::protobuf::Message& from);
   void MergeFrom(const ::google::protobuf::Message& from);
-  void CopyFrom(const DataDescription& from);
-  void MergeFrom(const DataDescription& from);
+  void CopyFrom(const DataRegistration& from);
+  void MergeFrom(const DataRegistration& from);
   void Clear();
   bool IsInitialized() const;
 
@@ -271,7 +272,7 @@ class DataDescription : public ::google::protobuf::Message {
   inline ::google::protobuf::uint32 handle() const;
   inline void set_handle(::google::protobuf::uint32 value);
 
-  // @@protoc_insertion_point(class_scope:DataDescription)
+  // @@protoc_insertion_point(class_scope:DataRegistration)
  private:
   inline void set_has_field_name();
   inline void clear_has_field_name();
@@ -294,7 +295,114 @@ class DataDescription : public ::google::protobuf::Message {
   friend void protobuf_ShutdownFile_protobuf_2fdata_2eproto();
 
   void InitAsDefaultInstance();
-  static DataDescription* default_instance_;
+  static DataRegistration* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class DataLabel : public ::google::protobuf::Message {
+ public:
+  DataLabel();
+  virtual ~DataLabel();
+
+  DataLabel(const DataLabel& from);
+
+  inline DataLabel& operator=(const DataLabel& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const DataLabel& default_instance();
+
+  void Swap(DataLabel* other);
+
+  // implements Message ----------------------------------------------
+
+  DataLabel* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const DataLabel& from);
+  void MergeFrom(const DataLabel& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // optional uint32 handle = 1;
+  inline bool has_handle() const;
+  inline void clear_handle();
+  static const int kHandleFieldNumber = 1;
+  inline ::google::protobuf::uint32 handle() const;
+  inline void set_handle(::google::protobuf::uint32 value);
+
+  // optional uint32 value = 2;
+  inline bool has_value() const;
+  inline void clear_value();
+  static const int kValueFieldNumber = 2;
+  inline ::google::protobuf::uint32 value() const;
+  inline void set_value(::google::protobuf::uint32 value);
+
+  // optional string field_name = 3;
+  inline bool has_field_name() const;
+  inline void clear_field_name();
+  static const int kFieldNameFieldNumber = 3;
+  inline const ::std::string& field_name() const;
+  inline void set_field_name(const ::std::string& value);
+  inline void set_field_name(const char* value);
+  inline void set_field_name(const char* value, size_t size);
+  inline ::std::string* mutable_field_name();
+  inline ::std::string* release_field_name();
+  inline void set_allocated_field_name(::std::string* field_name);
+
+  // @@protoc_insertion_point(class_scope:DataLabel)
+ private:
+  inline void set_has_handle();
+  inline void clear_has_handle();
+  inline void set_has_value();
+  inline void clear_has_value();
+  inline void set_has_field_name();
+  inline void clear_has_field_name();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::google::protobuf::uint32 handle_;
+  ::google::protobuf::uint32 value_;
+  ::std::string* field_name_;
+
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(3 + 31) / 32];
+
+  friend void  protobuf_AddDesc_protobuf_2fdata_2eproto();
+  friend void protobuf_AssignDesc_protobuf_2fdata_2eproto();
+  friend void protobuf_ShutdownFile_protobuf_2fdata_2eproto();
+
+  void InitAsDefaultInstance();
+  static DataLabel* default_instance_;
 };
 // -------------------------------------------------------------------
 
@@ -361,17 +469,29 @@ class Packet : public ::google::protobuf::Message {
   inline ::Data* release_data();
   inline void set_allocated_data(::Data* data);
 
-  // repeated .DataDescription data_descriptions = 2;
-  inline int data_descriptions_size() const;
-  inline void clear_data_descriptions();
-  static const int kDataDescriptionsFieldNumber = 2;
-  inline const ::DataDescription& data_descriptions(int index) const;
-  inline ::DataDescription* mutable_data_descriptions(int index);
-  inline ::DataDescription* add_data_descriptions();
-  inline const ::google::protobuf::RepeatedPtrField< ::DataDescription >&
-      data_descriptions() const;
-  inline ::google::protobuf::RepeatedPtrField< ::DataDescription >*
-      mutable_data_descriptions();
+  // repeated .DataRegistration data_registrations = 2;
+  inline int data_registrations_size() const;
+  inline void clear_data_registrations();
+  static const int kDataRegistrationsFieldNumber = 2;
+  inline const ::DataRegistration& data_registrations(int index) const;
+  inline ::DataRegistration* mutable_data_registrations(int index);
+  inline ::DataRegistration* add_data_registrations();
+  inline const ::google::protobuf::RepeatedPtrField< ::DataRegistration >&
+      data_registrations() const;
+  inline ::google::protobuf::RepeatedPtrField< ::DataRegistration >*
+      mutable_data_registrations();
+
+  // repeated .DataLabel data_labels = 3;
+  inline int data_labels_size() const;
+  inline void clear_data_labels();
+  static const int kDataLabelsFieldNumber = 3;
+  inline const ::DataLabel& data_labels(int index) const;
+  inline ::DataLabel* mutable_data_labels(int index);
+  inline ::DataLabel* add_data_labels();
+  inline const ::google::protobuf::RepeatedPtrField< ::DataLabel >&
+      data_labels() const;
+  inline ::google::protobuf::RepeatedPtrField< ::DataLabel >*
+      mutable_data_labels();
 
   // @@protoc_insertion_point(class_scope:Packet)
  private:
@@ -381,10 +501,11 @@ class Packet : public ::google::protobuf::Message {
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
   ::Data* data_;
-  ::google::protobuf::RepeatedPtrField< ::DataDescription > data_descriptions_;
+  ::google::protobuf::RepeatedPtrField< ::DataRegistration > data_registrations_;
+  ::google::protobuf::RepeatedPtrField< ::DataLabel > data_labels_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(2 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(3 + 31) / 32];
 
   friend void  protobuf_AddDesc_protobuf_2fdata_2eproto();
   friend void protobuf_AssignDesc_protobuf_2fdata_2eproto();
@@ -534,56 +655,56 @@ inline void Data::set_data_float_z(float value) {
 
 // -------------------------------------------------------------------
 
-// DataDescription
+// DataRegistration
 
 // optional string field_name = 1;
-inline bool DataDescription::has_field_name() const {
+inline bool DataRegistration::has_field_name() const {
   return (_has_bits_[0] & 0x00000001u) != 0;
 }
-inline void DataDescription::set_has_field_name() {
+inline void DataRegistration::set_has_field_name() {
   _has_bits_[0] |= 0x00000001u;
 }
-inline void DataDescription::clear_has_field_name() {
+inline void DataRegistration::clear_has_field_name() {
   _has_bits_[0] &= ~0x00000001u;
 }
-inline void DataDescription::clear_field_name() {
+inline void DataRegistration::clear_field_name() {
   if (field_name_ != &::google::protobuf::internal::kEmptyString) {
     field_name_->clear();
   }
   clear_has_field_name();
 }
-inline const ::std::string& DataDescription::field_name() const {
+inline const ::std::string& DataRegistration::field_name() const {
   return *field_name_;
 }
-inline void DataDescription::set_field_name(const ::std::string& value) {
+inline void DataRegistration::set_field_name(const ::std::string& value) {
   set_has_field_name();
   if (field_name_ == &::google::protobuf::internal::kEmptyString) {
     field_name_ = new ::std::string;
   }
   field_name_->assign(value);
 }
-inline void DataDescription::set_field_name(const char* value) {
+inline void DataRegistration::set_field_name(const char* value) {
   set_has_field_name();
   if (field_name_ == &::google::protobuf::internal::kEmptyString) {
     field_name_ = new ::std::string;
   }
   field_name_->assign(value);
 }
-inline void DataDescription::set_field_name(const char* value, size_t size) {
+inline void DataRegistration::set_field_name(const char* value, size_t size) {
   set_has_field_name();
   if (field_name_ == &::google::protobuf::internal::kEmptyString) {
     field_name_ = new ::std::string;
   }
   field_name_->assign(reinterpret_cast<const char*>(value), size);
 }
-inline ::std::string* DataDescription::mutable_field_name() {
+inline ::std::string* DataRegistration::mutable_field_name() {
   set_has_field_name();
   if (field_name_ == &::google::protobuf::internal::kEmptyString) {
     field_name_ = new ::std::string;
   }
   return field_name_;
 }
-inline ::std::string* DataDescription::release_field_name() {
+inline ::std::string* DataRegistration::release_field_name() {
   clear_has_field_name();
   if (field_name_ == &::google::protobuf::internal::kEmptyString) {
     return NULL;
@@ -593,7 +714,7 @@ inline ::std::string* DataDescription::release_field_name() {
     return temp;
   }
 }
-inline void DataDescription::set_allocated_field_name(::std::string* field_name) {
+inline void DataRegistration::set_allocated_field_name(::std::string* field_name) {
   if (field_name_ != &::google::protobuf::internal::kEmptyString) {
     delete field_name_;
   }
@@ -607,48 +728,166 @@ inline void DataDescription::set_allocated_field_name(::std::string* field_name)
 }
 
 // optional .vb_data_type_t type = 2;
-inline bool DataDescription::has_type() const {
+inline bool DataRegistration::has_type() const {
   return (_has_bits_[0] & 0x00000002u) != 0;
 }
-inline void DataDescription::set_has_type() {
+inline void DataRegistration::set_has_type() {
   _has_bits_[0] |= 0x00000002u;
 }
-inline void DataDescription::clear_has_type() {
+inline void DataRegistration::clear_has_type() {
   _has_bits_[0] &= ~0x00000002u;
 }
-inline void DataDescription::clear_type() {
+inline void DataRegistration::clear_type() {
   type_ = 0;
   clear_has_type();
 }
-inline ::vb_data_type_t DataDescription::type() const {
+inline ::vb_data_type_t DataRegistration::type() const {
   return static_cast< ::vb_data_type_t >(type_);
 }
-inline void DataDescription::set_type(::vb_data_type_t value) {
+inline void DataRegistration::set_type(::vb_data_type_t value) {
   assert(::vb_data_type_t_IsValid(value));
   set_has_type();
   type_ = value;
 }
 
 // optional uint32 handle = 3;
-inline bool DataDescription::has_handle() const {
+inline bool DataRegistration::has_handle() const {
   return (_has_bits_[0] & 0x00000004u) != 0;
 }
-inline void DataDescription::set_has_handle() {
+inline void DataRegistration::set_has_handle() {
   _has_bits_[0] |= 0x00000004u;
 }
-inline void DataDescription::clear_has_handle() {
+inline void DataRegistration::clear_has_handle() {
   _has_bits_[0] &= ~0x00000004u;
 }
-inline void DataDescription::clear_handle() {
+inline void DataRegistration::clear_handle() {
   handle_ = 0u;
   clear_has_handle();
 }
-inline ::google::protobuf::uint32 DataDescription::handle() const {
+inline ::google::protobuf::uint32 DataRegistration::handle() const {
   return handle_;
 }
-inline void DataDescription::set_handle(::google::protobuf::uint32 value) {
+inline void DataRegistration::set_handle(::google::protobuf::uint32 value) {
   set_has_handle();
   handle_ = value;
+}
+
+// -------------------------------------------------------------------
+
+// DataLabel
+
+// optional uint32 handle = 1;
+inline bool DataLabel::has_handle() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void DataLabel::set_has_handle() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void DataLabel::clear_has_handle() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void DataLabel::clear_handle() {
+  handle_ = 0u;
+  clear_has_handle();
+}
+inline ::google::protobuf::uint32 DataLabel::handle() const {
+  return handle_;
+}
+inline void DataLabel::set_handle(::google::protobuf::uint32 value) {
+  set_has_handle();
+  handle_ = value;
+}
+
+// optional uint32 value = 2;
+inline bool DataLabel::has_value() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void DataLabel::set_has_value() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void DataLabel::clear_has_value() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void DataLabel::clear_value() {
+  value_ = 0u;
+  clear_has_value();
+}
+inline ::google::protobuf::uint32 DataLabel::value() const {
+  return value_;
+}
+inline void DataLabel::set_value(::google::protobuf::uint32 value) {
+  set_has_value();
+  value_ = value;
+}
+
+// optional string field_name = 3;
+inline bool DataLabel::has_field_name() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
+}
+inline void DataLabel::set_has_field_name() {
+  _has_bits_[0] |= 0x00000004u;
+}
+inline void DataLabel::clear_has_field_name() {
+  _has_bits_[0] &= ~0x00000004u;
+}
+inline void DataLabel::clear_field_name() {
+  if (field_name_ != &::google::protobuf::internal::kEmptyString) {
+    field_name_->clear();
+  }
+  clear_has_field_name();
+}
+inline const ::std::string& DataLabel::field_name() const {
+  return *field_name_;
+}
+inline void DataLabel::set_field_name(const ::std::string& value) {
+  set_has_field_name();
+  if (field_name_ == &::google::protobuf::internal::kEmptyString) {
+    field_name_ = new ::std::string;
+  }
+  field_name_->assign(value);
+}
+inline void DataLabel::set_field_name(const char* value) {
+  set_has_field_name();
+  if (field_name_ == &::google::protobuf::internal::kEmptyString) {
+    field_name_ = new ::std::string;
+  }
+  field_name_->assign(value);
+}
+inline void DataLabel::set_field_name(const char* value, size_t size) {
+  set_has_field_name();
+  if (field_name_ == &::google::protobuf::internal::kEmptyString) {
+    field_name_ = new ::std::string;
+  }
+  field_name_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* DataLabel::mutable_field_name() {
+  set_has_field_name();
+  if (field_name_ == &::google::protobuf::internal::kEmptyString) {
+    field_name_ = new ::std::string;
+  }
+  return field_name_;
+}
+inline ::std::string* DataLabel::release_field_name() {
+  clear_has_field_name();
+  if (field_name_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = field_name_;
+    field_name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+inline void DataLabel::set_allocated_field_name(::std::string* field_name) {
+  if (field_name_ != &::google::protobuf::internal::kEmptyString) {
+    delete field_name_;
+  }
+  if (field_name) {
+    set_has_field_name();
+    field_name_ = field_name;
+  } else {
+    clear_has_field_name();
+    field_name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  }
 }
 
 // -------------------------------------------------------------------
@@ -693,29 +932,54 @@ inline void Packet::set_allocated_data(::Data* data) {
   }
 }
 
-// repeated .DataDescription data_descriptions = 2;
-inline int Packet::data_descriptions_size() const {
-  return data_descriptions_.size();
+// repeated .DataRegistration data_registrations = 2;
+inline int Packet::data_registrations_size() const {
+  return data_registrations_.size();
 }
-inline void Packet::clear_data_descriptions() {
-  data_descriptions_.Clear();
+inline void Packet::clear_data_registrations() {
+  data_registrations_.Clear();
 }
-inline const ::DataDescription& Packet::data_descriptions(int index) const {
-  return data_descriptions_.Get(index);
+inline const ::DataRegistration& Packet::data_registrations(int index) const {
+  return data_registrations_.Get(index);
 }
-inline ::DataDescription* Packet::mutable_data_descriptions(int index) {
-  return data_descriptions_.Mutable(index);
+inline ::DataRegistration* Packet::mutable_data_registrations(int index) {
+  return data_registrations_.Mutable(index);
 }
-inline ::DataDescription* Packet::add_data_descriptions() {
-  return data_descriptions_.Add();
+inline ::DataRegistration* Packet::add_data_registrations() {
+  return data_registrations_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::DataDescription >&
-Packet::data_descriptions() const {
-  return data_descriptions_;
+inline const ::google::protobuf::RepeatedPtrField< ::DataRegistration >&
+Packet::data_registrations() const {
+  return data_registrations_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::DataDescription >*
-Packet::mutable_data_descriptions() {
-  return &data_descriptions_;
+inline ::google::protobuf::RepeatedPtrField< ::DataRegistration >*
+Packet::mutable_data_registrations() {
+  return &data_registrations_;
+}
+
+// repeated .DataLabel data_labels = 3;
+inline int Packet::data_labels_size() const {
+  return data_labels_.size();
+}
+inline void Packet::clear_data_labels() {
+  data_labels_.Clear();
+}
+inline const ::DataLabel& Packet::data_labels(int index) const {
+  return data_labels_.Get(index);
+}
+inline ::DataLabel* Packet::mutable_data_labels(int index) {
+  return data_labels_.Mutable(index);
+}
+inline ::DataLabel* Packet::add_data_labels() {
+  return data_labels_.Add();
+}
+inline const ::google::protobuf::RepeatedPtrField< ::DataLabel >&
+Packet::data_labels() const {
+  return data_labels_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::DataLabel >*
+Packet::mutable_data_labels() {
+  return &data_labels_;
 }
 
 

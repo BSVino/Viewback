@@ -45,7 +45,7 @@ int main()
 				{
 				case VB_DATATYPE_INT:
 					for (size_t j = oData.m_aIntData.size()>=10?oData.m_aIntData.size()-10:0; j < oData.m_aIntData.size(); j++)
-						printf(" %d", oData.m_aIntData[j]);
+						printf(" %s", vb.GetLabelForValue(i, oData.m_aIntData[j]).c_str());
 					break;
 
 				case VB_DATATYPE_FLOAT:

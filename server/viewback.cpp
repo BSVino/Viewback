@@ -39,9 +39,13 @@ size_t vb_config_get_memory_required(vb_config_t* config)
 	if (config->num_data_registrations <= 0)
 		return 0;
 
+	if (config->num_data_labels < 0)
+		return 0;
+
 	return
 		sizeof(vb_t) +
-		config->num_data_registrations * sizeof(vb_data_registration_t) +
+		config->num_data_registrations * sizeof(vb_data_registration_t)+
+		config->num_data_labels * sizeof(vb_data_label_t)+
 		config->max_connections * sizeof(vb_connection_t);
 }
 
@@ -67,12 +71,17 @@ int vb_config_install(vb_config_t* config, void* memory, size_t memory_size)
 
 	VB = (vb_t*)memory;
 
+	memset(VB, 0, sizeof(VB));
+
 	VB->config = *config;
 
 	VB->registrations = (vb_data_registration_t*)((char*)memory + sizeof(vb_t));
 	VB->next_registration = 0;
 
-	VB->connections = (vb_connection_t*)((char*)memory + sizeof(vb_t) + sizeof(vb_data_registration_t)*config->num_data_registrations);
+	VB->labels = (vb_data_label_t*)((char*)VB->registrations + sizeof(vb_data_registration_t)*config->num_data_registrations);
+	VB->next_label = 0;
+
+	VB->connections = (vb_connection_t*)((char*)VB->labels + sizeof(vb_data_label_t)*config->num_data_labels);
 
 	for (int i = 0; i < config->max_connections; i++)
 		VB->connections[i].socket = VB_INVALID_SOCKET;
@@ -107,6 +116,52 @@ int vb_data_register(const char* name, vb_data_type_t type, /*out*/ vb_data_hand
 	VB->next_registration++;
 
 	return 1;
+}
+
+int vb_data_label(vb_data_handle_t handle, int value, const char* name)
+{
+	if (!name)
+		return 0;
+
+	if (!name[0])
+		return 0;
+
+	if (handle < 0 || handle >= VB->next_registration)
+		return 0;
+
+	if (VB->next_label >= VB->config.num_data_labels)
+		return 0;
+
+	if (VB->server_active)
+		return 0;
+
+	VB->labels[VB->next_label].handle = handle;
+	VB->labels[VB->next_label].name = name;
+	VB->labels[VB->next_label].value = value;
+
+	VB->next_label++;
+
+	return 1;
+}
+
+int vb_data_get_label(vb_data_handle_t handle, int value, const char** label)
+{
+	if (handle < 0 || handle >= VB->next_registration)
+		return false;
+
+	if (!VB->server_active)
+		return false;
+
+	for (int i = 0; i < VB->next_label; i++)
+	{
+		if (VB->labels[i].handle == handle && VB->labels[i].value == value)
+		{
+			*label = VB->labels[i].name;
+			return true;
+		}
+	}
+
+	return false;
 }
 
 int vb_server_create()
@@ -327,9 +382,10 @@ void vb_server_update()
 				VBPrintf("Sending registrations to %d.\n", VB->connections[i].socket);
 
 				struct Packet packet;
-				struct DataDescription* descriptions = (struct DataDescription*)alloca(VB->next_registration * sizeof(struct DataDescription));
+				struct DataRegistration* registrations = (struct DataRegistration*)alloca(VB->next_registration * sizeof(struct DataRegistration));
+				struct DataLabel* labels = (struct DataLabel*)alloca(VB->next_label * sizeof(struct DataLabel));
 
-				Packet_initialize_registrations(&packet, descriptions, VB->next_registration);
+				Packet_initialize_registrations(&packet, registrations, VB->next_registration, labels, VB->next_label);
 
 				size_t message_predicted_length = Packet_get_message_size(&packet);
 				void* message = Packet_alloca(message_predicted_length);
@@ -592,36 +648,55 @@ int Data_write_with_tag(struct Data *_Data, void *_buffer, int offset, int tag)
 	return offset;
 }
 
-int DataDescription_write(struct DataDescription *_DataDescription, void *_buffer, int offset)
+int DataRegistration_write(struct DataRegistration *_DataRegistration, void *_buffer, int offset)
 {
-	VBAssert(_DataDescription->_field_name_len);
-	VBAssert(_DataDescription->_field_name);
-	VBAssert(_DataDescription->_field_name[0]);
-	VBAssert(_DataDescription->_type);
+	VBAssert(_DataRegistration->_field_name_len);
+	VBAssert(_DataRegistration->_field_name);
+	VBAssert(_DataRegistration->_field_name[0]);
+	VBAssert(_DataRegistration->_type);
 
-	/* Write content of each message element.*/
-	/* Write the optional attribute only if it is different than the default value. */
-	if (_DataDescription->_field_name_len != 1 || _DataDescription->_field_name[0] != '0')
+	if (_DataRegistration->_field_name_len != 1 || _DataRegistration->_field_name[0] != '0')
 	{
 		offset = write_raw_varint32((1<<3)+2, _buffer, offset);
-		offset = write_raw_varint32(_DataDescription->_field_name_len, _buffer, offset);
-		offset = write_raw_bytes(_DataDescription->_field_name, _DataDescription->_field_name_len, _buffer, offset);
+		offset = write_raw_varint32(_DataRegistration->_field_name_len, _buffer, offset);
+		offset = write_raw_bytes(_DataRegistration->_field_name, _DataRegistration->_field_name_len, _buffer, offset);
 	}
 
-	/* Write the optional attribute only if it is different than the default value. */
-	offset = vb_data_type_t_write_with_tag(&_DataDescription->_type, _buffer, offset, 2);
+	offset = vb_data_type_t_write_with_tag(&_DataRegistration->_type, _buffer, offset, 2);
 
 	offset = write_raw_varint32((3<<3)+0, _buffer, offset);
-	offset = write_raw_varint32(_DataDescription->_handle, _buffer, offset);
+	offset = write_raw_varint32(_DataRegistration->_handle, _buffer, offset);
 
 	return offset;
 }
 
-int DataDescription_write_delimited_to(struct DataDescription *_DataDescription, void *_buffer, int offset)
+int DataLabel_write(struct DataLabel *_DataLabel, void *_buffer, int offset)
+{
+	VBAssert(_DataLabel->_field_name_len);
+	VBAssert(_DataLabel->_field_name);
+	VBAssert(_DataLabel->_field_name[0]);
+
+	offset = write_raw_varint32((1 << 3) + 0, _buffer, offset);
+	offset = write_raw_varint32(_DataLabel->_handle, _buffer, offset);
+
+	offset = write_raw_varint32((2 << 3) + 0, _buffer, offset);
+	offset = write_raw_varint32(_DataLabel->_value, _buffer, offset);
+
+	if (_DataLabel->_field_name_len != 1 || _DataLabel->_field_name[0] != '0')
+	{
+		offset = write_raw_varint32((3 << 3) + 2, _buffer, offset);
+		offset = write_raw_varint32(_DataLabel->_field_name_len, _buffer, offset);
+		offset = write_raw_bytes(_DataLabel->_field_name, _DataLabel->_field_name_len, _buffer, offset);
+	}
+
+	return offset;
+}
+
+int DataRegistration_write_delimited_to(struct DataRegistration *_DataRegistration, void *_buffer, int offset)
 {
 	int i, shift, new_offset, size;
 
-	new_offset = DataDescription_write(_DataDescription, _buffer, offset);
+	new_offset = DataRegistration_write(_DataRegistration, _buffer, offset);
 	size = new_offset - offset;
 	shift = (size > 127) ? 2 : 1;
 	for (i = new_offset - 1; i >= offset; -- i)
@@ -632,19 +707,44 @@ int DataDescription_write_delimited_to(struct DataDescription *_DataDescription,
 	return new_offset + shift;
 }
 
-int DataDescription_write_with_tag(struct DataDescription *_DataDescription, void *_buffer, int offset, int tag)
+int DataLabel_write_delimited_to(struct DataLabel *_DataLabel, void *_buffer, int offset)
+{
+	int i, shift, new_offset, size;
+
+	new_offset = DataLabel_write(_DataLabel, _buffer, offset);
+	size = new_offset - offset;
+	shift = (size > 127) ? 2 : 1;
+	for (i = new_offset - 1; i >= offset; --i)
+		*((char *)_buffer + i + shift) = *((char *)_buffer + i);
+
+	write_raw_varint32((unsigned long)size, _buffer, offset);
+
+	return new_offset + shift;
+}
+
+int DataRegistration_write_with_tag(struct DataRegistration *_DataRegistration, void *_buffer, int offset, int tag)
 {
 	/* Write tag.*/
 	offset = write_raw_varint32((tag<<3)+2, _buffer, offset);
 	/* Write content.*/
-	offset = DataDescription_write_delimited_to(_DataDescription, _buffer, offset);
+	offset = DataRegistration_write_delimited_to(_DataRegistration, _buffer, offset);
+
+	return offset;
+}
+
+int DataLabel_write_with_tag(struct DataLabel *_DataLabel, void *_buffer, int offset, int tag)
+{
+	/* Write tag.*/
+	offset = write_raw_varint32((tag << 3) + 2, _buffer, offset);
+	/* Write content.*/
+	offset = DataLabel_write_delimited_to(_DataLabel, _buffer, offset);
 
 	return offset;
 }
 
 int Packet_write(struct Packet *_Packet, void *_buffer, int offset)
 {
-	int data_descriptions_cnt;
+	int data_registrations_cnt;
 
 	/* Write content of each message element.*/
 	/* Write the optional attribute only if it is different than the default value. */
@@ -653,9 +753,14 @@ int Packet_write(struct Packet *_Packet, void *_buffer, int offset)
 		offset = Data_write_with_tag(_Packet->_data, _buffer, offset, 1);
 	}
 
-	for (data_descriptions_cnt = 0; data_descriptions_cnt < _Packet->_data_descriptions_repeated_len; ++ data_descriptions_cnt)
+	for (data_registrations_cnt = 0; data_registrations_cnt < _Packet->_data_registrations_repeated_len; ++data_registrations_cnt)
 	{
-		offset = DataDescription_write_with_tag(&_Packet->_data_descriptions[data_descriptions_cnt], _buffer, offset, 2);
+		offset = DataRegistration_write_with_tag(&_Packet->_data_registrations[data_registrations_cnt], _buffer, offset, 2);
+	}
+
+	for (int data_labels_cnt = 0; data_labels_cnt < _Packet->_data_labels_repeated_len; ++data_labels_cnt)
+	{
+		offset = DataLabel_write_with_tag(&_Packet->_data_labels[data_labels_cnt], _buffer, offset, 3);
 	}
 
 	return offset;
@@ -672,22 +777,35 @@ void Packet_initialize_data(struct Packet* packet, struct Data* data, vb_data_ty
 	data->_type = type;
 }
 
-void Packet_initialize_registrations(struct Packet* packet, struct DataDescription* data_reg, size_t registrations)
+void Packet_initialize_registrations(struct Packet* packet, struct DataRegistration* data_reg, size_t registrations, struct DataLabel* data_labels, size_t labels)
 {
 	memset(packet, 0, sizeof(struct Packet));
 
-	packet->_data_descriptions = data_reg;
-	packet->_data_descriptions_repeated_len = registrations;
+	packet->_data_registrations = data_reg;
+	packet->_data_registrations_repeated_len = registrations;
 
-	memset(data_reg, 0, sizeof(struct DataDescription) * registrations);
+	packet->_data_labels = data_labels;
+	packet->_data_labels_repeated_len = labels;
+
+	memset(data_reg, 0, sizeof(struct DataRegistration) * registrations);
+	memset(data_labels, 0, sizeof(struct DataLabel) * labels);
 
 	VBAssert(registrations == VB->next_registration);
-	for (int i = 0; i < registrations; i++)
+	for (size_t i = 0; i < registrations; i++)
 	{
 		data_reg[i]._field_name = VB->registrations[i].name;
 		data_reg[i]._field_name_len = strlen(VB->registrations[i].name);
 		data_reg[i]._handle = i;
 		data_reg[i]._type = VB->registrations[i].type;
+	}
+
+	VBAssert(labels == VB->next_label);
+	for (size_t i = 0; i < labels; i++)
+	{
+		data_labels[i]._field_name = VB->labels[i].name;
+		data_labels[i]._field_name_len = strlen(VB->labels[i].name);
+		data_labels[i]._handle = VB->labels[i].handle;
+		data_labels[i]._value = VB->labels[i].value;
 	}
 }
 
@@ -724,14 +842,14 @@ size_t Packet_get_message_size(struct Packet *_Packet)
 		}
 	}
 
-	if (_Packet->_data_descriptions_repeated_len)
+	if (_Packet->_data_registrations_repeated_len)
 	{
 		int i;
 
-		for (i = 0; i < _Packet->_data_descriptions_repeated_len; i++)
+		for (i = 0; i < _Packet->_data_registrations_repeated_len; i++)
 		{
 			size += 1; // One byte for the field number and wire type.
-			size += 1; // One byte for the length of DataDescription, which is going to be max 50 or so.
+			size += 1; // One byte for the length of DataRegistration, which is going to be max 50 or so.
 
 			size += 1; // One byte for "type" field number and wire type.
 			size += 2; // Two bytes in case we ever get a lot of types.
@@ -743,7 +861,30 @@ size_t Packet_get_message_size(struct Packet *_Packet)
 			size += 4; // 4 bytes to support really long strings.
 
 			// Add on the size for each string.
-			size += _Packet->_data_descriptions[i]._field_name_len;
+			size += _Packet->_data_registrations[i]._field_name_len;
+		}
+	}
+
+	if (_Packet->_data_labels_repeated_len)
+	{
+		int i;
+
+		for (i = 0; i < _Packet->_data_labels_repeated_len; i++)
+		{
+			size += 1; // One byte for the field number and wire type.
+			size += 1; // One byte for the length of DataLabel, which is going to be max 50 or so.
+
+			size += 1; // One byte for "handle" field number and wire type.
+			size += 4; // 4 bytes to support a ton of handles.
+
+			size += 1; // One byte for "value" field number and wire type.
+			size += 8; // Value could be anything, assume 8 byte long is possible.
+
+			size += 1; // One byte for "name" field number and wire type.
+			size += 4; // 4 bytes to support really long strings.
+
+			// Add on the size for each string.
+			size += _Packet->_data_labels[i]._field_name_len;
 		}
 	}
 

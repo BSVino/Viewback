@@ -10,6 +10,8 @@ public:
 	unsigned int   m_iHandle;
 	std::string    m_sFieldName;
 	vb_data_type_t m_eDataType;
+
+	std::map<int, std::string> m_asLabels;
 };
 
 // Holds all of the data associated with one handle.
@@ -35,6 +37,9 @@ public:
 	inline const std::vector<CViewbackDataList>& GetData() const { return m_aData; }
 
 	vb_data_type_t TypeForHandle(size_t iHandle);
+
+	bool HasLabel(size_t iHandle, int iValue);
+	std::string GetLabelForValue(size_t iHandle, int iValue);
 
 private:
 	void StashData(const Data* pData);

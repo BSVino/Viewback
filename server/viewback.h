@@ -40,6 +40,7 @@ extern "C" {
 typedef struct {
 	int port;
 	int num_data_registrations;
+	int num_data_labels;
 	int max_connections;
 } vb_config_t;
 
@@ -78,6 +79,22 @@ int vb_config_install(vb_config_t* config, void* memory, size_t memory_size);
 	that handle somewhere.
 */
 int vb_data_register(const char* name, vb_data_type_t type, /*out*/ vb_data_handle_t* handle);
+
+/*
+	Register a label for integers. When the specified data has the specified value
+	the monitor will give it the specified label. Think enumerations. Example:
+	vb_data_label(vb_player_state, 0, "Dead");
+	vb_data_label(vb_player_state, 1, "Alive");
+	vb_data_label(vb_player_state, 2, "Hungry");
+	vb_data_label(vb_player_state, 3, "Ephemeral");
+*/
+int vb_data_label(vb_data_handle_t handle, int value, const char* label);
+
+/*
+	Just retrieves the data registered in vb_data_label(). "label" output is only
+	valid if the function return true.
+*/
+int vb_data_get_label(vb_data_handle_t handle, int value, /*out*/ const char** label);
 
 /*
 	After registering all of your data, call this to start up the server.

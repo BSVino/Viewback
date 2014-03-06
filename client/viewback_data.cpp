@@ -33,7 +33,7 @@ bool CViewbackDataThread::Initialize(unsigned long address)
 	if (connect(m_socket, (struct sockaddr *)&addr, sizeof(addr)) < 0)
 		return false;
 
-	// Start by requesting a list of data descriptions from the server.
+	// Start by requesting a list of data registrations from the server.
 	const char registrations[] = "registrations";
 	int bytes_sent = send(m_socket, (const char*)registrations, sizeof(registrations), 0);
 
