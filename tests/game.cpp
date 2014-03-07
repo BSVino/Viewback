@@ -2,6 +2,8 @@
 
 #ifdef _WIN32
 #include <winsock2.h>
+#include <sys/types.h>
+#include <sys/timeb.h>
 #endif
 
 #include <memory>
@@ -94,9 +96,17 @@ int main()
 	float mouse_x = 0;
 	float mouse_y = 0;
 
+	struct timeb initial_time_millis;
+	ftime(&initial_time_millis);
+
 	while (true)
 	{
-		vb_server_update();
+		struct timeb current_time_millis;
+		ftime(&current_time_millis);
+
+		double current_time_double = (current_time_millis.time - initial_time_millis.time) + (float)(current_time_millis.millitm - initial_time_millis.millitm)/1000;
+
+		vb_server_update(current_time_double);
 
 		time_t current_time;
 		time(&current_time);

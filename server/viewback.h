@@ -105,7 +105,7 @@ int vb_server_create();
 	Call every frame. It should take only minimal processing and never does
 	memory allocations.
 */
-void vb_server_update();
+void vb_server_update(double current_time_seconds);
 
 /*
 	Closes all sockets. After shutdown you can add more registrations or reset

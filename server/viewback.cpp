@@ -254,10 +254,12 @@ size_t vb_write_length_prepended_message(struct Packet *_Packet, void *_buffer, 
 	return serialized_length + sizeof(network_length);
 }
 
-void vb_server_update()
+void vb_server_update(double current_time_seconds)
 {
 	if (!VB->server_active)
 		return;
+
+	VB->current_time = current_time_seconds;
 
 	time_t current_time;
 	time(&current_time);
@@ -614,6 +616,20 @@ int write_raw_little_endian32(unsigned long value, void *_buffer, int offset)
 	return offset;
 }
 
+int write_raw_little_endian64(unsigned long long value, void *_buffer, int offset)
+{
+	offset = write_raw_byte((char)((value)& 0xFF), _buffer, offset);
+	offset = write_raw_byte((char)((value >> 8) & 0xFF), _buffer, offset);
+	offset = write_raw_byte((char)((value >> 16) & 0xFF), _buffer, offset);
+	offset = write_raw_byte((char)((value >> 24) & 0xFF), _buffer, offset);
+	offset = write_raw_byte((char)((value >> 32) & 0xFF), _buffer, offset);
+	offset = write_raw_byte((char)((value >> 40) & 0xFF), _buffer, offset);
+	offset = write_raw_byte((char)((value >> 48) & 0xFF), _buffer, offset);
+	offset = write_raw_byte((char)((value >> 56) & 0xFF), _buffer, offset);
+
+	return offset;
+}
+
 int vb_data_type_t_write_with_tag(vb_data_type_t *_vb_data_type_t, void *_buffer, int offset, int tag)
 {
 	/* Write tag.*/
@@ -659,6 +675,10 @@ int Data_write(struct Data *_Data, void *_buffer, int offset)
 		offset = write_raw_varint32((7<<3)+5, _buffer, offset);
 		offset = write_raw_little_endian32(*data_float_z_ptr, _buffer, offset);
 	}
+
+	unsigned long long *data_time = (unsigned long long *)&_Data->_time;
+	offset = write_raw_varint32((8 << 3) + 1, _buffer, offset);
+	offset = write_raw_little_endian64(*data_time, _buffer, offset);
 
 	return offset;
 }
@@ -827,6 +847,7 @@ void Packet_initialize_data(struct Packet* packet, struct Data* data, vb_data_ty
 	memset(data, 0, sizeof(struct Data));
 
 	data->_type = type;
+	data->_time = VB->current_time;
 }
 
 void Packet_initialize_registrations(struct Packet* packet, struct DataRegistration* data_reg, size_t registrations, struct DataLabel* data_labels, size_t labels)
@@ -892,6 +913,9 @@ size_t Packet_get_message_size(struct Packet *_Packet)
 			size += 4; // 4 bytes for a float.
 			size += 4; // 4 bytes for a float.
 		}
+
+		size += 1; // One byte for "time" field number and wire type
+		size += 8; // 8 bytes for a double.
 	}
 
 	if (_Packet->_data_registrations_repeated_len)

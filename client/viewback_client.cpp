@@ -159,15 +159,15 @@ void CViewbackClient::StashData(const Data* pData)
 		break;
 
 	case VB_DATATYPE_INT:
-		m_aData[pData->handle()].m_aIntData.push_back(pData->data_int());
+		m_aData[pData->handle()].m_aIntData.push_back(CViewbackDataList::DataPair<int>(pData->time(), pData->data_int()));
 		break;
 
 	case VB_DATATYPE_FLOAT:
-		m_aData[pData->handle()].m_aFloatData.push_back(pData->data_float());
+		m_aData[pData->handle()].m_aFloatData.push_back(CViewbackDataList::DataPair<float>(pData->time(), pData->data_float()));
 		break;
 
 	case VB_DATATYPE_VECTOR:
-		m_aData[pData->handle()].m_aVectorData.push_back(VBVector3(pData->data_float_x(), pData->data_float_y(), pData->data_float_z()));
+		m_aData[pData->handle()].m_aVectorData.push_back(CViewbackDataList::DataPair<VBVector3>(pData->time(), VBVector3(pData->data_float_x(), pData->data_float_y(), pData->data_float_z())));
 		break;
 	}
 }

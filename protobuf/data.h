@@ -58,7 +58,7 @@ enum vb_data_type_t {
  *******************************************************************/
 
 /* Maximum size of a serialized Data-message, useful for buffer allocation. */
-#define MAX_Data_SIZE 40
+#define MAX_Data_SIZE 50
 
 /* Structure that holds a deserialized Data-message. */
 struct Data {
@@ -68,6 +68,7 @@ struct Data {
     float _data_float_x;
     float _data_float_y;
     float _data_float_z;
+    double _time;
 };
 
 /*
@@ -93,14 +94,14 @@ int Data_read_delimited_from(void *_buffer, struct Data *_Data, int offset);
 
 
 /*******************************************************************
- * Message: Data.proto, line 26
+ * Message: Data.proto, line 27
  *******************************************************************/
 
-/* Maximum size of a serialized DataDescription-message, useful for buffer allocation. */
-#define MAX_DataDescription_SIZE 47
+/* Maximum size of a serialized DataRegistration-message, useful for buffer allocation. */
+#define MAX_DataRegistration_SIZE 47
 
-/* Structure that holds a deserialized DataDescription-message. */
-struct DataDescription {
+/* Structure that holds a deserialized DataRegistration-message. */
+struct DataRegistration {
     int _field_name_len;
     char _field_name[MAX_STRING_LENGTH];
     enum vb_data_type_t _type;
@@ -111,14 +112,14 @@ struct DataDescription {
  * Serialize a Person-message into the given buffer at offset and return
  * new offset for optional next message.
  */
-int DataDescription_write_delimited_to(struct DataDescription *_DataDescription, void *_buffer, int offset);
+int DataRegistration_write_delimited_to(struct DataRegistration *_DataRegistration, void *_buffer, int offset);
 
 /*
  * Serialize a Person-message together with its tag into the given buffer 
  * at offset and return new offset for optional next message.
  * Is useful if a Person-message is embedded in another message.
  */
-int DataDescription_write_with_tag(struct DataDescription *_DataDescription, void *_buffer, int offset, int tag);
+int DataRegistration_write_with_tag(struct DataRegistration *_DataRegistration, void *_buffer, int offset, int tag);
 
 /*
  * Deserialize a Person-message from the given buffer at offset and return
@@ -126,21 +127,62 @@ int DataDescription_write_with_tag(struct DataDescription *_DataDescription, voi
  *
  * Note: All fields in _Person will be reset to 0 before _buffer is interpreted.
  */
-int DataDescription_read_delimited_from(void *_buffer, struct DataDescription *_DataDescription, int offset);
+int DataRegistration_read_delimited_from(void *_buffer, struct DataRegistration *_DataRegistration, int offset);
 
 
 /*******************************************************************
- * Message: Data.proto, line 32
+ * Message: Data.proto, line 33
+ *******************************************************************/
+
+/* Maximum size of a serialized DataLabel-message, useful for buffer allocation. */
+#define MAX_DataLabel_SIZE 51
+
+/* Structure that holds a deserialized DataLabel-message. */
+struct DataLabel {
+    unsigned long _handle;
+    unsigned long _value;
+    int _field_name_len;
+    char _field_name[MAX_STRING_LENGTH];
+};
+
+/*
+ * Serialize a Person-message into the given buffer at offset and return
+ * new offset for optional next message.
+ */
+int DataLabel_write_delimited_to(struct DataLabel *_DataLabel, void *_buffer, int offset);
+
+/*
+ * Serialize a Person-message together with its tag into the given buffer 
+ * at offset and return new offset for optional next message.
+ * Is useful if a Person-message is embedded in another message.
+ */
+int DataLabel_write_with_tag(struct DataLabel *_DataLabel, void *_buffer, int offset, int tag);
+
+/*
+ * Deserialize a Person-message from the given buffer at offset and return
+ * new offset for optional next message.
+ *
+ * Note: All fields in _Person will be reset to 0 before _buffer is interpreted.
+ */
+int DataLabel_read_delimited_from(void *_buffer, struct DataLabel *_DataLabel, int offset);
+
+
+/*******************************************************************
+ * Message: Data.proto, line 39
  *******************************************************************/
 
 /* Maximum size of a serialized Packet-message, useful for buffer allocation. */
-#define MAX_Packet_SIZE 4742
+#define MAX_Packet_SIZE 9887
 
 /* Structure that holds a deserialized Packet-message. */
 struct Packet {
     struct Data _data;
-    int _data_descriptions_repeated_len;
-    struct DataDescription _data_descriptions[MAX_REPEATED_LENGTH];
+    int _data_registrations_repeated_len;
+    struct DataRegistration _data_registrations[MAX_REPEATED_LENGTH];
+    int _data_labels_repeated_len;
+    struct DataLabel _data_labels[MAX_REPEATED_LENGTH];
+    int _console_output_len;
+    char _console_output[MAX_STRING_LENGTH];
 };
 
 /*

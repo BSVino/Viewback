@@ -42,13 +42,14 @@ void protobuf_AssignDesc_protobuf_2fdata_2eproto() {
       "protobuf/data.proto");
   GOOGLE_CHECK(file != NULL);
   Data_descriptor_ = file->message_type(0);
-  static const int Data_offsets_[6] = {
+  static const int Data_offsets_[7] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Data, handle_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Data, data_int_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Data, data_float_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Data, data_float_x_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Data, data_float_y_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Data, data_float_z_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Data, time_),
   };
   Data_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -156,20 +157,20 @@ void protobuf_AddDesc_protobuf_2fdata_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-    "\n\023protobuf/data.proto\"~\n\004Data\022\016\n\006handle\030"
-    "\001 \001(\r\022\020\n\010data_int\030\003 \001(\r\022\022\n\ndata_float\030\004 "
-    "\001(\002\022\024\n\014data_float_x\030\005 \001(\002\022\024\n\014data_float_"
-    "y\030\006 \001(\002\022\024\n\014data_float_z\030\007 \001(\002\"U\n\020DataReg"
-    "istration\022\022\n\nfield_name\030\001 \001(\t\022\035\n\004type\030\002 "
-    "\001(\0162\017.vb_data_type_t\022\016\n\006handle\030\003 \001(\r\">\n\t"
-    "DataLabel\022\016\n\006handle\030\001 \001(\r\022\r\n\005value\030\002 \001(\r"
-    "\022\022\n\nfield_name\030\003 \001(\t\"\205\001\n\006Packet\022\023\n\004data\030"
-    "\001 \001(\0132\005.Data\022-\n\022data_registrations\030\002 \003(\013"
-    "2\021.DataRegistration\022\037\n\013data_labels\030\003 \003(\013"
-    "2\n.DataLabel\022\026\n\016console_output\030\004 \001(\t*j\n\016"
-    "vb_data_type_t\022\024\n\020VB_DATATYPE_NONE\020\000\022\023\n\017"
-    "VB_DATATYPE_INT\020\001\022\025\n\021VB_DATATYPE_FLOAT\020\002"
-    "\022\026\n\022VB_DATATYPE_VECTOR\020\003", 544);
+    "\n\023protobuf/data.proto\"\214\001\n\004Data\022\016\n\006handle"
+    "\030\001 \001(\r\022\020\n\010data_int\030\003 \001(\r\022\022\n\ndata_float\030\004"
+    " \001(\002\022\024\n\014data_float_x\030\005 \001(\002\022\024\n\014data_float"
+    "_y\030\006 \001(\002\022\024\n\014data_float_z\030\007 \001(\002\022\014\n\004time\030\010"
+    " \001(\001\"U\n\020DataRegistration\022\022\n\nfield_name\030\001"
+    " \001(\t\022\035\n\004type\030\002 \001(\0162\017.vb_data_type_t\022\016\n\006h"
+    "andle\030\003 \001(\r\">\n\tDataLabel\022\016\n\006handle\030\001 \001(\r"
+    "\022\r\n\005value\030\002 \001(\r\022\022\n\nfield_name\030\003 \001(\t\"\205\001\n\006"
+    "Packet\022\023\n\004data\030\001 \001(\0132\005.Data\022-\n\022data_regi"
+    "strations\030\002 \003(\0132\021.DataRegistration\022\037\n\013da"
+    "ta_labels\030\003 \003(\0132\n.DataLabel\022\026\n\016console_o"
+    "utput\030\004 \001(\t*j\n\016vb_data_type_t\022\024\n\020VB_DATA"
+    "TYPE_NONE\020\000\022\023\n\017VB_DATATYPE_INT\020\001\022\025\n\021VB_D"
+    "ATATYPE_FLOAT\020\002\022\026\n\022VB_DATATYPE_VECTOR\020\003", 559);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "protobuf/data.proto", &protobuf_RegisterTypes);
   Data::default_instance_ = new Data();
@@ -215,6 +216,7 @@ const int Data::kDataFloatFieldNumber;
 const int Data::kDataFloatXFieldNumber;
 const int Data::kDataFloatYFieldNumber;
 const int Data::kDataFloatZFieldNumber;
+const int Data::kTimeFieldNumber;
 #endif  // !_MSC_VER
 
 Data::Data()
@@ -239,6 +241,7 @@ void Data::SharedCtor() {
   data_float_x_ = 0;
   data_float_y_ = 0;
   data_float_z_ = 0;
+  time_ = 0;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -280,6 +283,7 @@ void Data::Clear() {
     data_float_x_ = 0;
     data_float_y_ = 0;
     data_float_z_ = 0;
+    time_ = 0;
   }
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
@@ -382,6 +386,22 @@ bool Data::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
+        if (input->ExpectTag(65)) goto parse_time;
+        break;
+      }
+
+      // optional double time = 8;
+      case 8: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_FIXED64) {
+         parse_time:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   double, ::google::protobuf::internal::WireFormatLite::TYPE_DOUBLE>(
+                 input, &time_)));
+          set_has_time();
+        } else {
+          goto handle_uninterpreted;
+        }
         if (input->ExpectAtEnd()) return true;
         break;
       }
@@ -434,6 +454,11 @@ void Data::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteFloat(7, this->data_float_z(), output);
   }
 
+  // optional double time = 8;
+  if (has_time()) {
+    ::google::protobuf::internal::WireFormatLite::WriteDouble(8, this->time(), output);
+  }
+
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -470,6 +495,11 @@ void Data::SerializeWithCachedSizes(
   // optional float data_float_z = 7;
   if (has_data_float_z()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(7, this->data_float_z(), target);
+  }
+
+  // optional double time = 8;
+  if (has_time()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteDoubleToArray(8, this->time(), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -517,6 +547,11 @@ int Data::ByteSize() const {
       total_size += 1 + 4;
     }
 
+    // optional double time = 8;
+    if (has_time()) {
+      total_size += 1 + 8;
+    }
+
   }
   if (!unknown_fields().empty()) {
     total_size +=
@@ -562,6 +597,9 @@ void Data::MergeFrom(const Data& from) {
     if (from.has_data_float_z()) {
       set_data_float_z(from.data_float_z());
     }
+    if (from.has_time()) {
+      set_time(from.time());
+    }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
 }
@@ -591,6 +629,7 @@ void Data::Swap(Data* other) {
     std::swap(data_float_x_, other->data_float_x_);
     std::swap(data_float_y_, other->data_float_y_);
     std::swap(data_float_z_, other->data_float_z_);
+    std::swap(time_, other->time_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);

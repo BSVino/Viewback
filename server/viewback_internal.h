@@ -21,6 +21,7 @@ struct Data {
 	float          _data_float_x;
 	float          _data_float_y;
 	float          _data_float_z;
+	double         _time;
 };
 
 struct DataRegistration {
@@ -99,4 +100,6 @@ typedef struct
 	bool     server_active;
 
 	vb_command_callback command_callback;
+
+	double   current_time;
 } vb_t;

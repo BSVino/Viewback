@@ -53,17 +53,17 @@ int main()
 				{
 				case VB_DATATYPE_INT:
 					for (size_t j = oData.m_aIntData.size()>=10?oData.m_aIntData.size()-10:0; j < oData.m_aIntData.size(); j++)
-						printf(" %s", vb.GetLabelForValue(i, oData.m_aIntData[j]).c_str());
+						printf(" %.2f: %s", oData.m_aIntData[j].time, vb.GetLabelForValue(i, oData.m_aIntData[j].data).c_str());
 					break;
 
 				case VB_DATATYPE_FLOAT:
 					for (size_t j = oData.m_aFloatData.size() >= 10 ? oData.m_aFloatData.size() - 10 : 0; j < oData.m_aFloatData.size(); j++)
-						printf(" %.1f", oData.m_aFloatData[j]);
+						printf(" %.2f: %.1f", oData.m_aFloatData[j].time, oData.m_aFloatData[j].data);
 					break;
 
 				case VB_DATATYPE_VECTOR:
 					for (size_t j = oData.m_aVectorData.size() >= 10 ? oData.m_aVectorData.size() - 10 : 0; j < oData.m_aVectorData.size(); j++)
-						printf(" (%.0f, %.0f, %.0f)", oData.m_aVectorData[j].x, oData.m_aVectorData[j].y, oData.m_aVectorData[j].z);
+						printf(" %.2f: (%.0f, %.0f, %.0f)", oData.m_aVectorData[j].time, oData.m_aVectorData[j].data.x, oData.m_aVectorData[j].data.y, oData.m_aVectorData[j].data.z);
 					break;
 				}
 

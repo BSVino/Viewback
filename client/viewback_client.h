@@ -20,10 +20,26 @@ public:
 class CViewbackDataList
 {
 public:
+	template <typename T>
+	class DataPair
+	{
+	public:
+		DataPair(double _time, T _data)
+		{
+			time = _time;
+			data = _data;
+		}
+
+	public:
+		double time;
+		T      data;
+	};
+
+public:
 	// Only one of these will be used at a time.
-	std::vector<int>       m_aIntData;
-	std::vector<float>     m_aFloatData;
-	std::vector<VBVector3> m_aVectorData;
+	std::vector<DataPair<int>>       m_aIntData;
+	std::vector<DataPair<float>>     m_aFloatData;
+	std::vector<DataPair<VBVector3>> m_aVectorData;
 };
 
 typedef void(*ConsoleOutputCallback)(const char*);

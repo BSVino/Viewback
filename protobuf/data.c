@@ -330,6 +330,8 @@ void Data_init_optional_attributes(struct Data *_Data) {
 	
 	_Data->_data_float_z = 0.0f;
 	
+	_Data->_time = 0.0;
+	
 }
 
 int Data_is_default_message(struct Data *_Data) {
@@ -344,6 +346,8 @@ int Data_is_default_message(struct Data *_Data) {
      && _Data->_data_float_y == 0.0f
     
      && _Data->_data_float_z == 0.0f
+    
+     && _Data->_time == 0.0
     ;
 }
 
@@ -387,6 +391,13 @@ int Data_write(struct Data *_Data, void *_buffer, int offset) {
 		offset = write_raw_varint32((7<<3)+5, _buffer, offset);
 	    unsigned long *data_float_z_ptr = (unsigned long *)&_Data->_data_float_z;
 	    offset = write_raw_little_endian32(*data_float_z_ptr, _buffer, offset);
+	}
+	
+	/* Write the optional attribute only if it is different than the default value. */
+	if(_Data->_time != 0) {
+		offset = write_raw_varint32((8<<3)+1, _buffer, offset);
+	    unsigned long long*time_ptr = (unsigned long long*)&_Data->_time;
+	    offset = write_raw_little_endian64(*time_ptr, _buffer, offset);
 	}
 	
 	return offset;
@@ -464,6 +475,12 @@ int Data_read(void *_buffer, struct Data *_Data, int offset, int limit) {
 	        	float *data_float_z = (float *)(&tag);
 	        	_Data->_data_float_z = *data_float_z;
 	        	break;
+	        /* tag of: _Data._time */
+	        case 8 :
+	        	offset = read_raw_little_endian64(&value, _buffer, offset);
+	        	double *time = (double *)(&value);
+	        	_Data->_time = *time;
+	        	break;
 	    }
 	}
 	
@@ -479,69 +496,69 @@ int Data_read_delimited_from(void *_buffer, struct Data *_Data, int offset) {
 	return offset + size;
 }
 /*******************************************************************
- * Message: Data.proto, line 26
+ * Message: Data.proto, line 27
  *******************************************************************/
 
-void DataDescription_clear(struct DataDescription *_DataDescription) {
-	_memset(_DataDescription, 0, sizeof(struct DataDescription));
+void DataRegistration_clear(struct DataRegistration *_DataRegistration) {
+	_memset(_DataRegistration, 0, sizeof(struct DataRegistration));
 }
 
-void DataDescription_init_optional_attributes(struct DataDescription *_DataDescription) {
-	_DataDescription->_field_name_len = 0;
+void DataRegistration_init_optional_attributes(struct DataRegistration *_DataRegistration) {
+	_DataRegistration->_field_name_len = 0;
 	
 	
-	_DataDescription->_type = 0;
+	_DataRegistration->_type = 0;
 	
-	_DataDescription->_handle = 0;
+	_DataRegistration->_handle = 0;
 	
 }
 
-int DataDescription_is_default_message(struct DataDescription *_DataDescription) {
-    return _DataDescription->_field_name_len == 0
+int DataRegistration_is_default_message(struct DataRegistration *_DataRegistration) {
+    return _DataRegistration->_field_name_len == 0
     
-     && _DataDescription->_type == 0
+     && _DataRegistration->_type == 0
     
-     && _DataDescription->_handle == 0
+     && _DataRegistration->_handle == 0
     ;
 }
 
-int DataDescription_write(struct DataDescription *_DataDescription, void *_buffer, int offset) {
+int DataRegistration_write(struct DataRegistration *_DataRegistration, void *_buffer, int offset) {
 	/* Write content of each message element.*/
 	/* Write the optional attribute only if it is different than the default value. */
-	if(_DataDescription->_field_name_len != 1
-	    || _DataDescription->_field_name[0] != '0') {
+	if(_DataRegistration->_field_name_len != 1
+	    || _DataRegistration->_field_name[0] != '0') {
 		offset = write_raw_varint32((1<<3)+2, _buffer, offset);
-	    offset = write_raw_varint32(_DataDescription->_field_name_len, _buffer, offset);
-	    offset = write_raw_bytes(_DataDescription->_field_name, _DataDescription->_field_name_len, _buffer, offset);
+	    offset = write_raw_varint32(_DataRegistration->_field_name_len, _buffer, offset);
+	    offset = write_raw_bytes(_DataRegistration->_field_name, _DataRegistration->_field_name_len, _buffer, offset);
 	}
 	
 	/* Write the optional attribute only if it is different than the default value. */
-	if(_DataDescription->_type != 0) {
-	    offset = vb_data_type_t_write_with_tag(&_DataDescription->_type, _buffer, offset, 2);
+	if(_DataRegistration->_type != 0) {
+	    offset = vb_data_type_t_write_with_tag(&_DataRegistration->_type, _buffer, offset, 2);
 	}
 	
 	/* Write the optional attribute only if it is different than the default value. */
-	if(_DataDescription->_handle != 0) {
+	if(_DataRegistration->_handle != 0) {
 		offset = write_raw_varint32((3<<3)+0, _buffer, offset);
-	    offset = write_raw_varint32(_DataDescription->_handle, _buffer, offset);
+	    offset = write_raw_varint32(_DataRegistration->_handle, _buffer, offset);
 	}
 	
 	return offset;
 }
 
-int DataDescription_write_with_tag(struct DataDescription *_DataDescription, void *_buffer, int offset, int tag) {
+int DataRegistration_write_with_tag(struct DataRegistration *_DataRegistration, void *_buffer, int offset, int tag) {
 	/* Write tag.*/
 	offset = write_raw_varint32((tag<<3)+2, _buffer, offset);
 	/* Write content.*/
-	offset = DataDescription_write_delimited_to(_DataDescription, _buffer, offset);
+	offset = DataRegistration_write_delimited_to(_DataRegistration, _buffer, offset);
 	
 	return offset;
 }
 
-int DataDescription_write_delimited_to(struct DataDescription *_DataDescription, void *_buffer, int offset) {
+int DataRegistration_write_delimited_to(struct DataRegistration *_DataRegistration, void *_buffer, int offset) {
 	int i, shift, new_offset, size;
 	
-	new_offset = DataDescription_write(_DataDescription, _buffer, offset);
+	new_offset = DataRegistration_write(_DataRegistration, _buffer, offset);
 	size = new_offset - offset;
 	shift = (size > 127) ? 2 : 1;
 	for (i = new_offset - 1; i >= offset; -- i)
@@ -552,38 +569,38 @@ int DataDescription_write_delimited_to(struct DataDescription *_DataDescription,
 	return new_offset + shift;
 }
 
-int DataDescription_read(void *_buffer, struct DataDescription *_DataDescription, int offset, int limit) {
+int DataRegistration_read(void *_buffer, struct DataRegistration *_DataRegistration, int offset, int limit) {
 	unsigned int i = 0;
 	unsigned long long value = i;
 	unsigned long tag = value;
 	
 	/* Reset all attributes to 0 in advance. */
-	DataDescription_clear(_DataDescription);
+	DataRegistration_clear(_DataRegistration);
 	/* Assign the optional attributes. */
-	DataDescription_init_optional_attributes(_DataDescription);
+	DataRegistration_init_optional_attributes(_DataRegistration);
 	
 	/* Read/interpret all attributes from buffer offset until upper limit is reached. */
 	while(offset < limit) {
 	    offset = read_raw_varint32(&tag, _buffer, offset);
 		tag = tag>>3;
 	    switch(tag){
-	        /* tag of: _DataDescription._field_name */
+	        /* tag of: _DataRegistration._field_name */
 	        case 1 :
 	        	/* Re-use 'tag' to store string length. */
 	        	offset = read_raw_varint32(&tag, _buffer, offset);
-	        	_DataDescription->_field_name_len = tag;
+	        	_DataRegistration->_field_name_len = tag;
 	        	for(i = 0; i < tag; ++ i) 
-	        	    offset = read_raw_byte((_DataDescription->_field_name + i), _buffer, offset);
+	        	    offset = read_raw_byte((_DataRegistration->_field_name + i), _buffer, offset);
 	        	break;
-	        /* tag of: _DataDescription._type */
+	        /* tag of: _DataRegistration._type */
 	        case 2 :
 	        	offset = read_raw_varint32(&tag, _buffer, offset);
-	        	_DataDescription->_type = tag;
+	        	_DataRegistration->_type = tag;
 	        	break;
-	        /* tag of: _DataDescription._handle */
+	        /* tag of: _DataRegistration._handle */
 	        case 3 :
 	        	offset = read_raw_varint32(&tag, _buffer, offset);
-	        	_DataDescription->_handle = tag;
+	        	_DataRegistration->_handle = tag;
 	        	break;
 	    }
 	}
@@ -591,16 +608,138 @@ int DataDescription_read(void *_buffer, struct DataDescription *_DataDescription
 	return offset;
 }
 
-int DataDescription_read_delimited_from(void *_buffer, struct DataDescription *_DataDescription, int offset) {
+int DataRegistration_read_delimited_from(void *_buffer, struct DataRegistration *_DataRegistration, int offset) {
 	unsigned long size;
 	
 	offset = read_raw_varint32(&size, _buffer, offset);
-	DataDescription_read(_buffer, _DataDescription, offset, size + offset);
+	DataRegistration_read(_buffer, _DataRegistration, offset, size + offset);
 	
 	return offset + size;
 }
 /*******************************************************************
- * Message: Data.proto, line 32
+ * Message: Data.proto, line 33
+ *******************************************************************/
+
+void DataLabel_clear(struct DataLabel *_DataLabel) {
+	_memset(_DataLabel, 0, sizeof(struct DataLabel));
+}
+
+void DataLabel_init_optional_attributes(struct DataLabel *_DataLabel) {
+	_DataLabel->_handle = 0;
+	
+	_DataLabel->_value = 0;
+	
+	_DataLabel->_field_name_len = 0;
+	
+	
+}
+
+int DataLabel_is_default_message(struct DataLabel *_DataLabel) {
+    return _DataLabel->_handle == 0
+    
+     && _DataLabel->_value == 0
+    
+     && _DataLabel->_field_name_len == 0
+    ;
+}
+
+int DataLabel_write(struct DataLabel *_DataLabel, void *_buffer, int offset) {
+	/* Write content of each message element.*/
+	/* Write the optional attribute only if it is different than the default value. */
+	if(_DataLabel->_handle != 0) {
+		offset = write_raw_varint32((1<<3)+0, _buffer, offset);
+	    offset = write_raw_varint32(_DataLabel->_handle, _buffer, offset);
+	}
+	
+	/* Write the optional attribute only if it is different than the default value. */
+	if(_DataLabel->_value != 0) {
+		offset = write_raw_varint32((2<<3)+0, _buffer, offset);
+	    offset = write_raw_varint32(_DataLabel->_value, _buffer, offset);
+	}
+	
+	/* Write the optional attribute only if it is different than the default value. */
+	if(_DataLabel->_field_name_len != 1
+	    || _DataLabel->_field_name[0] != '0') {
+		offset = write_raw_varint32((3<<3)+2, _buffer, offset);
+	    offset = write_raw_varint32(_DataLabel->_field_name_len, _buffer, offset);
+	    offset = write_raw_bytes(_DataLabel->_field_name, _DataLabel->_field_name_len, _buffer, offset);
+	}
+	
+	return offset;
+}
+
+int DataLabel_write_with_tag(struct DataLabel *_DataLabel, void *_buffer, int offset, int tag) {
+	/* Write tag.*/
+	offset = write_raw_varint32((tag<<3)+2, _buffer, offset);
+	/* Write content.*/
+	offset = DataLabel_write_delimited_to(_DataLabel, _buffer, offset);
+	
+	return offset;
+}
+
+int DataLabel_write_delimited_to(struct DataLabel *_DataLabel, void *_buffer, int offset) {
+	int i, shift, new_offset, size;
+	
+	new_offset = DataLabel_write(_DataLabel, _buffer, offset);
+	size = new_offset - offset;
+	shift = (size > 127) ? 2 : 1;
+	for (i = new_offset - 1; i >= offset; -- i)
+	    *((char *)_buffer + i + shift) = *((char *)_buffer + i);
+	
+	write_raw_varint32((unsigned long) size, _buffer, offset);         
+	    
+	return new_offset + shift;
+}
+
+int DataLabel_read(void *_buffer, struct DataLabel *_DataLabel, int offset, int limit) {
+	unsigned int i = 0;
+	unsigned long long value = i;
+	unsigned long tag = value;
+	
+	/* Reset all attributes to 0 in advance. */
+	DataLabel_clear(_DataLabel);
+	/* Assign the optional attributes. */
+	DataLabel_init_optional_attributes(_DataLabel);
+	
+	/* Read/interpret all attributes from buffer offset until upper limit is reached. */
+	while(offset < limit) {
+	    offset = read_raw_varint32(&tag, _buffer, offset);
+		tag = tag>>3;
+	    switch(tag){
+	        /* tag of: _DataLabel._handle */
+	        case 1 :
+	        	offset = read_raw_varint32(&tag, _buffer, offset);
+	        	_DataLabel->_handle = tag;
+	        	break;
+	        /* tag of: _DataLabel._value */
+	        case 2 :
+	        	offset = read_raw_varint32(&tag, _buffer, offset);
+	        	_DataLabel->_value = tag;
+	        	break;
+	        /* tag of: _DataLabel._field_name */
+	        case 3 :
+	        	/* Re-use 'tag' to store string length. */
+	        	offset = read_raw_varint32(&tag, _buffer, offset);
+	        	_DataLabel->_field_name_len = tag;
+	        	for(i = 0; i < tag; ++ i) 
+	        	    offset = read_raw_byte((_DataLabel->_field_name + i), _buffer, offset);
+	        	break;
+	    }
+	}
+	
+	return offset;
+}
+
+int DataLabel_read_delimited_from(void *_buffer, struct DataLabel *_DataLabel, int offset) {
+	unsigned long size;
+	
+	offset = read_raw_varint32(&size, _buffer, offset);
+	DataLabel_read(_buffer, _DataLabel, offset, size + offset);
+	
+	return offset + size;
+}
+/*******************************************************************
+ * Message: Data.proto, line 39
  *******************************************************************/
 
 void Packet_clear(struct Packet *_Packet) {
@@ -610,12 +749,16 @@ void Packet_clear(struct Packet *_Packet) {
 void Packet_init_optional_attributes(struct Packet *_Packet) {
 	Data_init_optional_attributes(&_Packet->_data);
 	
+	_Packet->_console_output_len = 0;
+	
+	
 }
 
 int Packet_is_default_message(struct Packet *_Packet) {
     return Data_is_default_message(&_Packet->_data)
     
-     && 
+     && _Packet->_console_output_len == 0
+    ;
 }
 
 int Packet_write(struct Packet *_Packet, void *_buffer, int offset) {
@@ -625,9 +768,22 @@ int Packet_write(struct Packet *_Packet, void *_buffer, int offset) {
 	    offset = Data_write_with_tag(&_Packet->_data, _buffer, offset, 1);
 	}
 	
-	int data_descriptions_cnt;
-	for (data_descriptions_cnt = 0; data_descriptions_cnt < _Packet->_data_descriptions_repeated_len; ++ data_descriptions_cnt) {
-	    offset = DataDescription_write_with_tag(&_Packet->_data_descriptions[data_descriptions_cnt], _buffer, offset, 2);
+	int data_registrations_cnt;
+	for (data_registrations_cnt = 0; data_registrations_cnt < _Packet->_data_registrations_repeated_len; ++ data_registrations_cnt) {
+	    offset = DataRegistration_write_with_tag(&_Packet->_data_registrations[data_registrations_cnt], _buffer, offset, 2);
+	}
+	
+	int data_labels_cnt;
+	for (data_labels_cnt = 0; data_labels_cnt < _Packet->_data_labels_repeated_len; ++ data_labels_cnt) {
+	    offset = DataLabel_write_with_tag(&_Packet->_data_labels[data_labels_cnt], _buffer, offset, 3);
+	}
+	
+	/* Write the optional attribute only if it is different than the default value. */
+	if(_Packet->_console_output_len != 1
+	    || _Packet->_console_output[0] != '0') {
+		offset = write_raw_varint32((4<<3)+2, _buffer, offset);
+	    offset = write_raw_varint32(_Packet->_console_output_len, _buffer, offset);
+	    offset = write_raw_bytes(_Packet->_console_output, _Packet->_console_output_len, _buffer, offset);
 	}
 	
 	return offset;
@@ -675,9 +831,21 @@ int Packet_read(void *_buffer, struct Packet *_Packet, int offset, int limit) {
 	        case 1 :
 	        	offset = Data_read_delimited_from(_buffer, &_Packet->_data, offset);
 	        	break;
-	        /* tag of: _Packet._data_descriptions */
+	        /* tag of: _Packet._data_registrations */
 	        case 2 :
-	        	offset = DataDescription_read_delimited_from(_buffer, &_Packet->_data_descriptions[(int)_Packet->_data_descriptions_repeated_len++], offset);
+	        	offset = DataRegistration_read_delimited_from(_buffer, &_Packet->_data_registrations[(int)_Packet->_data_registrations_repeated_len++], offset);
+	        	break;
+	        /* tag of: _Packet._data_labels */
+	        case 3 :
+	        	offset = DataLabel_read_delimited_from(_buffer, &_Packet->_data_labels[(int)_Packet->_data_labels_repeated_len++], offset);
+	        	break;
+	        /* tag of: _Packet._console_output */
+	        case 4 :
+	        	/* Re-use 'tag' to store string length. */
+	        	offset = read_raw_varint32(&tag, _buffer, offset);
+	        	_Packet->_console_output_len = tag;
+	        	for(i = 0; i < tag; ++ i) 
+	        	    offset = read_raw_byte((_Packet->_console_output + i), _buffer, offset);
 	        	break;
 	    }
 	}

@@ -21,6 +21,7 @@ message Data {
 	optional float data_float_x  = 5;
 	optional float data_float_y  = 6;
 	optional float data_float_z  = 7;
+	optional double time         = 8;
 }
 
 message DataRegistration {
