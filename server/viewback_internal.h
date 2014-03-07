@@ -97,4 +97,6 @@ typedef struct
 	vb_connection_t*        connections;
 
 	bool     server_active;
+
+	vb_command_callback command_callback;
 } vb_t;

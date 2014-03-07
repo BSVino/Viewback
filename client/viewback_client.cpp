@@ -86,6 +86,16 @@ void CViewbackClient::Update()
 			if (aPackets[i].has_console_output() && m_pfnConsoleOutput)
 				m_pfnConsoleOutput(aPackets[i].console_output().c_str());
 		}
+
+		while (m_sOutgoingCommands.size())
+		{
+			if (CViewbackDataThread::SendConsoleCommand(m_sOutgoingCommands.front()))
+				// Message was received, we can remove this command from the list.
+				m_sOutgoingCommands.pop_front();
+			else
+				// There's already a command waiting to be sent to the data thread, hold on for now.
+				break;
+		}
 	}
 	else
 	{
@@ -108,6 +118,12 @@ void CViewbackClient::Update()
 bool CViewbackClient::HasConnection()
 {
 	return CViewbackDataThread::IsConnected();
+}
+
+void CViewbackClient::SendConsoleCommand(const string& sCommand)
+{
+	// This list is pumped into the data thread during the Update().
+	m_sOutgoingCommands.push_back(sCommand);
 }
 
 vb_data_type_t CViewbackClient::TypeForHandle(size_t iHandle)

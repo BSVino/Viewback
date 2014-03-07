@@ -4,9 +4,11 @@
 
 using namespace std;
 
-std::atomic<bool> CViewbackDataThread::s_bConnected = false;
-std::vector<Packet> CViewbackDataThread::s_aDataDrop;
-std::atomic<bool> CViewbackDataThread::s_bDropReady(false);
+atomic<bool> CViewbackDataThread::s_bConnected = false;
+vector<Packet> CViewbackDataThread::s_aDataDrop;
+atomic<bool> CViewbackDataThread::s_bDataDropReady = false;
+string CViewbackDataThread::s_sCommandDrop;
+atomic<bool> CViewbackDataThread::s_bCommandDropReady = true;
 
 bool CViewbackDataThread::Run(unsigned long address)
 {
@@ -79,7 +81,7 @@ void CViewbackDataThread::Pump()
 			return;
 		}
 
-		std::vector<char> aCharsRead(msgbuf, msgbuf + iBytesRead);
+		vector<char> aCharsRead(msgbuf, msgbuf + iBytesRead);
 		aMsgBuf.insert(aMsgBuf.end(), aCharsRead.begin(), aCharsRead.end());
 
 		if (iBytesRead < MSGBUFSIZE)
@@ -106,29 +108,56 @@ void CViewbackDataThread::Pump()
 
 	VBAssert(iCurrentPacket == aMsgBuf.size());
 
-	if (!s_bDropReady)
+	if (!s_bDataDropReady)
 	{
 		VBAssert(!s_aDataDrop.size());
 
 		for (size_t i = 0; i < m_aMessages.size(); i++)
 			s_aDataDrop.push_back(m_aMessages[i]);
 
-		s_bDropReady = true;
+		s_bDataDropReady = true;
 
 		m_aMessages.clear();
+	}
+
+	if (!s_bCommandDropReady)
+	{
+		VBAssert(s_sCommandDrop.length());
+
+		// Stash it away and let the main thread have it back.
+		string sCommand = s_sCommandDrop;
+		s_bCommandDropReady = true;
+
+		string sMessage = "console: " + sCommand + "\0";
+
+		// Send it to the server
+		int bytes_sent = send(m_socket, sMessage.c_str(), sMessage.length()+1, 0); // +1 length for the terminal null
 	}
 }
 
 // This function runs as part of the main thread.
-std::vector<Packet> CViewbackDataThread::GetData()
+vector<Packet> CViewbackDataThread::GetData()
 {
-	if (s_bDropReady)
+	if (s_bDataDropReady)
 	{
-		std::vector<Packet> temp = s_aDataDrop; // Make a copy.
+		vector<Packet> temp = s_aDataDrop; // Make a copy.
 		s_aDataDrop.clear();
-		s_bDropReady = false; // The data thread can have it back now.
+		s_bDataDropReady = false; // The data thread can have it back now.
 		return temp;
 	}
 
-	return std::vector<Packet>();
+	return vector<Packet>();
+}
+
+// This function runs as part of the main thread.
+bool CViewbackDataThread::SendConsoleCommand(const string& sCommand)
+{
+	if (s_bCommandDropReady)
+	{
+		s_sCommandDrop = sCommand;
+		s_bCommandDropReady = false; // The data thread can have it back now.
+		return true;
+	}
+
+	return false;
 }

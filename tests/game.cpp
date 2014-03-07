@@ -7,6 +7,22 @@
 #include <memory>
 #include <time.h>
 
+#include <string>
+
+using namespace std;
+
+void command_callback(const char* text)
+{
+	string s;
+	s += "] ";
+	s += text;
+	s += "\n";
+
+	printf("From client: %s", s.c_str());
+
+	vb_console_append(s.c_str());
+}
+
 int main()
 {
 #ifdef _WIN32
@@ -52,6 +68,12 @@ int main()
 		!vb_data_label(vb_player, 3, "Philosophical"))
 	{
 		printf("Couldn't register labels\n");
+		return 1;
+	}
+
+	if (!vb_console_register_command_callback(&command_callback))
+	{
+		printf("Couldn't register console callback\n");
 		return 1;
 	}
 
@@ -121,7 +143,7 @@ int main()
 			switch (rand() % 5)
 			{
 			case 0:
-				output = ("] sv_cheats 1\n");
+				output = ("Loading.\n");
 				break;
 
 			case 1:

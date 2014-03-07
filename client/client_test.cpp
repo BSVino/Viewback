@@ -6,6 +6,7 @@
 #endif
 
 #include <stdio.h>
+#include <random>
 
 void ConsoleOutput(const char* pszOutput)
 {
@@ -31,6 +32,8 @@ int main()
 
 	time_t last_time;
 	time(&last_time);
+
+	srand((int)last_time);
 
 	while (true)
 	{
@@ -65,6 +68,37 @@ int main()
 				}
 
 				printf("\n");
+			}
+
+			if (rand() % 2 == 0)
+			{
+				const char* pszCommand;
+				switch (rand() % 5)
+				{
+				case 0:
+				default:
+					pszCommand = "sv_cheats 1";
+					break;
+
+				case 1:
+					pszCommand = "map de_dust";
+					break;
+
+				case 2:
+					pszCommand = "connect 192.168.1.100:27015";
+					break;
+
+				case 3:
+					pszCommand = "status";
+					break;
+
+				case 4:
+					pszCommand = "rcon kick GabeN";
+					break;
+				}
+
+				printf("Sending command: %s\n", pszCommand);
+				vb.SendConsoleCommand(pszCommand);
 			}
 
 			last_time = now;

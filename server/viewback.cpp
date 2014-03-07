@@ -395,6 +395,11 @@ void vb_server_update()
 				if (message_actual_length)
 					send(VB->connections[i].socket, (const char*)message, message_actual_length, 0);
 			}
+			else if (strncmp(mesg, "console: ", 9) == 0)
+			{
+				if (VB->command_callback)
+					(*VB->command_callback)(&mesg[9]);
+			}
 		}
 	}
 }
@@ -540,6 +545,16 @@ int vb_console_append(const char* text)
 		return 0;
 
 	vb_send_to_all(message, message_actual_length);
+
+	return 1;
+}
+
+int vb_console_register_command_callback(vb_command_callback cmd)
+{
+	if (VB->server_active)
+		return 0;
+
+	VB->command_callback = cmd;
 
 	return 1;
 }

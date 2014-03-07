@@ -16,6 +16,8 @@ public:
 	static bool IsConnected() { return s_bConnected; }
 	static std::vector<Packet> GetData();
 
+	static bool SendConsoleCommand(const std::string& sCommand);
+
 private:
 	CViewbackDataThread() {};
 
@@ -35,7 +37,11 @@ private:
 
 	// Thread signalling.
 	static std::atomic<bool>   s_bConnected;
+
 	static std::vector<Packet> s_aDataDrop;
-	static std::atomic<bool>   s_bDropReady;
+	static std::atomic<bool>   s_bDataDropReady;
+
+	static std::string       s_sCommandDrop;
+	static std::atomic<bool> s_bCommandDropReady;
 };
 

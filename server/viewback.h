@@ -127,8 +127,11 @@ int vb_data_send_vector(vb_data_handle_t handle, float x, float y, float z);
 */
 int vb_console_append(const char* text);
 
-//void vb_console_status(const char* text);
-//void vb_console_register_command_callback(vb_command_callback cmd);
+/*
+	This function will be called by Viewback any time a command comes in from
+	the client to run.
+*/
+int vb_console_register_command_callback(vb_command_callback cmd);
 
 #ifdef __cplusplus
 }
