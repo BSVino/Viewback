@@ -85,6 +85,9 @@ void CViewbackClient::Update()
 
 			if (aPackets[i].has_console_output() && m_pfnConsoleOutput)
 				m_pfnConsoleOutput(aPackets[i].console_output().c_str());
+
+			if (aPackets[i].has_status())
+				m_sStatus = aPackets[i].status();
 		}
 
 		while (m_sOutgoingCommands.size())

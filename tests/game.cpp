@@ -10,6 +10,7 @@
 #include <time.h>
 
 #include <string>
+#include <sstream>
 
 using namespace std;
 
@@ -180,6 +181,12 @@ int main()
 
 		if (!success)
 			printf("Could not send data\n");
+
+		ostringstream s;
+		s << "FPS: ";
+		s << (float)(rand() % 1000)/100 + 60;
+
+		vb_status_set(s.str().c_str());
 	}
 
 	vb_server_shutdown();

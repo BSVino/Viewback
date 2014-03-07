@@ -37,8 +37,9 @@ message DataLabel {
 }
 
 message Packet {
-	optional Data             data = 1;
+	optional Data             data               = 1;
 	repeated DataRegistration data_registrations = 2;
-	repeated DataLabel        data_labels = 3;
-	optional string           console_output = 4;
+	repeated DataLabel        data_labels        = 3;
+	optional string           console_output     = 4;
+	optional string           status             = 5;
 }

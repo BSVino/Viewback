@@ -515,12 +515,26 @@ class Packet : public ::google::protobuf::Message {
   inline ::std::string* release_console_output();
   inline void set_allocated_console_output(::std::string* console_output);
 
+  // optional string status = 5;
+  inline bool has_status() const;
+  inline void clear_status();
+  static const int kStatusFieldNumber = 5;
+  inline const ::std::string& status() const;
+  inline void set_status(const ::std::string& value);
+  inline void set_status(const char* value);
+  inline void set_status(const char* value, size_t size);
+  inline ::std::string* mutable_status();
+  inline ::std::string* release_status();
+  inline void set_allocated_status(::std::string* status);
+
   // @@protoc_insertion_point(class_scope:Packet)
  private:
   inline void set_has_data();
   inline void clear_has_data();
   inline void set_has_console_output();
   inline void clear_has_console_output();
+  inline void set_has_status();
+  inline void clear_has_status();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -528,9 +542,10 @@ class Packet : public ::google::protobuf::Message {
   ::google::protobuf::RepeatedPtrField< ::DataRegistration > data_registrations_;
   ::google::protobuf::RepeatedPtrField< ::DataLabel > data_labels_;
   ::std::string* console_output_;
+  ::std::string* status_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(5 + 31) / 32];
 
   friend void  protobuf_AddDesc_protobuf_2fdata_2eproto();
   friend void protobuf_AssignDesc_protobuf_2fdata_2eproto();
@@ -1096,6 +1111,76 @@ inline void Packet::set_allocated_console_output(::std::string* console_output) 
   } else {
     clear_has_console_output();
     console_output_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  }
+}
+
+// optional string status = 5;
+inline bool Packet::has_status() const {
+  return (_has_bits_[0] & 0x00000010u) != 0;
+}
+inline void Packet::set_has_status() {
+  _has_bits_[0] |= 0x00000010u;
+}
+inline void Packet::clear_has_status() {
+  _has_bits_[0] &= ~0x00000010u;
+}
+inline void Packet::clear_status() {
+  if (status_ != &::google::protobuf::internal::kEmptyString) {
+    status_->clear();
+  }
+  clear_has_status();
+}
+inline const ::std::string& Packet::status() const {
+  return *status_;
+}
+inline void Packet::set_status(const ::std::string& value) {
+  set_has_status();
+  if (status_ == &::google::protobuf::internal::kEmptyString) {
+    status_ = new ::std::string;
+  }
+  status_->assign(value);
+}
+inline void Packet::set_status(const char* value) {
+  set_has_status();
+  if (status_ == &::google::protobuf::internal::kEmptyString) {
+    status_ = new ::std::string;
+  }
+  status_->assign(value);
+}
+inline void Packet::set_status(const char* value, size_t size) {
+  set_has_status();
+  if (status_ == &::google::protobuf::internal::kEmptyString) {
+    status_ = new ::std::string;
+  }
+  status_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* Packet::mutable_status() {
+  set_has_status();
+  if (status_ == &::google::protobuf::internal::kEmptyString) {
+    status_ = new ::std::string;
+  }
+  return status_;
+}
+inline ::std::string* Packet::release_status() {
+  clear_has_status();
+  if (status_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = status_;
+    status_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+inline void Packet::set_allocated_status(::std::string* status) {
+  if (status_ != &::google::protobuf::internal::kEmptyString) {
+    delete status_;
+  }
+  if (status) {
+    set_has_status();
+    status_ = status;
+  } else {
+    clear_has_status();
+    status_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   }
 }
 

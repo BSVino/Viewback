@@ -63,6 +63,8 @@ public:
 	bool HasLabel(size_t iHandle, int iValue);
 	std::string GetLabelForValue(size_t iHandle, int iValue);
 
+	std::string GetStatus() { return m_sStatus; }
+
 private:
 	void StashData(const Data* pData);
 
@@ -75,4 +77,6 @@ private:
 	std::deque<std::string> m_sOutgoingCommands;
 
 	ConsoleOutputCallback m_pfnConsoleOutput;
+
+	std::string m_sStatus;
 };

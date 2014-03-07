@@ -46,8 +46,12 @@ struct Packet {
 	struct DataRegistration* _data_registrations;
 	int                      _data_labels_repeated_len;
 	struct DataLabel*        _data_labels;
+
 	int            _console_output_len;
 	const char*    _console_output;
+
+	int            _status_len;
+	const char*    _status;
 };
 
 void Packet_initialize(struct Packet* packet);
@@ -83,11 +87,10 @@ typedef struct
 {
 	vb_config_t config;
 
-	vb_socket_t             multicast_socket;
-	struct sockaddr_in      multicast_addr;
-	time_t                  last_multicast;
-
-	vb_socket_t             tcp_socket;
+	vb_socket_t        multicast_socket;
+	struct sockaddr_in multicast_addr;
+	time_t             last_multicast;
+	vb_socket_t        tcp_socket;
 
 	vb_data_registration_t* registrations;
 	int                     next_registration;
@@ -95,11 +98,10 @@ typedef struct
 	vb_data_label_t* labels;
 	int              next_label;
 
-	vb_connection_t*        connections;
-
-	bool     server_active;
+	vb_connection_t* connections;
+	bool             server_active;
 
 	vb_command_callback command_callback;
 
-	double   current_time;
+	double current_time;
 } vb_t;

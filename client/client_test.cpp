@@ -70,6 +70,8 @@ int main()
 				printf("\n");
 			}
 
+			printf("Current status: %s\n", vb.GetStatus().c_str());
+
 			if (rand() % 2 == 0)
 			{
 				const char* pszCommand;

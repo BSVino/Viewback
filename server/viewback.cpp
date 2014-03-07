@@ -561,6 +561,31 @@ int vb_console_register_command_callback(vb_command_callback cmd)
 	return 1;
 }
 
+int vb_status_set(const char* text)
+{
+	if (!VB->server_active)
+		return 0;
+
+	struct Packet packet;
+	Packet_initialize(&packet);
+
+	packet._status = text;
+	packet._status_len = strlen(text);
+
+	size_t message_predicted_length = Packet_get_message_size(&packet);
+	void* message = Packet_alloca(message_predicted_length);
+
+	size_t message_actual_length = vb_write_length_prepended_message(&packet, message, message_predicted_length, &Packet_serialize);
+
+	if (!message_actual_length)
+		return 0;
+
+	vb_send_to_all(message, message_actual_length);
+
+	return 1;
+}
+
+
 
 
 
@@ -830,6 +855,13 @@ int Packet_write(struct Packet *_Packet, void *_buffer, int offset)
 		offset = write_raw_bytes(_Packet->_console_output, _Packet->_console_output_len, _buffer, offset);
 	}
 
+	if (_Packet->_status_len && _Packet->_status && _Packet->_status[0])
+	{
+		offset = write_raw_varint32((5 << 3) + 2, _buffer, offset);
+		offset = write_raw_varint32(_Packet->_status_len, _buffer, offset);
+		offset = write_raw_bytes(_Packet->_status, _Packet->_status_len, _buffer, offset);
+	}
+
 	return offset;
 }
 
@@ -969,6 +1001,13 @@ size_t Packet_get_message_size(struct Packet *_Packet)
 		size += 1; // One byte for field number and wire type.
 		size += 4; // 4 bytes to support really long strings.
 		size += _Packet->_console_output_len;
+	}
+
+	if (_Packet->_status_len)
+	{
+		size += 1; // One byte for field number and wire type.
+		size += 4; // 4 bytes to support really long strings.
+		size += _Packet->_status_len;
 	}
 
 	return size;

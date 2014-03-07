@@ -97,11 +97,12 @@ void protobuf_AssignDesc_protobuf_2fdata_2eproto() {
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(DataLabel));
   Packet_descriptor_ = file->message_type(3);
-  static const int Packet_offsets_[4] = {
+  static const int Packet_offsets_[5] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Packet, data_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Packet, data_registrations_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Packet, data_labels_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Packet, console_output_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Packet, status_),
   };
   Packet_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -164,13 +165,14 @@ void protobuf_AddDesc_protobuf_2fdata_2eproto() {
     " \001(\001\"U\n\020DataRegistration\022\022\n\nfield_name\030\001"
     " \001(\t\022\035\n\004type\030\002 \001(\0162\017.vb_data_type_t\022\016\n\006h"
     "andle\030\003 \001(\r\">\n\tDataLabel\022\016\n\006handle\030\001 \001(\r"
-    "\022\r\n\005value\030\002 \001(\r\022\022\n\nfield_name\030\003 \001(\t\"\205\001\n\006"
+    "\022\r\n\005value\030\002 \001(\r\022\022\n\nfield_name\030\003 \001(\t\"\225\001\n\006"
     "Packet\022\023\n\004data\030\001 \001(\0132\005.Data\022-\n\022data_regi"
     "strations\030\002 \003(\0132\021.DataRegistration\022\037\n\013da"
     "ta_labels\030\003 \003(\0132\n.DataLabel\022\026\n\016console_o"
-    "utput\030\004 \001(\t*j\n\016vb_data_type_t\022\024\n\020VB_DATA"
-    "TYPE_NONE\020\000\022\023\n\017VB_DATATYPE_INT\020\001\022\025\n\021VB_D"
-    "ATATYPE_FLOAT\020\002\022\026\n\022VB_DATATYPE_VECTOR\020\003", 559);
+    "utput\030\004 \001(\t\022\016\n\006status\030\005 \001(\t*j\n\016vb_data_t"
+    "ype_t\022\024\n\020VB_DATATYPE_NONE\020\000\022\023\n\017VB_DATATY"
+    "PE_INT\020\001\022\025\n\021VB_DATATYPE_FLOAT\020\002\022\026\n\022VB_DA"
+    "TATYPE_VECTOR\020\003", 575);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "protobuf/data.proto", &protobuf_RegisterTypes);
   Data::default_instance_ = new Data();
@@ -1268,6 +1270,7 @@ const int Packet::kDataFieldNumber;
 const int Packet::kDataRegistrationsFieldNumber;
 const int Packet::kDataLabelsFieldNumber;
 const int Packet::kConsoleOutputFieldNumber;
+const int Packet::kStatusFieldNumber;
 #endif  // !_MSC_VER
 
 Packet::Packet()
@@ -1289,6 +1292,7 @@ void Packet::SharedCtor() {
   _cached_size_ = 0;
   data_ = NULL;
   console_output_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  status_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -1299,6 +1303,9 @@ Packet::~Packet() {
 void Packet::SharedDtor() {
   if (console_output_ != &::google::protobuf::internal::kEmptyString) {
     delete console_output_;
+  }
+  if (status_ != &::google::protobuf::internal::kEmptyString) {
+    delete status_;
   }
   if (this != default_instance_) {
     delete data_;
@@ -1334,6 +1341,11 @@ void Packet::Clear() {
     if (has_console_output()) {
       if (console_output_ != &::google::protobuf::internal::kEmptyString) {
         console_output_->clear();
+      }
+    }
+    if (has_status()) {
+      if (status_ != &::google::protobuf::internal::kEmptyString) {
+        status_->clear();
       }
     }
   }
@@ -1405,6 +1417,23 @@ bool Packet::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
+        if (input->ExpectTag(42)) goto parse_status;
+        break;
+      }
+
+      // optional string status = 5;
+      case 5: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_status:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_status()));
+          ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+            this->status().data(), this->status().length(),
+            ::google::protobuf::internal::WireFormat::PARSE);
+        } else {
+          goto handle_uninterpreted;
+        }
         if (input->ExpectAtEnd()) return true;
         break;
       }
@@ -1454,6 +1483,15 @@ void Packet::SerializeWithCachedSizes(
       4, this->console_output(), output);
   }
 
+  // optional string status = 5;
+  if (has_status()) {
+    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+      this->status().data(), this->status().length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE);
+    ::google::protobuf::internal::WireFormatLite::WriteString(
+      5, this->status(), output);
+  }
+
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -1493,6 +1531,16 @@ void Packet::SerializeWithCachedSizes(
         4, this->console_output(), target);
   }
 
+  // optional string status = 5;
+  if (has_status()) {
+    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+      this->status().data(), this->status().length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE);
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        5, this->status(), target);
+  }
+
   if (!unknown_fields().empty()) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
@@ -1516,6 +1564,13 @@ int Packet::ByteSize() const {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::StringSize(
           this->console_output());
+    }
+
+    // optional string status = 5;
+    if (has_status()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::StringSize(
+          this->status());
     }
 
   }
@@ -1569,6 +1624,9 @@ void Packet::MergeFrom(const Packet& from) {
     if (from.has_console_output()) {
       set_console_output(from.console_output());
     }
+    if (from.has_status()) {
+      set_status(from.status());
+    }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
 }
@@ -1596,6 +1654,7 @@ void Packet::Swap(Packet* other) {
     data_registrations_.Swap(&other->data_registrations_);
     data_labels_.Swap(&other->data_labels_);
     std::swap(console_output_, other->console_output_);
+    std::swap(status_, other->status_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);

@@ -133,6 +133,13 @@ int vb_console_append(const char* text);
 */
 int vb_console_register_command_callback(vb_command_callback cmd);
 
+/*
+	Set the status text. Unlike the console, the status text doesn't append,
+	it just shows whatever is in the status. Good for fps and current assets
+	loaded and that sort of thing.
+*/
+int vb_status_set(const char* text);
+
 #ifdef __cplusplus
 }
 #endif
