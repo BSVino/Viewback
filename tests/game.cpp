@@ -26,6 +26,11 @@ void command_callback(const char* text)
 	vb_console_append(s.c_str());
 }
 
+float RemapVal(float flInput, float flInLo, float flInHi, float flOutLo, float flOutHi)
+{
+	return (((flInput - flInLo) / (flInHi - flInLo)) * (flOutHi - flOutLo)) + flOutLo;
+}
+
 int main()
 {
 #ifdef _WIN32
@@ -116,14 +121,12 @@ int main()
 		if (current_time == initial_time)
 			continue;
 
-		// TODO: See what happens when it updates viewback as fast as it can instead of only once per second.
-
 		initial_time = current_time;
 
-		health += (float)(rand()%100)/50-1;
+		health += RemapVal((float)(rand() % 100), 0, 99, -1, 1);
 
-		mouse_x += ((float)(rand()%100)/50-1)*10;
-		mouse_y += ((float)(rand()%100)/50-1)*10;
+		mouse_x += RemapVal((float)(rand() % 100), 0, 99, -1, 1)*10;
+		mouse_y += RemapVal((float)(rand() % 100), 0, 99, -1, 1)*10;
 
 		key_down = rand() % 2;
 		player = rand() % 4;
