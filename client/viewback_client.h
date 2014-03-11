@@ -85,10 +85,10 @@ public:
 
 	std::string GetStatus() { return m_sStatus; }
 
+	double FindNewestData();
+
 private:
 	void StashData(const Data* pData);
-
-	double FindNewestData();
 
 private:
 	std::vector<Packet> m_aUnhandledMessages;

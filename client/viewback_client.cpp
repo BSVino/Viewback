@@ -23,6 +23,7 @@ void CViewbackClient::Update()
 {
 	if (CViewbackDataThread::IsConnected())
 	{
+		size_t iStartPacket = 0;
 		vector<Packet> aPackets = CViewbackDataThread::GetData();
 
 		// Look for a data registration packet.
@@ -39,6 +40,12 @@ void CViewbackClient::Update()
 					VBVector3(1, 1, 0),
 				};
 				int iColorsSize = sizeof(aclrColors) / sizeof(aclrColors[0]);
+
+				// Disregard any data which came in before the registration packet, it may be from another server or old connection.
+				m_aData.clear();
+				m_aMeta.clear();
+				m_aUnhandledMessages.clear();
+				iStartPacket = i + 1;
 
 				m_aDataRegistrations.resize(aPackets[i].data_registrations_size());
 				m_aData.resize(aPackets[i].data_registrations_size());
@@ -98,7 +105,7 @@ void CViewbackClient::Update()
 
 		m_aUnhandledMessages.clear();
 
-		for (size_t i = 0; i < aPackets.size(); i++)
+		for (size_t i = iStartPacket; i < aPackets.size(); i++)
 		{
 			if (aPackets[i].has_data())
 				StashData(&aPackets[i].data());
@@ -138,6 +145,13 @@ void CViewbackClient::Update()
 	}
 	else
 	{
+		for (auto& oData : m_aData)
+		{
+			oData.m_aFloatData.clear();
+			oData.m_aIntData.clear();
+			oData.m_aVectorData.clear();
+		}
+
 		unsigned long best_server = CViewbackServersThread::GetServer();
 
 		if (best_server)

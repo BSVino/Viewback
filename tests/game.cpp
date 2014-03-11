@@ -105,23 +105,24 @@ int main()
 	struct timeb initial_time_millis;
 	ftime(&initial_time_millis);
 
+	struct timeb last_update;
+	last_update.time = 0;
+	last_update.millitm = 0;
+
 	while (true)
 	{
 		struct timeb current_time_millis;
 		ftime(&current_time_millis);
 
-		double current_time_double = (current_time_millis.time - initial_time_millis.time) + (float)(current_time_millis.millitm - initial_time_millis.millitm)/1000;
+		double current_time_double = (current_time_millis.time - initial_time_millis.time) + (float)(current_time_millis.millitm - initial_time_millis.millitm) / 1000;
 
 		vb_server_update(current_time_double);
 
-		time_t current_time;
-		time(&current_time);
-
-		// Update once per second.
-		if (current_time == initial_time)
+		double last_update_double = (current_time_millis.time - last_update.time) + (float)(current_time_millis.millitm - last_update.millitm) / 1000;
+		if (last_update_double < 0.2)
 			continue;
 
-		initial_time = current_time;
+		ftime(&last_update);
 
 		health += RemapVal((float)(rand() % 100), 0, 99, -1, 1);
 
@@ -150,6 +151,15 @@ int main()
 			success = false;
 		if (!vb_data_send_int(vb_player, player))
 			success = false;
+
+		time_t current_time;
+		time(&current_time);
+
+		// Send console output once per second.
+		if (current_time == initial_time)
+			continue;
+
+		initial_time = current_time;
 
 		if (rand() % 2 == 0)
 		{
