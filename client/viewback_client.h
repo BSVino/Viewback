@@ -37,17 +37,36 @@ public:
 
 public:
 	// Only one of these will be used at a time.
-	std::vector<DataPair<int>>       m_aIntData;
-	std::vector<DataPair<float>>     m_aFloatData;
-	std::vector<DataPair<VBVector3>> m_aVectorData;
+	std::deque<DataPair<int>>       m_aIntData;
+	std::deque<DataPair<float>>     m_aFloatData;
+	std::deque<DataPair<VBVector3>> m_aVectorData;
+};
+
+// This data may be initialized by the server, but after that can be edited
+// by the monitor as per user preferences.
+class CDataMetaInfo
+{
+public:
+	CDataMetaInfo()
+	{
+		m_vecMaxValue = VBVector3(0, 0, 0);
+		m_clrColor = VBVector3(1, 1, 1);
+		m_flDisplayDuration = 1;
+	}
+
+public:
+	VBVector3 m_vecMaxValue;
+	VBVector3 m_clrColor;
+	float     m_flDisplayDuration; // In the 2D view, how many seconds worth of data should the monitor show?
 };
 
 typedef void(*ConsoleOutputCallback)(const char*);
+typedef void(*RegistrationUpdateCallback)();
 
 class CViewbackClient
 {
 public:
-	bool Initialize(ConsoleOutputCallback pfnConsoleOutput);
+	bool Initialize(RegistrationUpdateCallback pfnRegistration, ConsoleOutputCallback pfnConsoleOutput);
 
 	void Update();
 
@@ -56,7 +75,8 @@ public:
 	void SendConsoleCommand(const std::string& sCommand);
 
 	inline const std::vector<CViewbackDataRegistration>& GetRegistrations() const { return m_aDataRegistrations; }
-	inline const std::vector<CViewbackDataList>& GetData() const { return m_aData; }
+	inline const std::vector<CViewbackDataList>& GetData() const { return m_aData; } // DO NOT STORE without copying, this may be wiped at any time.
+	inline std::vector<CDataMetaInfo>& GetMeta() { return m_aMeta; }
 
 	vb_data_type_t TypeForHandle(size_t iHandle);
 
@@ -68,15 +88,21 @@ public:
 private:
 	void StashData(const Data* pData);
 
+	double FindNewestData();
+
 private:
 	std::vector<Packet> m_aUnhandledMessages;
 
 	std::vector<CViewbackDataRegistration> m_aDataRegistrations;
 	std::vector<CViewbackDataList> m_aData;
+	std::vector<CDataMetaInfo> m_aMeta;
 
 	std::deque<std::string> m_sOutgoingCommands;
 
-	ConsoleOutputCallback m_pfnConsoleOutput;
+	RegistrationUpdateCallback m_pfnRegistrationUpdate;
+	ConsoleOutputCallback      m_pfnConsoleOutput;
 
 	std::string m_sStatus;
+
+	double m_flNextDataClear;
 };

@@ -9,8 +9,11 @@
 
 using namespace std;
 
-bool CViewbackClient::Initialize(ConsoleOutputCallback pfnConsoleOutput)
+bool CViewbackClient::Initialize(RegistrationUpdateCallback pfnRegistration, ConsoleOutputCallback pfnConsoleOutput)
 {
+	m_flNextDataClear = 10;
+
+	m_pfnRegistrationUpdate = pfnRegistration;
 	m_pfnConsoleOutput = pfnConsoleOutput;
 
 	return CViewbackServersThread::Run();
@@ -27,8 +30,20 @@ void CViewbackClient::Update()
 		{
 			if (aPackets[i].data_registrations_size())
 			{
+				static VBVector3 aclrColors[] = {
+					VBVector3(1, 0, 0),
+					VBVector3(0, 1, 0),
+					VBVector3(0, 0, 1),
+					VBVector3(0, 1, 1),
+					VBVector3(1, 0, 1),
+					VBVector3(1, 1, 0),
+				};
+				int iColorsSize = sizeof(aclrColors) / sizeof(aclrColors[0]);
+
 				m_aDataRegistrations.resize(aPackets[i].data_registrations_size());
 				m_aData.resize(aPackets[i].data_registrations_size());
+				m_aMeta.resize(aPackets[i].data_registrations_size());
+
 				for (int j = 0; j < aPackets[i].data_registrations_size(); j++)
 				{
 					auto& oRegistrationProtobuf = aPackets[i].data_registrations(j);
@@ -42,6 +57,8 @@ void CViewbackClient::Update()
 					oRegistration.m_iHandle = oRegistrationProtobuf.handle();
 					oRegistration.m_sFieldName = oRegistrationProtobuf.field_name();
 					oRegistration.m_eDataType = oRegistrationProtobuf.type();
+
+					m_aMeta[oRegistrationProtobuf.handle()].m_clrColor = aclrColors[j % iColorsSize];
 				}
 
 				VBPrintf("Installed %d registrations.\n", aPackets[i].data_registrations_size());
@@ -59,6 +76,9 @@ void CViewbackClient::Update()
 				}
 
 				VBPrintf("Installed %d labels.\n", aPackets[i].data_labels_size());
+
+				if (m_pfnRegistrationUpdate)
+					m_pfnRegistrationUpdate();
 			}
 		}
 
@@ -98,6 +118,22 @@ void CViewbackClient::Update()
 			else
 				// There's already a command waiting to be sent to the data thread, hold on for now.
 				break;
+		}
+
+		// Clear out old data. First let's find the newest timestamp of any data.
+		double flNewest = FindNewestData();
+		if (flNewest > m_flNextDataClear)
+		{
+			for (size_t i = 0; i < m_aData.size(); i++)
+			{
+				if (m_aDataRegistrations[i].m_eDataType != VB_DATATYPE_VECTOR)
+					continue;
+
+				while (m_aData[i].m_aVectorData.size() && m_aData[i].m_aVectorData.front().time < flNewest - m_aMeta[i].m_flDisplayDuration - 10)
+					m_aData[i].m_aVectorData.pop_front();
+			}
+
+			m_flNextDataClear = flNewest + 10;
 		}
 	}
 	else
@@ -174,3 +210,24 @@ void CViewbackClient::StashData(const Data* pData)
 		break;
 	}
 }
+
+double CViewbackClient::FindNewestData()
+{
+	double flNewest = 0;
+	for (auto& o : m_aData)
+	{
+		if (o.m_aFloatData.size())
+			flNewest = max(o.m_aFloatData.back().time, flNewest);
+
+		if (o.m_aIntData.size())
+			flNewest = max(o.m_aIntData.back().time, flNewest);
+
+		if (o.m_aVectorData.size())
+			flNewest = max(o.m_aVectorData.back().time, flNewest);
+	}
+
+	return flNewest;
+}
+
+
+
