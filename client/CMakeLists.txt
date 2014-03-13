@@ -1,6 +1,3 @@
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
-
 include_directories (
 	${PROJECT_SOURCE_DIR}
 	${PROJECT_SOURCE_DIR}/../ext-deps/pthreads-w32-2-8-0-release
