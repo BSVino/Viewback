@@ -35,9 +35,7 @@
 #define VBPrintf printf
 #else
 #define VBPrintf no_printf
-void no_printf(...)
-{
-}
+inline void no_printf(...) {}
 #endif
 
 // This quick class automates the cleanup of sockets in case the server creation fails for some reason.
