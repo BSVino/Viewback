@@ -85,7 +85,8 @@ public:
 
 	std::string GetStatus() { return m_sStatus; }
 
-	double FindNewestData();
+	double GetLatestDataTime() { return m_flLatestDataTime; }
+	double PredictCurrentTime();
 
 private:
 	void StashData(const Data* pData);
@@ -104,5 +105,10 @@ private:
 
 	std::string m_sStatus;
 
+	time_t         m_iServerConnectionTimeS;
+	unsigned short m_iServerConnectionTimeMS;
+
 	double m_flNextDataClear;
+	double m_flLatestDataTime;
+	double m_flTimeReceivedLatestData;
 };

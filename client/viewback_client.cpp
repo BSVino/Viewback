@@ -1,6 +1,7 @@
 #include "viewback_client.h"
 
 #include <sstream>
+#include <sys/timeb.h>
 
 #include "../server/viewback_shared.h"
 
@@ -128,7 +129,7 @@ void CViewbackClient::Update()
 		}
 
 		// Clear out old data. First let's find the newest timestamp of any data.
-		double flNewest = FindNewestData();
+		double flNewest = GetLatestDataTime();
 		if (flNewest > m_flNextDataClear)
 		{
 			for (size_t i = 0; i < m_aData.size(); i++)
@@ -164,6 +165,18 @@ void CViewbackClient::Update()
 				VBPrintf("Success.\n");
 			else
 				VBPrintf("Failed.\n");
+
+			if (bResult)
+			{
+				struct timeb now;
+				now.time = 0;
+				now.millitm = 0;
+
+				ftime(&now);
+
+				m_iServerConnectionTimeS = now.time;
+				m_iServerConnectionTimeMS = now.millitm;
+			}
 		}
 	}
 }
@@ -223,24 +236,36 @@ void CViewbackClient::StashData(const Data* pData)
 		m_aData[pData->handle()].m_aVectorData.push_back(CViewbackDataList::DataPair<VBVector3>(pData->time(), VBVector3(pData->data_float_x(), pData->data_float_y(), pData->data_float_z())));
 		break;
 	}
+
+	if (pData->time() > m_flLatestDataTime)
+	{
+		m_flLatestDataTime = pData->time();
+
+		struct timeb now;
+		now.time = 0;
+		now.millitm = 0;
+
+		ftime(&now);
+
+		m_flTimeReceivedLatestData = (double)(now.time - m_iServerConnectionTimeS);
+		m_flTimeReceivedLatestData += ((double)(now.millitm) - (double)m_iServerConnectionTimeMS)/1000;
+	}
 }
 
-double CViewbackClient::FindNewestData()
+double CViewbackClient::PredictCurrentTime()
 {
-	double flNewest = 0;
-	for (auto& o : m_aData)
-	{
-		if (o.m_aFloatData.size())
-			flNewest = max(o.m_aFloatData.back().time, flNewest);
+	struct timeb now;
+	now.time = 0;
+	now.millitm = 0;
 
-		if (o.m_aIntData.size())
-			flNewest = max(o.m_aIntData.back().time, flNewest);
+	ftime(&now);
 
-		if (o.m_aVectorData.size())
-			flNewest = max(o.m_aVectorData.back().time, flNewest);
-	}
+	double flTimeNow = (double)(now.time - m_iServerConnectionTimeS);
+	flTimeNow += ((double)(now.millitm) - (double)m_iServerConnectionTimeMS) / 1000;
 
-	return flNewest;
+	double flTimeDifference = flTimeNow - m_flTimeReceivedLatestData;
+
+	return m_flLatestDataTime + flTimeDifference;
 }
 
 
