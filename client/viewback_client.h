@@ -88,6 +88,10 @@ public:
 	double GetLatestDataTime() { return m_flLatestDataTime; }
 	double PredictCurrentTime();
 
+	// Time view data (type float or int) with time stamps before this time may be cleared from memory.
+	// It's important to update this periodically or else old data will never be deleted.
+	void SetDataClearTime(double flTime) { m_flDataClearTime = flTime; }
+
 private:
 	void StashData(const Data* pData);
 
@@ -111,4 +115,6 @@ private:
 	double m_flNextDataClear;
 	double m_flLatestDataTime;
 	double m_flTimeReceivedLatestData;
+
+	double m_flDataClearTime;
 };

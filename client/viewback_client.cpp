@@ -13,6 +13,7 @@ using namespace std;
 bool CViewbackClient::Initialize(RegistrationUpdateCallback pfnRegistration, ConsoleOutputCallback pfnConsoleOutput)
 {
 	m_flNextDataClear = 10;
+	m_flDataClearTime = 0;
 
 	m_pfnRegistrationUpdate = pfnRegistration;
 	m_pfnConsoleOutput = pfnConsoleOutput;
@@ -134,11 +135,23 @@ void CViewbackClient::Update()
 		{
 			for (size_t i = 0; i < m_aData.size(); i++)
 			{
-				if (m_aDataRegistrations[i].m_eDataType != VB_DATATYPE_VECTOR)
-					continue;
-
-				while (m_aData[i].m_aVectorData.size() && m_aData[i].m_aVectorData.front().time < flNewest - m_aMeta[i].m_flDisplayDuration - 10)
-					m_aData[i].m_aVectorData.pop_front();
+				if (m_aDataRegistrations[i].m_eDataType == VB_DATATYPE_VECTOR)
+				{
+					while (m_aData[i].m_aVectorData.size() && m_aData[i].m_aVectorData.front().time < flNewest - m_aMeta[i].m_flDisplayDuration - 10)
+						m_aData[i].m_aVectorData.pop_front();
+				}
+				else if (m_aDataRegistrations[i].m_eDataType == VB_DATATYPE_FLOAT)
+				{
+					while (m_aData[i].m_aFloatData.size() && m_aData[i].m_aFloatData.front().time < m_flDataClearTime)
+						m_aData[i].m_aFloatData.pop_front();
+				}
+				else if (m_aDataRegistrations[i].m_eDataType == VB_DATATYPE_INT)
+				{
+					while (m_aData[i].m_aIntData.size() && m_aData[i].m_aIntData.front().time < m_flDataClearTime)
+						m_aData[i].m_aIntData.pop_front();
+				}
+				else
+					VBAssert(false);
 			}
 
 			m_flNextDataClear = flNewest + 10;
@@ -176,6 +189,7 @@ void CViewbackClient::Update()
 
 				m_iServerConnectionTimeS = now.time;
 				m_iServerConnectionTimeMS = now.millitm;
+				m_flDataClearTime = 0;
 			}
 		}
 	}
