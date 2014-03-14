@@ -69,16 +69,32 @@ void CViewbackDataThread::Pump()
 	int iBytesRead;
 	while (true)
 	{
+		vb_set_blocking(m_socket, 0);
+
 		if ((iBytesRead = recv(m_socket, msgbuf, MSGBUFSIZE, 0)) < 0)
 		{
-			s_bConnected = false;
-			return;
+			if (!vb_is_blocking_error(vb_socket_error()))
+			{
+				s_bConnected = false;
+				return;
+			}
+
+			MaintainDrops();
+			continue;
 		}
+
+		vb_set_blocking(m_socket, 1);
 
 		if (iBytesRead == 0)
 		{
-			s_bConnected = false;
-			return;
+			if (!vb_is_blocking_error(vb_socket_error()))
+			{
+				s_bConnected = false;
+				return;
+			}
+
+			MaintainDrops();
+			continue;
 		}
 
 		vector<char> aCharsRead(msgbuf, msgbuf + iBytesRead);
@@ -108,7 +124,12 @@ void CViewbackDataThread::Pump()
 
 	VBAssert(iCurrentPacket == aMsgBuf.size());
 
-	if (!s_bDataDropReady)
+	MaintainDrops();
+}
+
+void CViewbackDataThread::MaintainDrops()
+{
+	if (!s_bDataDropReady && m_aMessages.size())
 	{
 		VBAssert(!s_aDataDrop.size());
 

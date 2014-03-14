@@ -28,6 +28,8 @@ private:
 
 	void Pump();
 
+	void MaintainDrops();
+
 private:
 	pthread_t m_iThread;
 
