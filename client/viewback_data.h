@@ -5,9 +5,9 @@
 
 #include <pthread.h>
 
-#include "../server/viewback_win32.h"
-
 #include "../protobuf/data.pb.h"
+
+#include "../server/viewback_shared.h"
 
 class CViewbackDataThread
 {

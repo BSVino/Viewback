@@ -6,7 +6,7 @@
 
 #include <pthread.h>
 
-#include "../server/viewback_win32.h"
+#include "../server/viewback_shared.h"
 
 class CViewbackServersThread
 {

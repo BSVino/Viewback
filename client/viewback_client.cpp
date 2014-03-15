@@ -213,7 +213,7 @@ vb_data_type_t CViewbackClient::TypeForHandle(size_t iHandle)
 
 bool CViewbackClient::HasLabel(size_t iHandle, int iValue)
 {
-	auto& it = m_aDataRegistrations[iHandle].m_asLabels.find(iValue);
+	auto it = m_aDataRegistrations[iHandle].m_asLabels.find(iValue);
 	if (it == m_aDataRegistrations[iHandle].m_asLabels.end())
 		return false;
 	else
@@ -222,7 +222,7 @@ bool CViewbackClient::HasLabel(size_t iHandle, int iValue)
 
 string CViewbackClient::GetLabelForValue(size_t iHandle, int iValue)
 {
-	auto& it = m_aDataRegistrations[iHandle].m_asLabels.find(iValue);
+	auto it = m_aDataRegistrations[iHandle].m_asLabels.find(iValue);
 	if (it == m_aDataRegistrations[iHandle].m_asLabels.end())
 		return static_cast<ostringstream*>(&(ostringstream() << iValue))->str();
 	else

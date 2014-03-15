@@ -4,11 +4,11 @@
 
 using namespace std;
 
-atomic<bool> CViewbackDataThread::s_bConnected = false;
+atomic<bool> CViewbackDataThread::s_bConnected;
 vector<Packet> CViewbackDataThread::s_aDataDrop;
-atomic<bool> CViewbackDataThread::s_bDataDropReady = false;
+atomic<bool> CViewbackDataThread::s_bDataDropReady;
 string CViewbackDataThread::s_sCommandDrop;
-atomic<bool> CViewbackDataThread::s_bCommandDropReady = true;
+atomic<bool> CViewbackDataThread::s_bCommandDropReady;
 
 bool CViewbackDataThread::Run(unsigned long address)
 {
@@ -38,6 +38,10 @@ bool CViewbackDataThread::Initialize(unsigned long address)
 	// Start by requesting a list of data registrations from the server.
 	const char registrations[] = "registrations";
 	int bytes_sent = send(m_socket, (const char*)registrations, sizeof(registrations), 0);
+
+	s_bConnected = false;
+	s_bDataDropReady = false;
+	s_bCommandDropReady = true;
 
 	if (pthread_create(&m_iThread, NULL, (void *(*) (void *))&CViewbackDataThread::ThreadMain, (void*)this) != 0)
 		return false;

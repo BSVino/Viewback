@@ -7,6 +7,7 @@
 #pragma comment(lib, "ws2_32")
 
 typedef SOCKET vb_socket_t;
+typedef int vb_socklen_t;
 
 #if defined(__GNUC__)
 #define VB_ALIGN(x) __attribute__((aligned(x)))
@@ -16,8 +17,7 @@ typedef SOCKET vb_socket_t;
 
 #define VB_INVALID_SOCKET INVALID_SOCKET
 #define snprintf _snprintf
-
-typedef int vb_socklen_t;
+#define SOCKADDR_IN_ADDR sin_addr.S_un.S_addr
 
 static int vb_socket_error(void)
 {

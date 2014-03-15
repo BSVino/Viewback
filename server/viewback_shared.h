@@ -1,7 +1,10 @@
-#pragma
+#pragma once
 
 #if defined(_WIN32)
 #include "viewback_win32.h"
+#elif defined(__ANDROID__)
+/* Android runs Linux. */
+#include "viewback_unix.h"
 #else
 #error !
 #endif
