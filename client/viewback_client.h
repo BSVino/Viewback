@@ -66,6 +66,9 @@ typedef void(*RegistrationUpdateCallback)();
 class CViewbackClient
 {
 public:
+	// Note that on Android you need to explicitly enable Multicast over WiFi.
+	// http://anandtechblog.blogspot.com.es/2011/11/multicast-udp-reciever-in-android.html
+	// Viewback will not do this for you.
 	bool Initialize(RegistrationUpdateCallback pfnRegistration, ConsoleOutputCallback pfnConsoleOutput);
 
 	void Update();

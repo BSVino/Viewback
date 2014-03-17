@@ -22,7 +22,10 @@ bool CViewbackDataThread::Initialize(unsigned long address)
 	u_int yes=1;
 
 	if ((m_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+	{
+		VBPrintf("Could not create data socket.\n");
 		return false;
+	}
 
 	CCleanupSocket c(m_socket);
 
@@ -33,7 +36,10 @@ bool CViewbackDataThread::Initialize(unsigned long address)
 	addr.sin_port=htons(VB_DEFAULT_PORT);
 
 	if (connect(m_socket, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+	{
+		VBPrintf("Could not create connect to viewback server.\n");
 		return false;
+	}
 
 	// Start by requesting a list of data registrations from the server.
 	const char registrations[] = "registrations";
@@ -44,7 +50,10 @@ bool CViewbackDataThread::Initialize(unsigned long address)
 	s_bCommandDropReady = true;
 
 	if (pthread_create(&m_iThread, NULL, (void *(*) (void *))&CViewbackDataThread::ThreadMain, (void*)this) != 0)
+	{
+		VBPrintf("Could not create data thread.\n");
 		return false;
+	}
 
 	c.Success();
 

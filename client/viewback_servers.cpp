@@ -19,11 +19,17 @@ bool CViewbackServersThread::Initialize()
 
 	/* create what looks like an ordinary UDP socket */
 	if ((m_socket = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+	{
+		VBPrintf("Could not create multicast socket.\n");
 		return false;
+	}
 
 	/* allow multiple sockets to use the same PORT number */
 	if (setsockopt(m_socket, SOL_SOCKET, SO_REUSEADDR, (char*)&yes, sizeof(yes)) < 0)
+	{
+		VBPrintf("Could not change multicast socket options.\n");
 		return false;
+	}
 
 	/* set up destination address */
 	struct sockaddr_in addr;
@@ -34,16 +40,25 @@ bool CViewbackServersThread::Initialize()
 
 	/* bind to receive address */
 	if (bind(m_socket, (struct sockaddr *) &addr, sizeof(addr)) < 0)
+	{
+		VBPrintf("Could not bind multicast socket.\n");
 		return false;
+	}
 
 	/* use setsockopt() to request that the kernel join a multicast group */
 	mreq.imr_multiaddr.s_addr=inet_addr(VB_DEFAULT_MULTICAST_ADDRESS);
 	mreq.imr_interface.s_addr=htonl(INADDR_ANY);
 	if (setsockopt(m_socket, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char*)&mreq, sizeof(mreq)) < 0)
+	{
+		VBPrintf("Could not join multicast group.\n");
 		return false;
+	}
 
 	if (pthread_create(&m_iThread, NULL, (void *(*) (void *))&CViewbackServersThread::ThreadMain, (void*)this) != 0)
+	{
+		VBPrintf("Could not create multicast listener thread.\n");
 		return false;
+	}
 
 	return true;
 }
