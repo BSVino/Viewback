@@ -176,6 +176,13 @@ int vb_server_create()
 	if (!vb_valid_socket(VB->multicast_socket))
 		return 0;
 
+	int ttl = 10;
+	if (setsockopt(VB->multicast_socket, IPPROTO_IP, IP_TTL, (const char*)&ttl, sizeof(ttl)) != 0)
+	{
+		VBPrintf("Couldn't set multicast socket TTL. Error: %d\n", vb_socket_error());
+		return 0;
+	}
+
 	memset(&VB->multicast_addr, 0, sizeof(VB->multicast_addr));
 	VB->multicast_addr.sin_family = AF_INET;
 	VB->multicast_addr.sin_addr.s_addr = inet_addr(VB_DEFAULT_MULTICAST_ADDRESS);
