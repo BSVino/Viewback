@@ -88,6 +88,7 @@ void CViewbackServersThread::Pump()
 	if ((iBytesRead = recvfrom(m_socket, msgbuf, MSGBUFSIZE, 0, (struct sockaddr *)&addr, &addrlen)) < 0)
 	{
 		int error = vb_socket_error();
+		VBPrintf("Error reading multicast socket: %d.\n", error);
 		return;
 	}
 
