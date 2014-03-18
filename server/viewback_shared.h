@@ -5,6 +5,8 @@
 #elif defined(__ANDROID__)
 /* Android runs Linux. */
 #include "viewback_unix.h"
+#elif defined(__linux__)
+#include "viewback_unix.h"
 #else
 #error !
 #endif

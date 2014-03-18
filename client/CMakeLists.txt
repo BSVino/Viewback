@@ -1,3 +1,9 @@
+if (NOT WIN32)
+	include(FindProtobuf)
+	find_package(Protobuf REQUIRED)
+	include_directories(${PROTOBUF_INCLUDE_DIR})
+endif ()
+
 include_directories (
 	${PROJECT_SOURCE_DIR}
 	${PROJECT_SOURCE_DIR}/../ext-deps/pthreads-w32-2-8-0-release
@@ -16,6 +22,10 @@ add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 add_definitions(-DPTW32_STATIC_LIB)
 
 add_executable (client_test ${CLIENT_TEST_SOURCES})
+
+if (NOT WIN32)
+	target_link_libraries($PROTOBUF_LIBRARY)
+endif ()
 
 if (WIN32)
 	target_link_libraries(client_test debug ${PROJECT_SOURCE_DIR}/../ext-deps/pthreads-w32-2-8-0-release-vs2013/Debug/pthread.lib)

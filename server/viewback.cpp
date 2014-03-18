@@ -19,6 +19,8 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 
 #include <malloc.h>
 #include <time.h>
+#include <string.h>
+#include <alloca.h>
 
 #include "viewback_shared.h"
 #include "viewback_internal.h"
@@ -219,10 +221,12 @@ int vb_server_create()
 	if (listen(VB->tcp_socket, SOMAXCONN) != 0)
 		return 0;
 
+#ifdef _WIN32
 	VBPrintf("Viewback server created on %d.%d.%d.%d:%d (%u).\n",
 		tcp_addr.sin_addr.S_un.S_un_b.s_b1, tcp_addr.sin_addr.S_un.S_un_b.s_b1, tcp_addr.sin_addr.S_un.S_un_b.s_b1, tcp_addr.sin_addr.S_un.S_un_b.s_b1,
 		tcp_addr.sin_port, tcp_addr.sin_addr.S_un.S_addr
 		);
+#endif
 
 	mc.Success();
 	tc.Success();
@@ -309,7 +313,7 @@ void vb_server_update(double current_time_seconds)
 	timeout.tv_sec = 0;
 	timeout.tv_usec = 5;
 
-	int err = select((int) (max_socket + 1), &read_fds, nullptr, nullptr, &timeout);
+	int err = select((int) (max_socket + 1), &read_fds, NULL, NULL, &timeout);
 
 	if (FD_ISSET(VB->tcp_socket, &read_fds))
 	{

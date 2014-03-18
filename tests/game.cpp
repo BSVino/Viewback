@@ -6,6 +6,13 @@
 #include <sys/timeb.h>
 #endif
 
+#ifdef __linux__
+#include <stdio.h>
+#include <alloca.h>
+#include <stdlib.h>
+#include <sys/timeb.h>
+#endif
+
 #include <memory>
 #include <time.h>
 
