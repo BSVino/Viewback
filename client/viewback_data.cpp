@@ -32,7 +32,7 @@ bool CViewbackDataThread::Initialize(unsigned long address)
 	struct sockaddr_in addr;
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family=AF_INET;
-	addr.sin_addr.s_addr=inet_addr("192.168.1.12");//htonl(address);
+	addr.sin_addr.s_addr=htonl(address);
 	addr.sin_port=htons(VB_DEFAULT_PORT);
 
 	if (connect(m_socket, (struct sockaddr *)&addr, sizeof(addr)) < 0)
