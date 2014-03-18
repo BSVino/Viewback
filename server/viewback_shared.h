@@ -34,8 +34,23 @@
 #endif
 
 #ifdef _DEBUG
+#ifdef __ANDROID__
+#include <android/log.h>
+#define VBPrintf android_printf
+inline void android_printf(const char* pszFormat, ...)
+{
+	char buf[1024];
+	va_list ap;
+	va_start(ap, pszFormat);
+	vsnprintf(buf, sizeof(buf), pszFormat, ap);
+	va_end(ap);
+
+	__android_log_print(ANDROID_LOG_INFO, "Viewback", "%s", buf);
+}
+#else
 #include <stdio.h>
 #define VBPrintf printf
+#endif
 #else
 #define VBPrintf no_printf
 inline void no_printf(...) {}

@@ -170,7 +170,7 @@ void CViewbackClient::Update()
 
 		if (best_server)
 		{
-			VBPrintf("Connecting to server at %u ...", best_server);
+			VBPrintf("Connecting to server at %u ...", (unsigned int)best_server);
 
 			bool bResult = CViewbackDataThread::Run(best_server);
 
