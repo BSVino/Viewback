@@ -268,7 +268,8 @@ void vb_server_update(double current_time_seconds)
 	if (current_time > VB->last_multicast)
 	{
 		const char message[] = "VB: HELLO WORLD"; // TODO: put game info here.
-		sendto(VB->multicast_socket, (const char*)message, sizeof(message), 0, (struct sockaddr *)&VB->multicast_addr, sizeof(VB->multicast_addr));
+		if (sendto(VB->multicast_socket, (const char*)message, sizeof(message), 0, (struct sockaddr *)&VB->multicast_addr, sizeof(VB->multicast_addr)) < 0)
+			VBPrintf("Multicast sendto failed, error %d\n", vb_socket_error());
 
 		VB->last_multicast = current_time;
 	}
