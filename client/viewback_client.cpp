@@ -159,8 +159,10 @@ void CViewbackClient::Update()
 	}
 	else
 	{
-		for (auto& oData : m_aData)
+		for (size_t i = 0; i < m_aData.size(); i++)
 		{
+			auto& oData = m_aData[i];
+
 			oData.m_aFloatData.clear();
 			oData.m_aIntData.clear();
 			oData.m_aVectorData.clear();

@@ -1,5 +1,9 @@
 #include "viewback_servers.h"
 
+#ifdef __linux__
+#include <string.h>
+#endif
+
 #include "../server/viewback_shared.h"
 
 using namespace std;
@@ -78,7 +82,7 @@ void CViewbackServersThread::Pump()
 	char msgbuf[MSGBUFSIZE];
 
 	struct sockaddr_in addr;
-	int addrlen = sizeof(addr);
+	vb_socklen_t addrlen = sizeof(addr);
 
 	int iBytesRead;
 	if ((iBytesRead = recvfrom(m_socket, msgbuf, MSGBUFSIZE, 0, (struct sockaddr *)&addr, &addrlen)) < 0)

@@ -2,7 +2,12 @@
 
 #include <map>
 #include <vector>
+
+#ifdef __linux__
+#include <cstdatomic>
+#else
 #include <atomic>
+#endif
 
 #include <pthread.h>
 

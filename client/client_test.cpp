@@ -27,7 +27,7 @@ int main()
 
 	CViewbackClient vb;
 
-	if (!vb.Initialize(nullptr, &ConsoleOutput))
+	if (!vb.Initialize(NULL, &ConsoleOutput))
 		return 1;
 
 	time_t last_time;

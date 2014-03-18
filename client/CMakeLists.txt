@@ -2,6 +2,8 @@ if (NOT WIN32)
 	include(FindProtobuf)
 	find_package(Protobuf REQUIRED)
 	include_directories(${PROTOBUF_INCLUDE_DIR})
+
+	find_package (Threads)
 endif ()
 
 include_directories (
@@ -24,7 +26,8 @@ add_definitions(-DPTW32_STATIC_LIB)
 add_executable (client_test ${CLIENT_TEST_SOURCES})
 
 if (NOT WIN32)
-	target_link_libraries($PROTOBUF_LIBRARY)
+	target_link_libraries(client_test ${PROTOBUF_LIBRARY})
+	target_link_libraries(client_test ${CMAKE_THREAD_LIBS_INIT})
 endif ()
 
 if (WIN32)
