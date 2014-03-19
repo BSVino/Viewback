@@ -3,7 +3,8 @@
 #include <map>
 #include <vector>
 
-#ifdef __linux__
+// This is probably way wrong.
+#if defined(__linux__) && !defined(__ANDROID__)
 #include <cstdatomic>
 #else
 #include <atomic>

@@ -17,7 +17,6 @@ typedef int vb_socklen_t;
 
 #define VB_INVALID_SOCKET INVALID_SOCKET
 #define snprintf _snprintf
-#define SOCKADDR_IN_ADDR sin_addr.S_un.S_addr
 
 static int vb_socket_error(void)
 {

@@ -12,7 +12,6 @@ typedef socklen_t vb_socklen_t;
 
 #define VB_ALIGN(x) __attribute__((aligned(x)))
 #define VB_INVALID_SOCKET (-1)
-#define SOCKADDR_IN_ADDR sin_addr.s_addr
 
 static int vb_socket_error(void)
 {

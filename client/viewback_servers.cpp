@@ -101,8 +101,8 @@ void CViewbackServersThread::Pump()
 	time_t now;
 	time(&now);
 
-	CServer& server = m_aServers[ntohl(addr.SOCKADDR_IN_ADDR)];
-	server.address = ntohl(addr.SOCKADDR_IN_ADDR);
+	CServer& server = m_aServers[ntohl(addr.sin_addr.s_addr)];
+	server.address = ntohl(addr.sin_addr.s_addr);
 	server.last_ping = now;
 
 	time_t most_recent = 0;

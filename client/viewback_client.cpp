@@ -191,7 +191,9 @@ void CViewbackClient::Update()
 
 		if (best_server)
 		{
-			VBPrintf("Connecting to server at %u ...", (unsigned int)best_server);
+			struct in_addr inaddr;
+			inaddr.s_addr = htonl(best_server);
+			VBPrintf("Connecting to server at %s ...\n", inet_ntoa(inaddr));
 
 			bool bResult = CViewbackDataThread::Run(best_server);
 
