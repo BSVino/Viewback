@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <sys/timeb.h>
+#include <stdarg.h>
 
 #include "../server/viewback_shared.h"
 
