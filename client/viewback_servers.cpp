@@ -64,13 +64,13 @@ bool CViewbackServersThread::Initialize()
 		return false;
 	}
 
+	VBPrintf("Now listening for multicast packets on %s:%d.\n", inet_ntoa(mreq.imr_multiaddr), ntohs(addr.sin_port));
+
 	return true;
 }
 
 void CViewbackServersThread::ThreadMain(CViewbackServersThread* pThis)
 {
-	VBPrintf("Now listening for multicast packets.\n");
-
 	while (true)
 		pThis->Pump();
 }
