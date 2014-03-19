@@ -606,7 +606,11 @@ void vb_debug_printf(const char* format, ...)
 	char buf[1024];
 	va_list ap;
 	va_start(ap, format);
+#ifdef _MSC_VER
+	vsnprintf_s(buf, sizeof(buf), format, ap);
+#else
 	vsnprintf(buf, sizeof(buf), format, ap);
+#endif
 	va_end(ap);
 
 	VB->config.debug_callback(buf);
