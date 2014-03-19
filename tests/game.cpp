@@ -38,7 +38,7 @@ float RemapVal(float flInput, float flInLo, float flInHi, float flOutLo, float f
 	return (((flInput - flInLo) / (flInHi - flInLo)) * (flOutHi - flOutLo)) + flOutLo;
 }
 
-int main()
+int main(int argc, const char** args)
 {
 #ifdef _WIN32
 	WSADATA wsadata;
@@ -50,6 +50,20 @@ int main()
 	vb_config_initialize(&config);
 	config.num_data_registrations = 4;
 	config.num_data_labels = 4;
+
+	for (int i = 1; i < argc; i++)
+	{
+		if (strcmp(args[i], "--port") == 0 && i < argc - 1)
+		{
+			i++;
+			config.port = atoi(args[i]);
+		}
+		else if (strcmp(args[i], "--multicast-group") == 0 && i < argc - 1)
+		{
+			i++;
+			config.multicast_group = args[i];
+		}
+	}
 
 	size_t memory_required = vb_config_get_memory_required(&config);
 

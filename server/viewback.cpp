@@ -32,6 +32,7 @@ void vb_config_initialize(vb_config_t* config)
 {
 	memset(config, 0, sizeof(vb_config_t));
 
+	config->multicast_group = VB_DEFAULT_MULTICAST_ADDRESS;
 	config->port = VB_DEFAULT_PORT;
 	config->max_connections = 4;
 }
@@ -190,7 +191,7 @@ int vb_server_create()
 
 	memset(&VB->multicast_addr, 0, sizeof(VB->multicast_addr));
 	VB->multicast_addr.sin_family = AF_INET;
-	VB->multicast_addr.sin_addr.s_addr = inet_addr(VB_DEFAULT_MULTICAST_ADDRESS);
+	VB->multicast_addr.sin_addr.s_addr = inet_addr(VB->config.multicast_group);
 	VB->multicast_addr.sin_port = htons(VB->config.port);
 	VB->last_multicast = 0;
 
@@ -231,12 +232,8 @@ int vb_server_create()
 	if (listen(VB->tcp_socket, SOMAXCONN) != 0)
 		return 0;
 
-#ifdef _WIN32
-	VBPrintf("Viewback server created on %d.%d.%d.%d:%d (%u).\n",
-		tcp_addr.sin_addr.S_un.S_un_b.s_b1, tcp_addr.sin_addr.S_un.S_un_b.s_b1, tcp_addr.sin_addr.S_un.S_un_b.s_b1, tcp_addr.sin_addr.S_un.S_un_b.s_b1,
-		tcp_addr.sin_port, tcp_addr.sin_addr.S_un.S_addr
-		);
-#endif
+	VBPrintf("Viewback server created on %s:%d (%u).\n", inet_ntoa(tcp_addr.sin_addr), ntohs(tcp_addr.sin_port), tcp_addr.sin_addr.s_addr);
+	VBPrintf("Multicasting to %s:%d.\n", inet_ntoa(VB->multicast_addr.sin_addr), ntohs(VB->multicast_addr.sin_port));
 
 	mc.Success();
 	tc.Success();

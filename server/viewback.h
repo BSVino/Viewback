@@ -38,6 +38,7 @@ extern "C" {
 */
 
 typedef struct {
+	const char* multicast_group;
 	int port;
 	int num_data_registrations;
 	int num_data_labels;
