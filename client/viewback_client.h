@@ -76,6 +76,7 @@ public:
 	void Update();
 
 	bool HasConnection();
+	void FindServer(); // Connect to the first server you can find by multicast.
 	void Disconnect();
 
 	void SendConsoleCommand(const std::string& sCommand);

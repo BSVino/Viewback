@@ -71,6 +71,10 @@ bool CViewbackDataThread::Initialize(unsigned long address)
 	const char registrations[] = "registrations";
 	int bytes_sent = send(m_socket, (const char*)registrations, sizeof(registrations), 0);
 
+	// Any data drops are lying around from last time, so clear them out.
+	s_aDataDrop.clear();
+	s_sCommandDrop.clear();
+
 	s_bConnected = false;
 	s_bDataDropReady = false;
 	s_bCommandDropReady = true;

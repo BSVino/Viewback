@@ -226,6 +226,11 @@ bool CViewbackClient::HasConnection()
 	return CViewbackDataThread::IsConnected();
 }
 
+void CViewbackClient::FindServer()
+{
+	m_bDisconnected = false;
+}
+
 void CViewbackClient::Disconnect()
 {
 	m_bDisconnected = true;
