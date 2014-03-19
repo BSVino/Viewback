@@ -4,17 +4,43 @@
 
 using namespace std;
 
+atomic<bool> CViewbackDataThread::s_bRunning;
 atomic<bool> CViewbackDataThread::s_bConnected;
 vector<Packet> CViewbackDataThread::s_aDataDrop;
 atomic<bool> CViewbackDataThread::s_bDataDropReady;
 string CViewbackDataThread::s_sCommandDrop;
 atomic<bool> CViewbackDataThread::s_bCommandDropReady;
+atomic<bool> CViewbackDataThread::s_bDisconnect;
 
-bool CViewbackDataThread::Run(unsigned long address)
+CViewbackDataThread::CViewbackDataThread()
+{
+	s_bRunning = false;
+}
+
+static CViewbackDataThread& DataThread()
 {
 	static CViewbackDataThread t;
 
-	return t.Initialize(address);
+	return t;
+}
+
+bool CViewbackDataThread::Connect(unsigned long address)
+{
+	if (s_bRunning)
+	{
+		// Another data thread is still running. That is bad. Hopefully we told it to disconnect and we're just waiting on that.
+		VBAssert(s_bDisconnect);
+
+		// If not, make sure that we do.
+		s_bDisconnect = true;
+
+		pthread_join(DataThread().m_iThread, NULL);
+	}
+
+	// We are being ordered to connect to something. Thus, we should not remain disconnected any longer.
+	s_bDisconnect = false;
+
+	return DataThread().Initialize(address);
 }
 
 bool CViewbackDataThread::Initialize(unsigned long address)
@@ -48,6 +74,7 @@ bool CViewbackDataThread::Initialize(unsigned long address)
 	s_bConnected = false;
 	s_bDataDropReady = false;
 	s_bCommandDropReady = true;
+	s_bDisconnect = false;
 
 	if (pthread_create(&m_iThread, NULL, (void *(*) (void *))&CViewbackDataThread::ThreadMain, (void*)this) != 0)
 	{
@@ -63,12 +90,19 @@ bool CViewbackDataThread::Initialize(unsigned long address)
 
 void CViewbackDataThread::ThreadMain(CViewbackDataThread* pThis)
 {
+	s_bRunning = true;
+
 	GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-	while (s_bConnected)
+	while (s_bConnected && !s_bDisconnect)
 		pThis->Pump();
 
+	s_bConnected = false;
+	vb_close_socket(pThis->m_socket);
+
 	google::protobuf::ShutdownProtobufLibrary();
+
+	s_bRunning = false;
 }
 
 #define MSGBUFSIZE 1024
@@ -167,6 +201,15 @@ void CViewbackDataThread::MaintainDrops()
 		// Send it to the server
 		int bytes_sent = send(m_socket, sMessage.c_str(), sMessage.length()+1, 0); // +1 length for the terminal null
 	}
+}
+
+// This function runs as part of the main thread.
+void CViewbackDataThread::Disconnect()
+{
+	s_bDisconnect = true;
+
+	// Don't bother joining the thread here, let it die slowly.
+	// We'll join it if it's still running when we try to connect again.
 }
 
 // This function runs as part of the main thread.

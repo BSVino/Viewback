@@ -76,6 +76,7 @@ public:
 	void Update();
 
 	bool HasConnection();
+	void Disconnect();
 
 	void SendConsoleCommand(const std::string& sCommand);
 	DebugOutputCallback GetDebugOutputCallback() { return m_pfnDebugOutput; }
@@ -124,4 +125,6 @@ private:
 	double m_flTimeReceivedLatestData;
 
 	double m_flDataClearTime;
+
+	bool m_bDisconnected; // Remain disconnected while this is on.
 };
