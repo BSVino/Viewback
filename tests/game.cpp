@@ -18,6 +18,7 @@
 
 #include <string>
 #include <sstream>
+#include <cstring>
 
 using namespace std;
 
@@ -35,7 +36,7 @@ void command_callback(const char* text)
 
 void debug_printf(const char* text)
 {
-	printf(text);
+	printf("%s", text);
 }
 
 
