@@ -18,7 +18,7 @@
 class CViewbackDataThread
 {
 public:
-	static bool Connect(unsigned long address);
+	static bool Connect(unsigned long address, int iPort = 0);
 	static bool IsConnected() { return s_bConnected; }
 	static void Disconnect();
 	static std::vector<Packet> GetData();
@@ -30,7 +30,7 @@ private:
 	friend CViewbackDataThread& DataThread();
 
 private:
-	bool Initialize(unsigned long address);
+	bool Initialize(unsigned long address, int port);
 
 	static void ThreadMain(CViewbackDataThread* pThis);
 

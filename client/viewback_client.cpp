@@ -226,6 +226,13 @@ bool CViewbackClient::HasConnection()
 	return CViewbackDataThread::IsConnected();
 }
 
+void CViewbackClient::Connect(const char* pszIP, int iPort)
+{
+	CViewbackDataThread::Disconnect();
+	m_bDisconnected = false;
+	CViewbackDataThread::Connect(ntohl(inet_addr(pszIP)), iPort);
+}
+
 void CViewbackClient::FindServer()
 {
 	m_bDisconnected = false;

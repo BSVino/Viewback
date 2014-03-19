@@ -76,6 +76,7 @@ public:
 	void Update();
 
 	bool HasConnection();
+	void Connect(const char* pszIP, int iPort); // Does not resolve hostnames, pass an IP.
 	void FindServer(); // Connect to the first server you can find by multicast.
 	void Disconnect();
 

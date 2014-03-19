@@ -24,7 +24,7 @@ static CViewbackDataThread& DataThread()
 	return t;
 }
 
-bool CViewbackDataThread::Connect(unsigned long address)
+bool CViewbackDataThread::Connect(unsigned long address, int port)
 {
 	if (s_bRunning)
 	{
@@ -40,10 +40,10 @@ bool CViewbackDataThread::Connect(unsigned long address)
 	// We are being ordered to connect to something. Thus, we should not remain disconnected any longer.
 	s_bDisconnect = false;
 
-	return DataThread().Initialize(address);
+	return DataThread().Initialize(address, port);
 }
 
-bool CViewbackDataThread::Initialize(unsigned long address)
+bool CViewbackDataThread::Initialize(unsigned long address, int port)
 {
 	u_int yes=1;
 
@@ -59,13 +59,15 @@ bool CViewbackDataThread::Initialize(unsigned long address)
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family=AF_INET;
 	addr.sin_addr.s_addr=htonl(address);
-	addr.sin_port=htons(VB_DEFAULT_PORT);
+	addr.sin_port=htons(port == 0?VB_DEFAULT_PORT:port);
 
 	if (connect(m_socket, (struct sockaddr *)&addr, sizeof(addr)) < 0)
 	{
-		VBPrintf("Could not create connect to viewback server.\n");
+		VBPrintf("Could not connect to viewback server.\n");
 		return false;
 	}
+
+	VBPrintf("Connected to Viewback server at %s:%d.\n", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
 
 	// Start by requesting a list of data registrations from the server.
 	const char registrations[] = "registrations";
