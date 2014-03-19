@@ -20,7 +20,10 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 #include <malloc.h>
 #include <time.h>
 #include <string.h>
+
+#ifdef __linux__
 #include <alloca.h>
+#endif
 
 #include "viewback_shared.h"
 #include "viewback_internal.h"
