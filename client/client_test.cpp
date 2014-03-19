@@ -13,6 +13,11 @@ void ConsoleOutput(const char* pszOutput)
 	printf("Console output: %s", pszOutput);
 }
 
+void DebugOutput(const char* pszOutput)
+{
+	printf("Console output: %s", pszOutput);
+}
+
 int main()
 {
 #ifdef _WIN32
@@ -27,7 +32,7 @@ int main()
 
 	CViewbackClient vb;
 
-	if (!vb.Initialize(NULL, &ConsoleOutput))
+	if (!vb.Initialize(NULL, &ConsoleOutput, DebugOutput))
 		return 1;
 
 	time_t last_time;

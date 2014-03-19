@@ -21,6 +21,7 @@ set (CLIENT_TEST_SOURCES
 )
 
 add_definitions(-D_SCL_SECURE_NO_WARNINGS)
+add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 add_definitions(-DPTW32_STATIC_LIB)
 
 add_executable (client_test ${CLIENT_TEST_SOURCES})

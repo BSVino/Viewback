@@ -10,13 +10,32 @@
 
 using namespace std;
 
-bool CViewbackClient::Initialize(RegistrationUpdateCallback pfnRegistration, ConsoleOutputCallback pfnConsoleOutput)
+static CViewbackClient* VB = NULL;
+
+void vb_debug_printf(const char* format, ...)
 {
+	if (!VB->GetDebugOutputCallback())
+		return;
+
+	char buf[1024];
+	va_list ap;
+	va_start(ap, format);
+	vsnprintf(buf, sizeof(buf), format, ap);
+	va_end(ap);
+
+	VB->GetDebugOutputCallback()(buf);
+}
+
+bool CViewbackClient::Initialize(RegistrationUpdateCallback pfnRegistration, ConsoleOutputCallback pfnConsoleOutput, DebugOutputCallback pfnDebugOutput)
+{
+	VB = this;
+
 	m_flNextDataClear = 10;
 	m_flDataClearTime = 0;
 
 	m_pfnRegistrationUpdate = pfnRegistration;
 	m_pfnConsoleOutput = pfnConsoleOutput;
+	m_pfnDebugOutput = pfnDebugOutput;
 
 	return CViewbackServersThread::Run();
 }

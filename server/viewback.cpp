@@ -20,6 +20,7 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 #include <malloc.h>
 #include <time.h>
 #include <string.h>
+#include <stdio.h>
 
 #ifdef __linux__
 #include <alloca.h>
@@ -596,6 +597,23 @@ int vb_status_set(const char* text)
 
 	return 1;
 }
+
+void vb_debug_printf(const char* format, ...)
+{
+	if (!VB->config.debug_callback)
+		return;
+
+	char buf[1024];
+	va_list ap;
+	va_start(ap, format);
+	vsnprintf(buf, sizeof(buf), format, ap);
+	va_end(ap);
+
+	VB->config.debug_callback(buf);
+}
+
+
+
 
 
 

@@ -37,12 +37,15 @@ extern "C" {
 	Refer to the readme for more information.
 */
 
+typedef void(*vb_debug_callback)(const char* text);
+
 typedef struct {
 	const char* multicast_group;
 	int port;
 	int num_data_registrations;
 	int num_data_labels;
 	int max_connections;
+	vb_debug_callback debug_callback;
 } vb_config_t;
 
 typedef int vb_data_handle_t;

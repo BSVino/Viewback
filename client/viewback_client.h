@@ -61,6 +61,7 @@ public:
 };
 
 typedef void(*ConsoleOutputCallback)(const char*);
+typedef void(*DebugOutputCallback)(const char*);
 typedef void(*RegistrationUpdateCallback)();
 
 class CViewbackClient
@@ -70,13 +71,14 @@ public:
 	// http://anandtechblog.blogspot.com.es/2011/11/multicast-udp-reciever-in-android.html
 	// http://codeisland.org/2012/udp-multicast-on-android/
 	// Viewback will not do this for you.
-	bool Initialize(RegistrationUpdateCallback pfnRegistration, ConsoleOutputCallback pfnConsoleOutput);
+	bool Initialize(RegistrationUpdateCallback pfnRegistration, ConsoleOutputCallback pfnConsoleOutput, DebugOutputCallback pfnDebugOutput = NULL);
 
 	void Update();
 
 	bool HasConnection();
 
 	void SendConsoleCommand(const std::string& sCommand);
+	DebugOutputCallback GetDebugOutputCallback() { return m_pfnDebugOutput; }
 
 	inline const std::vector<CViewbackDataRegistration>& GetRegistrations() const { return m_aDataRegistrations; }
 	inline const std::vector<CViewbackDataList>& GetData() const { return m_aData; } // DO NOT STORE without copying, this may be wiped at any time.
@@ -110,6 +112,7 @@ private:
 
 	RegistrationUpdateCallback m_pfnRegistrationUpdate;
 	ConsoleOutputCallback      m_pfnConsoleOutput;
+	DebugOutputCallback        m_pfnDebugOutput;
 
 	std::string m_sStatus;
 

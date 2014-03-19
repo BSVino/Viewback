@@ -33,6 +33,12 @@ void command_callback(const char* text)
 	vb_console_append(s.c_str());
 }
 
+void debug_printf(const char* text)
+{
+	printf(text);
+}
+
+
 float RemapVal(float flInput, float flInLo, float flInHi, float flOutLo, float flOutHi)
 {
 	return (((flInput - flInLo) / (flInHi - flInLo)) * (flOutHi - flOutLo)) + flOutLo;
@@ -50,6 +56,7 @@ int main(int argc, const char** args)
 	vb_config_initialize(&config);
 	config.num_data_registrations = 4;
 	config.num_data_labels = 4;
+	config.debug_callback = &debug_printf;
 
 	for (int i = 1; i < argc; i++)
 	{
