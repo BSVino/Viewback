@@ -27,7 +27,7 @@ public:
 
 private:
 	CViewbackDataThread();
-	friend CViewbackDataThread& DataThread();
+	static CViewbackDataThread& DataThread();
 
 private:
 	bool Initialize(unsigned long address, int port);

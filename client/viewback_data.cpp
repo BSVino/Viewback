@@ -17,7 +17,7 @@ CViewbackDataThread::CViewbackDataThread()
 	s_bRunning = false;
 }
 
-static CViewbackDataThread& DataThread()
+CViewbackDataThread& CViewbackDataThread::DataThread()
 {
 	static CViewbackDataThread t;
 
