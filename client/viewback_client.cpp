@@ -38,6 +38,8 @@ bool CViewbackClient::Initialize(RegistrationUpdateCallback pfnRegistration, Con
 	m_pfnConsoleOutput = pfnConsoleOutput;
 	m_pfnDebugOutput = pfnDebugOutput;
 
+	m_bDisconnected = false;
+
 	return CViewbackServersThread::Run();
 }
 
@@ -190,13 +192,13 @@ void CViewbackClient::Update()
 
 		unsigned long best_server = CViewbackServersThread::GetServer();
 
-		if (best_server)
+		if (!m_bDisconnected && best_server)
 		{
 			struct in_addr inaddr;
 			inaddr.s_addr = htonl(best_server);
 			VBPrintf("Connecting to server at %s ...\n", inet_ntoa(inaddr));
 
-			bool bResult = CViewbackDataThread::Run(best_server);
+			bool bResult = CViewbackDataThread::Connect(best_server);
 
 			if (bResult)
 				VBPrintf("Success.\n");
@@ -222,6 +224,24 @@ void CViewbackClient::Update()
 bool CViewbackClient::HasConnection()
 {
 	return CViewbackDataThread::IsConnected();
+}
+
+void CViewbackClient::Connect(const char* pszIP, int iPort)
+{
+	CViewbackDataThread::Disconnect();
+	m_bDisconnected = false;
+	CViewbackDataThread::Connect(ntohl(inet_addr(pszIP)), iPort);
+}
+
+void CViewbackClient::FindServer()
+{
+	m_bDisconnected = false;
+}
+
+void CViewbackClient::Disconnect()
+{
+	m_bDisconnected = true;
+	CViewbackDataThread::Disconnect();
 }
 
 void CViewbackClient::SendConsoleCommand(const string& sCommand)

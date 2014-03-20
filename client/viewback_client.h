@@ -76,6 +76,9 @@ public:
 	void Update();
 
 	bool HasConnection();
+	void Connect(const char* pszIP, int iPort); // Does not resolve hostnames, pass an IP.
+	void FindServer(); // Connect to the first server you can find by multicast.
+	void Disconnect();
 
 	void SendConsoleCommand(const std::string& sCommand);
 	DebugOutputCallback GetDebugOutputCallback() { return m_pfnDebugOutput; }
@@ -124,4 +127,6 @@ private:
 	double m_flTimeReceivedLatestData;
 
 	double m_flDataClearTime;
+
+	bool m_bDisconnected; // Remain disconnected while this is on.
 };

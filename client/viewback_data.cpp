@@ -4,20 +4,46 @@
 
 using namespace std;
 
+atomic<bool> CViewbackDataThread::s_bRunning;
 atomic<bool> CViewbackDataThread::s_bConnected;
 vector<Packet> CViewbackDataThread::s_aDataDrop;
 atomic<bool> CViewbackDataThread::s_bDataDropReady;
 string CViewbackDataThread::s_sCommandDrop;
 atomic<bool> CViewbackDataThread::s_bCommandDropReady;
+atomic<bool> CViewbackDataThread::s_bDisconnect;
 
-bool CViewbackDataThread::Run(unsigned long address)
+CViewbackDataThread::CViewbackDataThread()
+{
+	s_bRunning = false;
+}
+
+CViewbackDataThread& CViewbackDataThread::DataThread()
 {
 	static CViewbackDataThread t;
 
-	return t.Initialize(address);
+	return t;
 }
 
-bool CViewbackDataThread::Initialize(unsigned long address)
+bool CViewbackDataThread::Connect(unsigned long address, int port)
+{
+	if (s_bRunning)
+	{
+		// Another data thread is still running. That is bad. Hopefully we told it to disconnect and we're just waiting on that.
+		VBAssert(s_bDisconnect);
+
+		// If not, make sure that we do.
+		s_bDisconnect = true;
+
+		pthread_join(DataThread().m_iThread, NULL);
+	}
+
+	// We are being ordered to connect to something. Thus, we should not remain disconnected any longer.
+	s_bDisconnect = false;
+
+	return DataThread().Initialize(address, port);
+}
+
+bool CViewbackDataThread::Initialize(unsigned long address, int port)
 {
 	u_int yes=1;
 
@@ -33,21 +59,28 @@ bool CViewbackDataThread::Initialize(unsigned long address)
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family=AF_INET;
 	addr.sin_addr.s_addr=htonl(address);
-	addr.sin_port=htons(VB_DEFAULT_PORT);
+	addr.sin_port=htons(port == 0?VB_DEFAULT_PORT:port);
 
 	if (connect(m_socket, (struct sockaddr *)&addr, sizeof(addr)) < 0)
 	{
-		VBPrintf("Could not create connect to viewback server.\n");
+		VBPrintf("Could not connect to viewback server.\n");
 		return false;
 	}
+
+	VBPrintf("Connected to Viewback server at %s:%d.\n", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
 
 	// Start by requesting a list of data registrations from the server.
 	const char registrations[] = "registrations";
 	int bytes_sent = send(m_socket, (const char*)registrations, sizeof(registrations), 0);
 
+	// Any data drops are lying around from last time, so clear them out.
+	s_aDataDrop.clear();
+	s_sCommandDrop.clear();
+
 	s_bConnected = false;
 	s_bDataDropReady = false;
 	s_bCommandDropReady = true;
+	s_bDisconnect = false;
 
 	if (pthread_create(&m_iThread, NULL, (void *(*) (void *))&CViewbackDataThread::ThreadMain, (void*)this) != 0)
 	{
@@ -63,12 +96,19 @@ bool CViewbackDataThread::Initialize(unsigned long address)
 
 void CViewbackDataThread::ThreadMain(CViewbackDataThread* pThis)
 {
+	s_bRunning = true;
+
 	GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-	while (s_bConnected)
+	while (s_bConnected && !s_bDisconnect)
 		pThis->Pump();
 
+	s_bConnected = false;
+	vb_close_socket(pThis->m_socket);
+
 	google::protobuf::ShutdownProtobufLibrary();
+
+	s_bRunning = false;
 }
 
 #define MSGBUFSIZE 1024
@@ -167,6 +207,15 @@ void CViewbackDataThread::MaintainDrops()
 		// Send it to the server
 		int bytes_sent = send(m_socket, sMessage.c_str(), sMessage.length()+1, 0); // +1 length for the terminal null
 	}
+}
+
+// This function runs as part of the main thread.
+void CViewbackDataThread::Disconnect()
+{
+	s_bDisconnect = true;
+
+	// Don't bother joining the thread here, let it die slowly.
+	// We'll join it if it's still running when we try to connect again.
 }
 
 // This function runs as part of the main thread.
