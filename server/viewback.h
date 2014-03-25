@@ -37,18 +37,56 @@ extern "C" {
 	Refer to the readme for more information.
 */
 
-typedef void(*vb_debug_callback)(const char* text);
+typedef void(*vb_debug_output_callback)(const char* text);
+typedef void(*vb_command_callback)(const char* text);
 
 typedef struct {
+
+	/*
+		Must be a valid IP group eg "239.127.251.37" If this is NULL the
+		default will be used. You should probably leave it NULL unless your
+		network is special. See: http://en.wikipedia.org/wiki/Multicast_address
+	*/
 	const char* multicast_group;
-	int port;
-	int num_data_registrations;
-	int num_data_labels;
-	int max_connections;
-	vb_debug_callback debug_callback;
+
+	/*
+		This port will be used for UDP multicast and for the TCP connections.
+	*/
+	unsigned short port;
+
+	/*
+		How many different types of data you would like to send to the monitor.
+	*/
+	size_t num_data_registrations;
+
+	/*
+		Some data can carry labels for when the data is a certain value.
+		EG 0 means off, 1 - loading, 2 - initializing, 3 - running,
+		4 - shutting down. This is the max number of labels for all data.
+	*/
+	size_t num_data_labels;
+
+	/*
+		How many viewback monitors will be able to connect. Should be at
+		least 1, but more monitors are cheap so more doesn't hurt.
+	*/
+	unsigned char max_connections;
+
+	/*
+		This function will be called by Viewback any time a command comes in
+		from the client to run. It should be passed into the game's console.
+	*/
+	vb_command_callback command_callback;
+
+	/*
+		This function is for the purposes of debugging Viewback. It will be
+		called whenever Viewback has debug output. You'll usually want it off
+		unless you're developing Viewback or having problems setting it up.
+	*/
+	vb_debug_output_callback debug_output_callback;
 } vb_config_t;
 
-typedef int vb_data_handle_t;
+typedef unsigned int vb_data_handle_t;
 
 /* If you change this, update it in viewback.proto as well. */
 typedef enum
@@ -58,8 +96,6 @@ typedef enum
 	VB_DATATYPE_FLOAT = 2,
 	VB_DATATYPE_VECTOR = 3,
 } vb_data_type_t;
-
-typedef void (*vb_command_callback)(const char* text);
 
 /*
 	A good idea (but not required) to pass your config in here first to make
@@ -113,7 +149,9 @@ void vb_server_update(double current_time_seconds);
 
 /*
 	Closes all sockets. After shutdown you can add more registrations or reset
-	the config (which removes all registrations) if you like.
+	the config (which removes all registrations) if you like. After calling this
+	Viewback no longer uses the memory you passed it, so you can free it if
+	you won't be using Viewback anymore.
 */
 void vb_server_shutdown();
 
@@ -130,12 +168,6 @@ int vb_data_send_vector(vb_data_handle_t handle, float x, float y, float z);
 	display in the monitor.
 */
 int vb_console_append(const char* text);
-
-/*
-	This function will be called by Viewback any time a command comes in from
-	the client to run.
-*/
-int vb_console_register_command_callback(vb_command_callback cmd);
 
 /*
 	Set the status text. Unlike the console, the status text doesn't append,

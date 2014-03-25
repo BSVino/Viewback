@@ -31,6 +31,7 @@ void command_callback(const char* text)
 
 	printf("From client: %s", s.c_str());
 
+	// Send it back down the wire as console output so that the monitor can see it arrived.
 	vb_console_append(s.c_str());
 }
 
@@ -57,7 +58,8 @@ int main(int argc, const char** args)
 	vb_config_initialize(&config);
 	config.num_data_registrations = 4;
 	config.num_data_labels = 4;
-	config.debug_callback = &debug_printf;
+	config.debug_output_callback = &debug_printf;
+	config.command_callback = &command_callback;
 
 	for (int i = 1; i < argc; i++)
 	{
@@ -105,12 +107,6 @@ int main(int argc, const char** args)
 		!vb_data_label(vb_player, 3, "Philosophical"))
 	{
 		printf("Couldn't register labels\n");
-		return 1;
-	}
-
-	if (!vb_console_register_command_callback(&command_callback))
-	{
-		printf("Couldn't register console callback\n");
 		return 1;
 	}
 

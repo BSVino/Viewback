@@ -93,15 +93,13 @@ typedef struct
 	vb_socket_t        tcp_socket;
 
 	vb_data_registration_t* registrations;
-	int                     next_registration;
+	size_t                  next_registration;
 
 	vb_data_label_t* labels;
-	int              next_label;
+	size_t           next_label;
 
 	vb_connection_t* connections;
 	bool             server_active;
-
-	vb_command_callback command_callback;
 
 	double current_time;
 } vb_t;

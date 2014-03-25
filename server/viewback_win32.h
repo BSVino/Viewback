@@ -43,8 +43,3 @@ static int vb_is_blocking_error(int error)
 {
 	return WSAEWOULDBLOCK == error;
 }
-
-static void vb_strncpy(char* dest, size_t dest_size, const char* source, size_t count)
-{
-	strncpy_s(dest, dest_size, source, count);
-}
