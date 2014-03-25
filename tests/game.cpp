@@ -110,6 +110,8 @@ int main(int argc, const char** args)
 		return 1;
 	}
 
+	// if (!vb_data_set_range(vb_health, 0, 150)) {}
+
 	if (!vb_server_create())
 	{
 		printf("Couldn't create Viewback server\n");

@@ -9,9 +9,17 @@
 class CViewbackDataRegistration
 {
 public:
+	CViewbackDataRegistration()
+	{
+		m_flMin = m_flMax = 0;
+	}
+
+public:
 	unsigned int   m_iHandle;
 	std::string    m_sFieldName;
 	vb_data_type_t m_eDataType;
+	float          m_flMin;
+	float          m_flMax;
 
 	std::map<int, std::string> m_asLabels;
 };

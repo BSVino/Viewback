@@ -89,6 +89,12 @@ void CViewbackClient::Update()
 					oRegistration.m_sFieldName = oRegistrationProtobuf.field_name();
 					oRegistration.m_eDataType = oRegistrationProtobuf.type();
 
+					if (oRegistrationProtobuf.has_range_min())
+						oRegistration.m_flMin = oRegistrationProtobuf.range_min();
+
+					if (oRegistrationProtobuf.has_range_max())
+						oRegistration.m_flMax = oRegistrationProtobuf.range_max();
+
 					m_aMeta[oRegistrationProtobuf.handle()].m_clrColor = aclrColors[j % iColorsSize];
 				}
 

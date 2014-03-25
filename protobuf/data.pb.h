@@ -282,6 +282,20 @@ class DataRegistration : public ::google::protobuf::Message {
   inline ::google::protobuf::uint32 handle() const;
   inline void set_handle(::google::protobuf::uint32 value);
 
+  // optional float range_min = 4;
+  inline bool has_range_min() const;
+  inline void clear_range_min();
+  static const int kRangeMinFieldNumber = 4;
+  inline float range_min() const;
+  inline void set_range_min(float value);
+
+  // optional float range_max = 5;
+  inline bool has_range_max() const;
+  inline void clear_range_max();
+  static const int kRangeMaxFieldNumber = 5;
+  inline float range_max() const;
+  inline void set_range_max(float value);
+
   // @@protoc_insertion_point(class_scope:DataRegistration)
  private:
   inline void set_has_field_name();
@@ -290,15 +304,21 @@ class DataRegistration : public ::google::protobuf::Message {
   inline void clear_has_type();
   inline void set_has_handle();
   inline void clear_has_handle();
+  inline void set_has_range_min();
+  inline void clear_has_range_min();
+  inline void set_has_range_max();
+  inline void clear_has_range_max();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
   ::std::string* field_name_;
   int type_;
   ::google::protobuf::uint32 handle_;
+  float range_min_;
+  float range_max_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(3 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(5 + 31) / 32];
 
   friend void  protobuf_AddDesc_protobuf_2fdata_2eproto();
   friend void protobuf_AssignDesc_protobuf_2fdata_2eproto();
@@ -832,6 +852,50 @@ inline ::google::protobuf::uint32 DataRegistration::handle() const {
 inline void DataRegistration::set_handle(::google::protobuf::uint32 value) {
   set_has_handle();
   handle_ = value;
+}
+
+// optional float range_min = 4;
+inline bool DataRegistration::has_range_min() const {
+  return (_has_bits_[0] & 0x00000008u) != 0;
+}
+inline void DataRegistration::set_has_range_min() {
+  _has_bits_[0] |= 0x00000008u;
+}
+inline void DataRegistration::clear_has_range_min() {
+  _has_bits_[0] &= ~0x00000008u;
+}
+inline void DataRegistration::clear_range_min() {
+  range_min_ = 0;
+  clear_has_range_min();
+}
+inline float DataRegistration::range_min() const {
+  return range_min_;
+}
+inline void DataRegistration::set_range_min(float value) {
+  set_has_range_min();
+  range_min_ = value;
+}
+
+// optional float range_max = 5;
+inline bool DataRegistration::has_range_max() const {
+  return (_has_bits_[0] & 0x00000010u) != 0;
+}
+inline void DataRegistration::set_has_range_max() {
+  _has_bits_[0] |= 0x00000010u;
+}
+inline void DataRegistration::clear_has_range_max() {
+  _has_bits_[0] &= ~0x00000010u;
+}
+inline void DataRegistration::clear_range_max() {
+  range_max_ = 0;
+  clear_has_range_max();
+}
+inline float DataRegistration::range_max() const {
+  return range_max_;
+}
+inline void DataRegistration::set_range_max(float value) {
+  set_has_range_max();
+  range_max_ = value;
 }
 
 // -------------------------------------------------------------------

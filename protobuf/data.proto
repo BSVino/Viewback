@@ -28,6 +28,8 @@ message DataRegistration {
 	optional string field_name   = 1;
 	optional vb_data_type_t type = 2;
 	optional uint32 handle       = 3;
+	optional float range_min     = 4;
+	optional float range_max     = 5;
 }
 
 message DataLabel {

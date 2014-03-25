@@ -29,6 +29,8 @@ struct DataRegistration {
 	const char*    _field_name;
 	vb_data_type_t _type;
 	unsigned long  _handle;
+	float          _min;
+	float          _max;
 };
 
 struct DataLabel {
@@ -69,6 +71,8 @@ typedef struct
 {
 	const char*    name;
 	vb_data_type_t type;
+	float          range_min;
+	float          range_max;
 } vb_data_registration_t;
 
 typedef struct

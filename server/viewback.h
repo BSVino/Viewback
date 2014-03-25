@@ -137,6 +137,13 @@ int vb_data_label(vb_data_handle_t handle, int value, const char* label);
 int vb_data_get_label(vb_data_handle_t handle, int value, /*out*/ const char** label);
 
 /*
+	If you set this, the monitor will fix the range to the specified values.
+	Otherwise the chart will automatically fit the window. For vector data,
+	only the max is used.
+*/
+int vb_data_set_range(vb_data_handle_t handle, float min, float max);
+
+/*
 	After registering all of your data, call this to start up the server.
 */
 int vb_server_create();

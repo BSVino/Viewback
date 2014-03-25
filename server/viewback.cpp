@@ -80,9 +80,9 @@ int vb_config_install(vb_config_t* config, void* memory, size_t memory_size)
 	if (VB && VB->server_active)
 		return 0;
 
-	VB = (vb_t*)memory;
+	memset(memory, 0, memory_size);
 
-	memset(VB, 0, sizeof(VB));
+	VB = (vb_t*)memory;
 
 	VB->config = *config;
 
@@ -182,6 +182,23 @@ int vb_data_get_label(vb_data_handle_t handle, int value, const char** label)
 	}
 
 	return false;
+}
+
+int vb_data_set_range(vb_data_handle_t handle, float min, float max)
+{
+	if (!VB)
+		return 0;
+
+	if (handle < 0 || handle >= VB->next_registration)
+		return 0;
+
+	if (VB->server_active)
+		return 0;
+
+	VB->registrations[handle].range_min = min;
+	VB->registrations[handle].range_max = max;
+
+	return 1;
 }
 
 int vb_server_create()
@@ -692,6 +709,16 @@ int write_raw_varint32(unsigned long value, void *_buffer, int offset)
 	return offset;
 }
 
+#define PB_WIRE_TYPE_VARINT           0
+#define PB_WIRE_TYPE_64BIT            1
+#define PB_WIRE_TYPE_LENGTH_DELIMITED 2
+#define PB_WIRE_TYPE_32BIT            5
+
+int write_wire_format(unsigned long field_number, unsigned char wire_type, void *_buffer, int offset)
+{
+	return write_raw_varint32((field_number << 3) + wire_type, _buffer, offset);
+}
+
 int write_raw_little_endian32(unsigned long value, void *_buffer, int offset)
 {
 	offset = write_raw_byte((char)((value      ) & 0xFF), _buffer, offset);
@@ -719,7 +746,7 @@ int write_raw_little_endian64(unsigned long long value, void *_buffer, int offse
 int vb_data_type_t_write_with_tag(vb_data_type_t *_vb_data_type_t, void *_buffer, int offset, int tag)
 {
 	/* Write tag.*/
-	offset = write_raw_varint32((tag<<3)+0, _buffer, offset);
+	offset = write_wire_format(tag, PB_WIRE_TYPE_VARINT, _buffer, offset);
 	/* Write content.*/
 	offset = write_raw_varint32(*_vb_data_type_t, _buffer, offset);
 
@@ -729,12 +756,12 @@ int vb_data_type_t_write_with_tag(vb_data_type_t *_vb_data_type_t, void *_buffer
 int Data_write(struct Data *_Data, void *_buffer, int offset)
 {
 	/* Always write the handle */
-	offset = write_raw_varint32((1<<3)+0, _buffer, offset);
+	offset = write_wire_format(1, PB_WIRE_TYPE_VARINT, _buffer, offset);
 	offset = write_raw_varint32(_Data->_handle, _buffer, offset);
 
 	if (_Data->_type == VB_DATATYPE_INT)
 	{
-		offset = write_raw_varint32((3<<3)+0, _buffer, offset);
+		offset = write_wire_format(3, PB_WIRE_TYPE_VARINT, _buffer, offset);
 		offset = write_raw_varint32(_Data->_data_int, _buffer, offset);
 	}
 
@@ -742,7 +769,7 @@ int Data_write(struct Data *_Data, void *_buffer, int offset)
 	{
 		unsigned long *data_float_ptr = (unsigned long *)&_Data->_data_float;
 
-		offset = write_raw_varint32((4<<3)+5, _buffer, offset);
+		offset = write_wire_format(4, PB_WIRE_TYPE_32BIT, _buffer, offset);
 		offset = write_raw_little_endian32(*data_float_ptr, _buffer, offset);
 	}
 
@@ -752,18 +779,18 @@ int Data_write(struct Data *_Data, void *_buffer, int offset)
 		unsigned long *data_float_y_ptr = (unsigned long *)&_Data->_data_float_y;
 		unsigned long *data_float_z_ptr = (unsigned long *)&_Data->_data_float_z;
 
-		offset = write_raw_varint32((5<<3)+5, _buffer, offset);
+		offset = write_wire_format(5, PB_WIRE_TYPE_32BIT, _buffer, offset);
 		offset = write_raw_little_endian32(*data_float_x_ptr, _buffer, offset);
 
-		offset = write_raw_varint32((6<<3)+5, _buffer, offset);
+		offset = write_wire_format(6, PB_WIRE_TYPE_32BIT, _buffer, offset);
 		offset = write_raw_little_endian32(*data_float_y_ptr, _buffer, offset);
 
-		offset = write_raw_varint32((7<<3)+5, _buffer, offset);
+		offset = write_wire_format(7, PB_WIRE_TYPE_32BIT, _buffer, offset);
 		offset = write_raw_little_endian32(*data_float_z_ptr, _buffer, offset);
 	}
 
 	unsigned long long *data_time = (unsigned long long *)&_Data->_time;
-	offset = write_raw_varint32((8 << 3) + 1, _buffer, offset);
+	offset = write_wire_format(8, PB_WIRE_TYPE_64BIT, _buffer, offset);
 	offset = write_raw_little_endian64(*data_time, _buffer, offset);
 
 	return offset;
@@ -787,7 +814,7 @@ int Data_write_delimited_to(struct Data *_Data, void *_buffer, int offset)
 int Data_write_with_tag(struct Data *_Data, void *_buffer, int offset, int tag)
 {
 	/* Write tag.*/
-	offset = write_raw_varint32((tag<<3)+2, _buffer, offset);
+	offset = write_wire_format(tag, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
 	/* Write content.*/
 	offset = Data_write_delimited_to(_Data, _buffer, offset);
 
@@ -803,15 +830,27 @@ int DataRegistration_write(struct DataRegistration *_DataRegistration, void *_bu
 
 	if (_DataRegistration->_field_name_len != 1 || _DataRegistration->_field_name[0] != '0')
 	{
-		offset = write_raw_varint32((1<<3)+2, _buffer, offset);
+		offset = write_wire_format(1, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
 		offset = write_raw_varint32(_DataRegistration->_field_name_len, _buffer, offset);
 		offset = write_raw_bytes(_DataRegistration->_field_name, _DataRegistration->_field_name_len, _buffer, offset);
 	}
 
 	offset = vb_data_type_t_write_with_tag(&_DataRegistration->_type, _buffer, offset, 2);
 
-	offset = write_raw_varint32((3<<3)+0, _buffer, offset);
+	offset = write_wire_format(3, PB_WIRE_TYPE_VARINT, _buffer, offset);
 	offset = write_raw_varint32(_DataRegistration->_handle, _buffer, offset);
+
+	if (_DataRegistration->_min != 0 || _DataRegistration->_max != 0)
+	{
+		unsigned long *min_ptr = (unsigned long *)&_DataRegistration->_min;
+		unsigned long *max_ptr = (unsigned long *)&_DataRegistration->_max;
+
+		offset = write_wire_format(4, PB_WIRE_TYPE_32BIT, _buffer, offset);
+		offset = write_raw_little_endian32(*min_ptr, _buffer, offset);
+
+		offset = write_wire_format(5, PB_WIRE_TYPE_32BIT, _buffer, offset);
+		offset = write_raw_little_endian32(*max_ptr, _buffer, offset);
+	}
 
 	return offset;
 }
@@ -822,15 +861,15 @@ int DataLabel_write(struct DataLabel *_DataLabel, void *_buffer, int offset)
 	VBAssert(_DataLabel->_field_name);
 	VBAssert(_DataLabel->_field_name[0]);
 
-	offset = write_raw_varint32((1 << 3) + 0, _buffer, offset);
+	offset = write_wire_format(1, PB_WIRE_TYPE_VARINT, _buffer, offset);
 	offset = write_raw_varint32(_DataLabel->_handle, _buffer, offset);
 
-	offset = write_raw_varint32((2 << 3) + 0, _buffer, offset);
+	offset = write_wire_format(2, PB_WIRE_TYPE_VARINT, _buffer, offset);
 	offset = write_raw_varint32(_DataLabel->_value, _buffer, offset);
 
 	if (_DataLabel->_field_name_len != 1 || _DataLabel->_field_name[0] != '0')
 	{
-		offset = write_raw_varint32((3 << 3) + 2, _buffer, offset);
+		offset = write_wire_format(3, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
 		offset = write_raw_varint32(_DataLabel->_field_name_len, _buffer, offset);
 		offset = write_raw_bytes(_DataLabel->_field_name, _DataLabel->_field_name_len, _buffer, offset);
 	}
@@ -871,7 +910,7 @@ int DataLabel_write_delimited_to(struct DataLabel *_DataLabel, void *_buffer, in
 int DataRegistration_write_with_tag(struct DataRegistration *_DataRegistration, void *_buffer, int offset, int tag)
 {
 	/* Write tag.*/
-	offset = write_raw_varint32((tag<<3)+2, _buffer, offset);
+	offset = write_wire_format(tag, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
 	/* Write content.*/
 	offset = DataRegistration_write_delimited_to(_DataRegistration, _buffer, offset);
 
@@ -881,7 +920,7 @@ int DataRegistration_write_with_tag(struct DataRegistration *_DataRegistration, 
 int DataLabel_write_with_tag(struct DataLabel *_DataLabel, void *_buffer, int offset, int tag)
 {
 	/* Write tag.*/
-	offset = write_raw_varint32((tag << 3) + 2, _buffer, offset);
+	offset = write_wire_format(tag, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
 	/* Write content.*/
 	offset = DataLabel_write_delimited_to(_DataLabel, _buffer, offset);
 
@@ -911,14 +950,14 @@ int Packet_write(struct Packet *_Packet, void *_buffer, int offset)
 
 	if (_Packet->_console_output_len && _Packet->_console_output && _Packet->_console_output[0])
 	{
-		offset = write_raw_varint32((4 << 3) + 2, _buffer, offset);
+		offset = write_wire_format(4, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
 		offset = write_raw_varint32(_Packet->_console_output_len, _buffer, offset);
 		offset = write_raw_bytes(_Packet->_console_output, _Packet->_console_output_len, _buffer, offset);
 	}
 
 	if (_Packet->_status_len && _Packet->_status && _Packet->_status[0])
 	{
-		offset = write_raw_varint32((5 << 3) + 2, _buffer, offset);
+		offset = write_wire_format(5, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
 		offset = write_raw_varint32(_Packet->_status_len, _buffer, offset);
 		offset = write_raw_bytes(_Packet->_status, _Packet->_status_len, _buffer, offset);
 	}
@@ -963,6 +1002,8 @@ void Packet_initialize_registrations(struct Packet* packet, struct DataRegistrat
 		data_reg[i]._field_name_len = strlen(VB->registrations[i].name);
 		data_reg[i]._handle = i;
 		data_reg[i]._type = VB->registrations[i].type;
+		data_reg[i]._min = VB->registrations[i].range_min;
+		data_reg[i]._max = VB->registrations[i].range_max;
 	}
 
 	VBAssert(labels == VB->next_label);
@@ -1028,6 +1069,12 @@ size_t Packet_get_message_size(struct Packet *_Packet)
 
 			size += 1; // One byte for "name" field number and wire type.
 			size += 4; // 4 bytes to support really long strings.
+
+			size += 1; // One byte for "min" field number and wire type.
+			size += 4; // 4 bytes for a float.
+
+			size += 1; // One byte for the "max" number and wire type.
+			size += 4; // 4 bytes for a float.
 
 			// Add on the size for each string.
 			size += _Packet->_data_registrations[i]._field_name_len;
