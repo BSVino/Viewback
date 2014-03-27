@@ -56,7 +56,9 @@ int main(int argc, const char** args)
 
 	vb_config_t config;
 	vb_config_initialize(&config);
-	config.num_data_registrations = 4;
+	config.num_data_channels = 4;
+	config.num_data_groups = 3;
+	config.num_data_group_members = 8;
 	config.num_data_labels = 4;
 	config.debug_output_callback = &debug_printf;
 	config.command_callback = &command_callback;
@@ -90,21 +92,43 @@ int main(int argc, const char** args)
 		return 1;
 	}
 
-	vb_data_handle_t vb_keydown, vb_player, vb_health, vb_mousepos;
+	vb_channel_handle_t vb_keydown, vb_player, vb_health, vb_mousepos;
 
-	if (!vb_data_register("Key down", VB_DATATYPE_INT, &vb_keydown) ||
-		!vb_data_register("Player", VB_DATATYPE_INT, &vb_player) ||
-		!vb_data_register("Health", VB_DATATYPE_FLOAT, &vb_health) ||
-		!vb_data_register("Mouse", VB_DATATYPE_VECTOR, &vb_mousepos))
+	if (!vb_data_add_channel("Key down", VB_DATATYPE_INT, &vb_keydown) ||
+		!vb_data_add_channel("Player", VB_DATATYPE_INT, &vb_player) ||
+		!vb_data_add_channel("Health", VB_DATATYPE_FLOAT, &vb_health) ||
+		!vb_data_add_channel("Mouse", VB_DATATYPE_VECTOR, &vb_mousepos))
 	{
-		printf("Couldn't register data events\n");
+		printf("Couldn't register data channels\n");
 		return 1;
 	}
 
-	if (!vb_data_label(vb_player, 0, "Dead") ||
-		!vb_data_label(vb_player, 1, "Alive") ||
-		!vb_data_label(vb_player, 2, "Transient") ||
-		!vb_data_label(vb_player, 3, "Philosophical"))
+	vb_group_handle_t vb_group1, vb_group2, vb_group3;
+	if (!vb_data_add_group("Group1", &vb_group1) ||
+		!vb_data_add_group("Group2", &vb_group2) ||
+		!vb_data_add_group("Group3", &vb_group3))
+	{
+		printf("Couldn't register data groups\n");
+		return 1;
+	}
+
+	if (!vb_data_add_channel_to_group(vb_group1, vb_keydown) ||
+		!vb_data_add_channel_to_group(vb_group1, vb_player) ||
+		!vb_data_add_channel_to_group(vb_group1, vb_health) ||
+		!vb_data_add_channel_to_group(vb_group2, vb_player) ||
+		!vb_data_add_channel_to_group(vb_group2, vb_health) ||
+		!vb_data_add_channel_to_group(vb_group2, vb_mousepos) ||
+		!vb_data_add_channel_to_group(vb_group3, vb_keydown) ||
+		!vb_data_add_channel_to_group(vb_group3, vb_mousepos))
+	{
+		printf("Couldn't set up groups\n");
+		return 1;
+	}
+
+	if (!vb_data_add_label(vb_player, 0, "Dead") ||
+		!vb_data_add_label(vb_player, 1, "Alive") ||
+		!vb_data_add_label(vb_player, 2, "Transient") ||
+		!vb_data_add_label(vb_player, 3, "Philosophical"))
 	{
 		printf("Couldn't register labels\n");
 		return 1;

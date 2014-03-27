@@ -53,7 +53,7 @@ void CViewbackClient::Update()
 		// Look for a data registration packet.
 		for (size_t i = 0; i < aPackets.size(); i++)
 		{
-			if (aPackets[i].data_registrations_size())
+			if (aPackets[i].data_channels_size())
 			{
 				static VBVector3 aclrColors[] = {
 					VBVector3(1, 0, 0),
@@ -71,45 +71,60 @@ void CViewbackClient::Update()
 				m_aUnhandledMessages.clear();
 				iStartPacket = i + 1;
 
-				m_aDataRegistrations.resize(aPackets[i].data_registrations_size());
-				m_aData.resize(aPackets[i].data_registrations_size());
-				m_aMeta.resize(aPackets[i].data_registrations_size());
+				m_aDataChannels.resize(aPackets[i].data_channels_size());
+				m_aData.resize(aPackets[i].data_channels_size());
+				m_aMeta.resize(aPackets[i].data_channels_size());
 
-				for (int j = 0; j < aPackets[i].data_registrations_size(); j++)
+				for (int j = 0; j < aPackets[i].data_channels_size(); j++)
 				{
-					auto& oRegistrationProtobuf = aPackets[i].data_registrations(j);
+					auto& oChannelProtobuf = aPackets[i].data_channels(j);
 
-					VBAssert(oRegistrationProtobuf.has_handle());
-					VBAssert(oRegistrationProtobuf.has_field_name());
-					VBAssert(oRegistrationProtobuf.has_type());
-					VBAssert(oRegistrationProtobuf.handle() == j);
+					VBAssert(oChannelProtobuf.has_handle());
+					VBAssert(oChannelProtobuf.has_name());
+					VBAssert(oChannelProtobuf.has_type());
+					VBAssert(oChannelProtobuf.handle() == j);
 
-					auto& oRegistration = m_aDataRegistrations[oRegistrationProtobuf.handle()];
-					oRegistration.m_iHandle = oRegistrationProtobuf.handle();
-					oRegistration.m_sFieldName = oRegistrationProtobuf.field_name();
-					oRegistration.m_eDataType = oRegistrationProtobuf.type();
+					auto& oChannel = m_aDataChannels[oChannelProtobuf.handle()];
+					oChannel.m_iHandle = oChannelProtobuf.handle();
+					oChannel.m_sFieldName = oChannelProtobuf.name();
+					oChannel.m_eDataType = oChannelProtobuf.type();
 
-					if (oRegistrationProtobuf.has_range_min())
-						oRegistration.m_flMin = oRegistrationProtobuf.range_min();
+					if (oChannelProtobuf.has_range_min())
+						oChannel.m_flMin = oChannelProtobuf.range_min();
 
-					if (oRegistrationProtobuf.has_range_max())
-						oRegistration.m_flMax = oRegistrationProtobuf.range_max();
+					if (oChannelProtobuf.has_range_max())
+						oChannel.m_flMax = oChannelProtobuf.range_max();
 
-					m_aMeta[oRegistrationProtobuf.handle()].m_clrColor = aclrColors[j % iColorsSize];
+					m_aMeta[oChannelProtobuf.handle()].m_clrColor = aclrColors[j % iColorsSize];
 				}
 
-				VBPrintf("Installed %d registrations.\n", aPackets[i].data_registrations_size());
+				VBPrintf("Installed %d channels.\n", aPackets[i].data_channels_size());
+
+				for (int j = 0; j < aPackets[i].data_groups_size(); j++)
+				{
+					auto& oGroupProtobuf = aPackets[i].data_groups(j);
+
+					VBAssert(oGroupProtobuf.has_name());
+
+					m_aDataGroups.push_back(CViewbackDataGroup());
+					auto& oGroup = m_aDataGroups.back();
+					oGroup.m_sName = oGroupProtobuf.name();
+					for (int k = 0; k < oGroupProtobuf.channels_size(); k++)
+						oGroup.m_iChannels.push_back(oGroupProtobuf.channels(k));
+				}
+
+				VBPrintf("Installed %d groups.\n", aPackets[i].data_groups_size());
 
 				for (int j = 0; j < aPackets[i].data_labels_size(); j++)
 				{
 					auto& oLabelProtobuf = aPackets[i].data_labels(j);
 
-					VBAssert(oLabelProtobuf.has_handle());
-					VBAssert(oLabelProtobuf.has_field_name());
+					VBAssert(oLabelProtobuf.has_label());
+					VBAssert(oLabelProtobuf.has_channel());
 					VBAssert(oLabelProtobuf.has_value());
 
-					auto& oRegistration = m_aDataRegistrations[oLabelProtobuf.handle()];
-					oRegistration.m_asLabels[oLabelProtobuf.value()] = oLabelProtobuf.field_name();
+					auto& oChannel = m_aDataChannels[oLabelProtobuf.channel()];
+					oChannel.m_asLabels[oLabelProtobuf.value()] = oLabelProtobuf.label();
 				}
 
 				VBPrintf("Installed %d labels.\n", aPackets[i].data_labels_size());
@@ -119,7 +134,7 @@ void CViewbackClient::Update()
 			}
 		}
 
-		if (!m_aDataRegistrations.size())
+		if (!m_aDataChannels.size())
 		{
 			// We somehow don't have any data registrations yet, so stash these messages for later.
 			// It might be possible if the server sends some messages between when the client connects and when it requests registrations.
@@ -163,17 +178,17 @@ void CViewbackClient::Update()
 		{
 			for (size_t i = 0; i < m_aData.size(); i++)
 			{
-				if (m_aDataRegistrations[i].m_eDataType == VB_DATATYPE_VECTOR)
+				if (m_aDataChannels[i].m_eDataType == VB_DATATYPE_VECTOR)
 				{
 					while (m_aData[i].m_aVectorData.size() && m_aData[i].m_aVectorData.front().time < flNewest - m_aMeta[i].m_flDisplayDuration - 10)
 						m_aData[i].m_aVectorData.pop_front();
 				}
-				else if (m_aDataRegistrations[i].m_eDataType == VB_DATATYPE_FLOAT)
+				else if (m_aDataChannels[i].m_eDataType == VB_DATATYPE_FLOAT)
 				{
 					while (m_aData[i].m_aFloatData.size() && m_aData[i].m_aFloatData.front().time < m_flDataClearTime)
 						m_aData[i].m_aFloatData.pop_front();
 				}
-				else if (m_aDataRegistrations[i].m_eDataType == VB_DATATYPE_INT)
+				else if (m_aDataChannels[i].m_eDataType == VB_DATATYPE_INT)
 				{
 					while (m_aData[i].m_aIntData.size() && m_aData[i].m_aIntData.front().time < m_flDataClearTime)
 						m_aData[i].m_aIntData.pop_front();
@@ -258,13 +273,13 @@ void CViewbackClient::SendConsoleCommand(const string& sCommand)
 
 vb_data_type_t CViewbackClient::TypeForHandle(size_t iHandle)
 {
-	return m_aDataRegistrations[iHandle].m_eDataType;
+	return m_aDataChannels[iHandle].m_eDataType;
 }
 
 bool CViewbackClient::HasLabel(size_t iHandle, int iValue)
 {
-	auto it = m_aDataRegistrations[iHandle].m_asLabels.find(iValue);
-	if (it == m_aDataRegistrations[iHandle].m_asLabels.end())
+	auto it = m_aDataChannels[iHandle].m_asLabels.find(iValue);
+	if (it == m_aDataChannels[iHandle].m_asLabels.end())
 		return false;
 	else
 		return true;
@@ -272,8 +287,8 @@ bool CViewbackClient::HasLabel(size_t iHandle, int iValue)
 
 string CViewbackClient::GetLabelForValue(size_t iHandle, int iValue)
 {
-	auto it = m_aDataRegistrations[iHandle].m_asLabels.find(iValue);
-	if (it == m_aDataRegistrations[iHandle].m_asLabels.end())
+	auto it = m_aDataChannels[iHandle].m_asLabels.find(iValue);
+	if (it == m_aDataChannels[iHandle].m_asLabels.end())
 		return static_cast<ostringstream*>(&(ostringstream() << iValue))->str();
 	else
 		return it->second;

@@ -24,13 +24,20 @@ struct Data {
 	double         _time;
 };
 
-struct DataRegistration {
+struct DataChannel {
 	int            _field_name_len;
 	const char*    _field_name;
 	vb_data_type_t _type;
 	unsigned long  _handle;
 	float          _min;
 	float          _max;
+};
+
+struct DataGroup {
+	const char*    _name;
+	int            _name_len;
+	unsigned long* _channels;
+	int            _channels_repeated_len;
 };
 
 struct DataLabel {
@@ -40,14 +47,14 @@ struct DataLabel {
 	const char*    _field_name;
 };
 
-#define MAX_REPEATED_LENGTH 100
-
 struct Packet {
-	struct Data*             _data;
-	int                      _data_registrations_repeated_len;
-	struct DataRegistration* _data_registrations;
-	int                      _data_labels_repeated_len;
-	struct DataLabel*        _data_labels;
+	struct Data*        _data;
+	int                 _data_channels_repeated_len;
+	struct DataChannel* _data_channels;
+	int                 _data_groups_repeated_len;
+	struct DataGroup*   _data_groups;
+	int                 _data_labels_repeated_len;
+	struct DataLabel*   _data_labels;
 
 	int            _console_output_len;
 	const char*    _console_output;
@@ -58,7 +65,7 @@ struct Packet {
 
 void Packet_initialize(struct Packet* packet);
 void Packet_initialize_data(struct Packet* packet, struct Data* data, vb_data_type_t type);
-void Packet_initialize_registrations(struct Packet* packet, struct DataRegistration* data_reg, size_t registrations, struct DataLabel* data_labels, size_t labels);
+void Packet_initialize_registrations(struct Packet* packet, struct DataChannel* data_channels, size_t channels, struct DataGroup* data_groups, size_t groups, struct DataLabel* data_labels, size_t labels);
 size_t Packet_get_message_size(struct Packet *_Packet);
 size_t Packet_serialize(struct Packet *_Packet, void *_buffer, size_t length);
 
@@ -73,13 +80,24 @@ typedef struct
 	vb_data_type_t type;
 	float          range_min;
 	float          range_max;
-} vb_data_registration_t;
+} vb_data_channel_t;
 
 typedef struct
 {
-	vb_data_handle_t handle;
-	int              value;
-	const char*      name;
+	const char* name;
+} vb_data_group_t;
+
+typedef struct
+{
+	vb_group_handle_t   group;
+	vb_channel_handle_t channel;
+} vb_data_group_member_t;
+
+typedef struct
+{
+	vb_channel_handle_t handle;
+	int                 value;
+	const char*         name;
 } vb_data_label_t;
 
 typedef struct
@@ -96,8 +114,14 @@ typedef struct
 	time_t             last_multicast;
 	vb_socket_t        tcp_socket;
 
-	vb_data_registration_t* registrations;
-	size_t                  next_registration;
+	vb_data_channel_t* channels;
+	size_t             next_channel;
+
+	vb_data_group_t* groups;
+	size_t           next_group;
+
+	vb_data_group_member_t* group_members;
+	size_t                  next_group_member;
 
 	vb_data_label_t* labels;
 	size_t           next_label;

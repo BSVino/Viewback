@@ -55,9 +55,26 @@ typedef struct {
 	unsigned short port;
 
 	/*
-		How many different types of data you would like to send to the monitor.
+		How many different channels of data you would like to send to the
+		monitor.
 	*/
-	size_t num_data_registrations;
+	size_t num_data_channels;
+
+	/*
+		Data channels can be placed into groups. These groups can be turned on
+		and off in the client as a means to organize the data. This is the
+		maximum number of groups possible.
+	*/
+	size_t num_data_groups;
+
+	/*
+		You can add a data channel to a group a maximum of this number of
+		times. E.G. if you have two groups, and group 1 has channels A B and C,
+		and group 2 has C D E and F, that's 7 total group members. In other
+		words it should be at least the number of times that you want to
+		call vb_data_add_channel_to_group().
+	*/
+	size_t num_data_group_members;
 
 	/*
 		Some data can carry labels for when the data is a certain value.
@@ -86,7 +103,8 @@ typedef struct {
 	vb_debug_output_callback debug_output_callback;
 } vb_config_t;
 
-typedef unsigned int vb_data_handle_t;
+typedef unsigned short vb_channel_handle_t;
+typedef unsigned short vb_group_handle_t;
 
 /* If you change this, update it in viewback.proto as well. */
 typedef enum
@@ -115,10 +133,21 @@ size_t vb_config_get_memory_required(vb_config_t* config);
 int vb_config_install(vb_config_t* config, void* memory, size_t memory_size);
 
 /*
-	Register a type of data. You should provide an address to a handle and store
+	Register a channel of data. You should provide an address to a handle and
+	store that handle somewhere.
+*/
+int vb_data_add_channel(const char* name, vb_data_type_t type, /*out*/ vb_channel_handle_t* handle);
+
+/*
+	Register a group of data. You should provide an address to a handle and store
 	that handle somewhere.
 */
-int vb_data_register(const char* name, vb_data_type_t type, /*out*/ vb_data_handle_t* handle);
+int vb_data_add_group(const char* name, /*out*/ vb_group_handle_t* handle);
+
+/*
+	Add the specified channel of data to the specified group.
+*/
+int vb_data_add_channel_to_group(vb_group_handle_t group, vb_channel_handle_t channel);
 
 /*
 	Register a label for integers. When the specified data has the specified value
@@ -128,20 +157,20 @@ int vb_data_register(const char* name, vb_data_type_t type, /*out*/ vb_data_hand
 	vb_data_label(vb_player_state, 2, "Hungry");
 	vb_data_label(vb_player_state, 3, "Ephemeral");
 */
-int vb_data_label(vb_data_handle_t handle, int value, const char* label);
+int vb_data_add_label(vb_channel_handle_t handle, int value, const char* label);
 
 /*
 	Just retrieves the data registered in vb_data_label(). "label" output is only
 	valid if the function return true.
 */
-int vb_data_get_label(vb_data_handle_t handle, int value, /*out*/ const char** label);
+int vb_data_get_label(vb_channel_handle_t handle, int value, /*out*/ const char** label);
 
 /*
 	If you set this, the monitor will fix the range to the specified values.
 	Otherwise the chart will automatically fit the window. For vector data,
 	only the max is used.
 */
-int vb_data_set_range(vb_data_handle_t handle, float min, float max);
+int vb_data_set_range(vb_channel_handle_t handle, float min, float max);
 
 /*
 	After registering all of your data, call this to start up the server.
@@ -155,8 +184,8 @@ int vb_server_create();
 void vb_server_update(double current_time_seconds);
 
 /*
-	Closes all sockets. After shutdown you can add more registrations or reset
-	the config (which removes all registrations) if you like. After calling this
+	Closes all sockets. After shutdown you can add more channels or reset the
+	config (which removes all channels) if you like. After calling this
 	Viewback no longer uses the memory you passed it, so you can free it if
 	you won't be using Viewback anymore.
 */
@@ -166,9 +195,9 @@ void vb_server_shutdown();
 	These methods send data to the monitor. If you use a handle that was
 	registered as an int but you try to send it as a float, it will fail.
 */
-int vb_data_send_int(vb_data_handle_t handle, int value);
-int vb_data_send_float(vb_data_handle_t handle, float value);
-int vb_data_send_vector(vb_data_handle_t handle, float x, float y, float z);
+int vb_data_send_int(vb_channel_handle_t handle, int value);
+int vb_data_send_float(vb_channel_handle_t handle, float value);
+int vb_data_send_vector(vb_channel_handle_t handle, float x, float y, float z);
 
 /*
 	Any text that goes to your console can also be piped into Viewback for

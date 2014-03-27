@@ -48,9 +48,9 @@ int main()
 		time(&now);
 		if (now > last_time && vb.HasConnection())
 		{
-			for (size_t i = 0; i < vb.GetRegistrations().size(); i++)
+			for (size_t i = 0; i < vb.GetChannels().size(); i++)
 			{
-				auto& oRegistration = vb.GetRegistrations()[i];
+				auto& oRegistration = vb.GetChannels()[i];
 				auto& oData = vb.GetData()[i];
 				printf("%s (%d):", oRegistration.m_sFieldName.c_str(), oData.m_aIntData.size() + oData.m_aFloatData.size() + oData.m_aVectorData.size());
 

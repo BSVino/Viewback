@@ -6,10 +6,10 @@
 
 #include <deque>
 
-class CViewbackDataRegistration
+class CViewbackDataChannel
 {
 public:
-	CViewbackDataRegistration()
+	CViewbackDataChannel()
 	{
 		m_flMin = m_flMax = 0;
 	}
@@ -22,6 +22,13 @@ public:
 	float          m_flMax;
 
 	std::map<int, std::string> m_asLabels;
+};
+
+class CViewbackDataGroup
+{
+public:
+	std::string m_sName;
+	std::vector<size_t> m_iChannels;
 };
 
 // Holds all of the data associated with one handle.
@@ -93,7 +100,8 @@ public:
 	void SendConsoleCommand(const std::string& sCommand);
 	DebugOutputCallback GetDebugOutputCallback() { return m_pfnDebugOutput; }
 
-	inline const std::vector<CViewbackDataRegistration>& GetRegistrations() const { return m_aDataRegistrations; }
+	inline const std::vector<CViewbackDataChannel>& GetChannels() const { return m_aDataChannels; }
+	inline const std::vector<CViewbackDataGroup>& GetGroups() const { return m_aDataGroups; }
 	inline const std::vector<CViewbackDataList>& GetData() const { return m_aData; } // DO NOT STORE without copying, this may be wiped at any time.
 	inline std::vector<CDataMetaInfo>& GetMeta() { return m_aMeta; }
 
@@ -117,7 +125,8 @@ private:
 private:
 	std::vector<Packet> m_aUnhandledMessages;
 
-	std::vector<CViewbackDataRegistration> m_aDataRegistrations;
+	std::vector<CViewbackDataChannel> m_aDataChannels;
+	std::vector<CViewbackDataGroup> m_aDataGroups;
 	std::vector<CViewbackDataList> m_aData;
 	std::vector<CDataMetaInfo> m_aMeta;
 

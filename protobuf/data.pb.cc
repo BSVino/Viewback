@@ -21,9 +21,12 @@ namespace {
 const ::google::protobuf::Descriptor* Data_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
   Data_reflection_ = NULL;
-const ::google::protobuf::Descriptor* DataRegistration_descriptor_ = NULL;
+const ::google::protobuf::Descriptor* DataChannel_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
-  DataRegistration_reflection_ = NULL;
+  DataChannel_reflection_ = NULL;
+const ::google::protobuf::Descriptor* DataGroup_descriptor_ = NULL;
+const ::google::protobuf::internal::GeneratedMessageReflection*
+  DataGroup_reflection_ = NULL;
 const ::google::protobuf::Descriptor* DataLabel_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
   DataLabel_reflection_ = NULL;
@@ -62,30 +65,46 @@ void protobuf_AssignDesc_protobuf_2fdata_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(Data));
-  DataRegistration_descriptor_ = file->message_type(1);
-  static const int DataRegistration_offsets_[5] = {
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataRegistration, field_name_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataRegistration, type_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataRegistration, handle_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataRegistration, range_min_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataRegistration, range_max_),
+  DataChannel_descriptor_ = file->message_type(1);
+  static const int DataChannel_offsets_[5] = {
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataChannel, name_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataChannel, type_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataChannel, handle_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataChannel, range_min_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataChannel, range_max_),
   };
-  DataRegistration_reflection_ =
+  DataChannel_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
-      DataRegistration_descriptor_,
-      DataRegistration::default_instance_,
-      DataRegistration_offsets_,
-      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataRegistration, _has_bits_[0]),
-      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataRegistration, _unknown_fields_),
+      DataChannel_descriptor_,
+      DataChannel::default_instance_,
+      DataChannel_offsets_,
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataChannel, _has_bits_[0]),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataChannel, _unknown_fields_),
       -1,
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
-      sizeof(DataRegistration));
-  DataLabel_descriptor_ = file->message_type(2);
+      sizeof(DataChannel));
+  DataGroup_descriptor_ = file->message_type(2);
+  static const int DataGroup_offsets_[2] = {
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataGroup, name_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataGroup, channels_),
+  };
+  DataGroup_reflection_ =
+    new ::google::protobuf::internal::GeneratedMessageReflection(
+      DataGroup_descriptor_,
+      DataGroup::default_instance_,
+      DataGroup_offsets_,
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataGroup, _has_bits_[0]),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataGroup, _unknown_fields_),
+      -1,
+      ::google::protobuf::DescriptorPool::generated_pool(),
+      ::google::protobuf::MessageFactory::generated_factory(),
+      sizeof(DataGroup));
+  DataLabel_descriptor_ = file->message_type(3);
   static const int DataLabel_offsets_[3] = {
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataLabel, handle_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataLabel, channel_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataLabel, value_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataLabel, field_name_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataLabel, label_),
   };
   DataLabel_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -98,10 +117,11 @@ void protobuf_AssignDesc_protobuf_2fdata_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(DataLabel));
-  Packet_descriptor_ = file->message_type(3);
-  static const int Packet_offsets_[5] = {
+  Packet_descriptor_ = file->message_type(4);
+  static const int Packet_offsets_[6] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Packet, data_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Packet, data_registrations_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Packet, data_channels_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Packet, data_groups_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Packet, data_labels_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Packet, console_output_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Packet, status_),
@@ -133,7 +153,9 @@ void protobuf_RegisterTypes(const ::std::string&) {
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
     Data_descriptor_, &Data::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
-    DataRegistration_descriptor_, &DataRegistration::default_instance());
+    DataChannel_descriptor_, &DataChannel::default_instance());
+  ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
+    DataGroup_descriptor_, &DataGroup::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
     DataLabel_descriptor_, &DataLabel::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
@@ -145,8 +167,10 @@ void protobuf_RegisterTypes(const ::std::string&) {
 void protobuf_ShutdownFile_protobuf_2fdata_2eproto() {
   delete Data::default_instance_;
   delete Data_reflection_;
-  delete DataRegistration::default_instance_;
-  delete DataRegistration_reflection_;
+  delete DataChannel::default_instance_;
+  delete DataChannel_reflection_;
+  delete DataGroup::default_instance_;
+  delete DataGroup_reflection_;
   delete DataLabel::default_instance_;
   delete DataLabel_reflection_;
   delete Packet::default_instance_;
@@ -164,26 +188,29 @@ void protobuf_AddDesc_protobuf_2fdata_2eproto() {
     "\030\001 \001(\r\022\020\n\010data_int\030\003 \001(\r\022\022\n\ndata_float\030\004"
     " \001(\002\022\024\n\014data_float_x\030\005 \001(\002\022\024\n\014data_float"
     "_y\030\006 \001(\002\022\024\n\014data_float_z\030\007 \001(\002\022\014\n\004time\030\010"
-    " \001(\001\"{\n\020DataRegistration\022\022\n\nfield_name\030\001"
-    " \001(\t\022\035\n\004type\030\002 \001(\0162\017.vb_data_type_t\022\016\n\006h"
-    "andle\030\003 \001(\r\022\021\n\trange_min\030\004 \001(\002\022\021\n\trange_"
-    "max\030\005 \001(\002\">\n\tDataLabel\022\016\n\006handle\030\001 \001(\r\022\r"
-    "\n\005value\030\002 \001(\r\022\022\n\nfield_name\030\003 \001(\t\"\225\001\n\006Pa"
-    "cket\022\023\n\004data\030\001 \001(\0132\005.Data\022-\n\022data_regist"
-    "rations\030\002 \003(\0132\021.DataRegistration\022\037\n\013data"
-    "_labels\030\003 \003(\0132\n.DataLabel\022\026\n\016console_out"
-    "put\030\004 \001(\t\022\016\n\006status\030\005 \001(\t*j\n\016vb_data_typ"
-    "e_t\022\024\n\020VB_DATATYPE_NONE\020\000\022\023\n\017VB_DATATYPE"
-    "_INT\020\001\022\025\n\021VB_DATATYPE_FLOAT\020\002\022\026\n\022VB_DATA"
-    "TYPE_VECTOR\020\003", 613);
+    " \001(\001\"p\n\013DataChannel\022\014\n\004name\030\001 \001(\t\022\035\n\004typ"
+    "e\030\002 \001(\0162\017.vb_data_type_t\022\016\n\006handle\030\003 \001(\r"
+    "\022\021\n\trange_min\030\004 \001(\002\022\021\n\trange_max\030\005 \001(\002\"/"
+    "\n\tDataGroup\022\014\n\004name\030\001 \001(\t\022\024\n\010channels\030\002 "
+    "\003(\rB\002\020\001\":\n\tDataLabel\022\017\n\007channel\030\001 \001(\r\022\r\n"
+    "\005value\030\002 \001(\r\022\r\n\005label\030\003 \001(\t\"\254\001\n\006Packet\022\023"
+    "\n\004data\030\001 \001(\0132\005.Data\022#\n\rdata_channels\030\002 \003"
+    "(\0132\014.DataChannel\022\037\n\013data_groups\030\003 \003(\0132\n."
+    "DataGroup\022\037\n\013data_labels\030\004 \003(\0132\n.DataLab"
+    "el\022\026\n\016console_output\030\005 \001(\t\022\016\n\006status\030\006 \001"
+    "(\t*j\n\016vb_data_type_t\022\024\n\020VB_DATATYPE_NONE"
+    "\020\000\022\023\n\017VB_DATATYPE_INT\020\001\022\025\n\021VB_DATATYPE_F"
+    "LOAT\020\002\022\026\n\022VB_DATATYPE_VECTOR\020\003", 670);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "protobuf/data.proto", &protobuf_RegisterTypes);
   Data::default_instance_ = new Data();
-  DataRegistration::default_instance_ = new DataRegistration();
+  DataChannel::default_instance_ = new DataChannel();
+  DataGroup::default_instance_ = new DataGroup();
   DataLabel::default_instance_ = new DataLabel();
   Packet::default_instance_ = new Packet();
   Data::default_instance_->InitAsDefaultInstance();
-  DataRegistration::default_instance_->InitAsDefaultInstance();
+  DataChannel::default_instance_->InitAsDefaultInstance();
+  DataGroup::default_instance_->InitAsDefaultInstance();
   DataLabel::default_instance_->InitAsDefaultInstance();
   Packet::default_instance_->InitAsDefaultInstance();
   ::google::protobuf::internal::OnShutdown(&protobuf_ShutdownFile_protobuf_2fdata_2eproto);
@@ -653,30 +680,30 @@ void Data::Swap(Data* other) {
 // ===================================================================
 
 #ifndef _MSC_VER
-const int DataRegistration::kFieldNameFieldNumber;
-const int DataRegistration::kTypeFieldNumber;
-const int DataRegistration::kHandleFieldNumber;
-const int DataRegistration::kRangeMinFieldNumber;
-const int DataRegistration::kRangeMaxFieldNumber;
+const int DataChannel::kNameFieldNumber;
+const int DataChannel::kTypeFieldNumber;
+const int DataChannel::kHandleFieldNumber;
+const int DataChannel::kRangeMinFieldNumber;
+const int DataChannel::kRangeMaxFieldNumber;
 #endif  // !_MSC_VER
 
-DataRegistration::DataRegistration()
+DataChannel::DataChannel()
   : ::google::protobuf::Message() {
   SharedCtor();
 }
 
-void DataRegistration::InitAsDefaultInstance() {
+void DataChannel::InitAsDefaultInstance() {
 }
 
-DataRegistration::DataRegistration(const DataRegistration& from)
+DataChannel::DataChannel(const DataChannel& from)
   : ::google::protobuf::Message() {
   SharedCtor();
   MergeFrom(from);
 }
 
-void DataRegistration::SharedCtor() {
+void DataChannel::SharedCtor() {
   _cached_size_ = 0;
-  field_name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   type_ = 0;
   handle_ = 0u;
   range_min_ = 0;
@@ -684,44 +711,44 @@ void DataRegistration::SharedCtor() {
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
-DataRegistration::~DataRegistration() {
+DataChannel::~DataChannel() {
   SharedDtor();
 }
 
-void DataRegistration::SharedDtor() {
-  if (field_name_ != &::google::protobuf::internal::kEmptyString) {
-    delete field_name_;
+void DataChannel::SharedDtor() {
+  if (name_ != &::google::protobuf::internal::kEmptyString) {
+    delete name_;
   }
   if (this != default_instance_) {
   }
 }
 
-void DataRegistration::SetCachedSize(int size) const {
+void DataChannel::SetCachedSize(int size) const {
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
   _cached_size_ = size;
   GOOGLE_SAFE_CONCURRENT_WRITES_END();
 }
-const ::google::protobuf::Descriptor* DataRegistration::descriptor() {
+const ::google::protobuf::Descriptor* DataChannel::descriptor() {
   protobuf_AssignDescriptorsOnce();
-  return DataRegistration_descriptor_;
+  return DataChannel_descriptor_;
 }
 
-const DataRegistration& DataRegistration::default_instance() {
+const DataChannel& DataChannel::default_instance() {
   if (default_instance_ == NULL) protobuf_AddDesc_protobuf_2fdata_2eproto();
   return *default_instance_;
 }
 
-DataRegistration* DataRegistration::default_instance_ = NULL;
+DataChannel* DataChannel::default_instance_ = NULL;
 
-DataRegistration* DataRegistration::New() const {
-  return new DataRegistration;
+DataChannel* DataChannel::New() const {
+  return new DataChannel;
 }
 
-void DataRegistration::Clear() {
+void DataChannel::Clear() {
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    if (has_field_name()) {
-      if (field_name_ != &::google::protobuf::internal::kEmptyString) {
-        field_name_->clear();
+    if (has_name()) {
+      if (name_ != &::google::protobuf::internal::kEmptyString) {
+        name_->clear();
       }
     }
     type_ = 0;
@@ -733,20 +760,20 @@ void DataRegistration::Clear() {
   mutable_unknown_fields()->Clear();
 }
 
-bool DataRegistration::MergePartialFromCodedStream(
+bool DataChannel::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
 #define DO_(EXPRESSION) if (!(EXPRESSION)) return false
   ::google::protobuf::uint32 tag;
   while ((tag = input->ReadTag()) != 0) {
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // optional string field_name = 1;
+      // optional string name = 1;
       case 1: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadString(
-                input, this->mutable_field_name()));
+                input, this->mutable_name()));
           ::google::protobuf::internal::WireFormat::VerifyUTF8String(
-            this->field_name().data(), this->field_name().length(),
+            this->name().data(), this->name().length(),
             ::google::protobuf::internal::WireFormat::PARSE);
         } else {
           goto handle_uninterpreted;
@@ -840,15 +867,15 @@ bool DataRegistration::MergePartialFromCodedStream(
 #undef DO_
 }
 
-void DataRegistration::SerializeWithCachedSizes(
+void DataChannel::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // optional string field_name = 1;
-  if (has_field_name()) {
+  // optional string name = 1;
+  if (has_name()) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8String(
-      this->field_name().data(), this->field_name().length(),
+      this->name().data(), this->name().length(),
       ::google::protobuf::internal::WireFormat::SERIALIZE);
     ::google::protobuf::internal::WireFormatLite::WriteString(
-      1, this->field_name(), output);
+      1, this->name(), output);
   }
 
   // optional .vb_data_type_t type = 2;
@@ -878,16 +905,16 @@ void DataRegistration::SerializeWithCachedSizes(
   }
 }
 
-::google::protobuf::uint8* DataRegistration::SerializeWithCachedSizesToArray(
+::google::protobuf::uint8* DataChannel::SerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
-  // optional string field_name = 1;
-  if (has_field_name()) {
+  // optional string name = 1;
+  if (has_name()) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8String(
-      this->field_name().data(), this->field_name().length(),
+      this->name().data(), this->name().length(),
       ::google::protobuf::internal::WireFormat::SERIALIZE);
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        1, this->field_name(), target);
+        1, this->name(), target);
   }
 
   // optional .vb_data_type_t type = 2;
@@ -918,15 +945,15 @@ void DataRegistration::SerializeWithCachedSizes(
   return target;
 }
 
-int DataRegistration::ByteSize() const {
+int DataChannel::ByteSize() const {
   int total_size = 0;
 
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    // optional string field_name = 1;
-    if (has_field_name()) {
+    // optional string name = 1;
+    if (has_name()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::StringSize(
-          this->field_name());
+          this->name());
     }
 
     // optional .vb_data_type_t type = 2;
@@ -964,10 +991,10 @@ int DataRegistration::ByteSize() const {
   return total_size;
 }
 
-void DataRegistration::MergeFrom(const ::google::protobuf::Message& from) {
+void DataChannel::MergeFrom(const ::google::protobuf::Message& from) {
   GOOGLE_CHECK_NE(&from, this);
-  const DataRegistration* source =
-    ::google::protobuf::internal::dynamic_cast_if_available<const DataRegistration*>(
+  const DataChannel* source =
+    ::google::protobuf::internal::dynamic_cast_if_available<const DataChannel*>(
       &from);
   if (source == NULL) {
     ::google::protobuf::internal::ReflectionOps::Merge(from, this);
@@ -976,11 +1003,11 @@ void DataRegistration::MergeFrom(const ::google::protobuf::Message& from) {
   }
 }
 
-void DataRegistration::MergeFrom(const DataRegistration& from) {
+void DataChannel::MergeFrom(const DataChannel& from) {
   GOOGLE_CHECK_NE(&from, this);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    if (from.has_field_name()) {
-      set_field_name(from.field_name());
+    if (from.has_name()) {
+      set_name(from.name());
     }
     if (from.has_type()) {
       set_type(from.type());
@@ -998,26 +1025,26 @@ void DataRegistration::MergeFrom(const DataRegistration& from) {
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
 }
 
-void DataRegistration::CopyFrom(const ::google::protobuf::Message& from) {
+void DataChannel::CopyFrom(const ::google::protobuf::Message& from) {
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-void DataRegistration::CopyFrom(const DataRegistration& from) {
+void DataChannel::CopyFrom(const DataChannel& from) {
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-bool DataRegistration::IsInitialized() const {
+bool DataChannel::IsInitialized() const {
 
   return true;
 }
 
-void DataRegistration::Swap(DataRegistration* other) {
+void DataChannel::Swap(DataChannel* other) {
   if (other != this) {
-    std::swap(field_name_, other->field_name_);
+    std::swap(name_, other->name_);
     std::swap(type_, other->type_);
     std::swap(handle_, other->handle_);
     std::swap(range_min_, other->range_min_);
@@ -1028,11 +1055,11 @@ void DataRegistration::Swap(DataRegistration* other) {
   }
 }
 
-::google::protobuf::Metadata DataRegistration::GetMetadata() const {
+::google::protobuf::Metadata DataChannel::GetMetadata() const {
   protobuf_AssignDescriptorsOnce();
   ::google::protobuf::Metadata metadata;
-  metadata.descriptor = DataRegistration_descriptor_;
-  metadata.reflection = DataRegistration_reflection_;
+  metadata.descriptor = DataChannel_descriptor_;
+  metadata.reflection = DataChannel_reflection_;
   return metadata;
 }
 
@@ -1040,9 +1067,300 @@ void DataRegistration::Swap(DataRegistration* other) {
 // ===================================================================
 
 #ifndef _MSC_VER
-const int DataLabel::kHandleFieldNumber;
+const int DataGroup::kNameFieldNumber;
+const int DataGroup::kChannelsFieldNumber;
+#endif  // !_MSC_VER
+
+DataGroup::DataGroup()
+  : ::google::protobuf::Message() {
+  SharedCtor();
+}
+
+void DataGroup::InitAsDefaultInstance() {
+}
+
+DataGroup::DataGroup(const DataGroup& from)
+  : ::google::protobuf::Message() {
+  SharedCtor();
+  MergeFrom(from);
+}
+
+void DataGroup::SharedCtor() {
+  _cached_size_ = 0;
+  name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+}
+
+DataGroup::~DataGroup() {
+  SharedDtor();
+}
+
+void DataGroup::SharedDtor() {
+  if (name_ != &::google::protobuf::internal::kEmptyString) {
+    delete name_;
+  }
+  if (this != default_instance_) {
+  }
+}
+
+void DataGroup::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const ::google::protobuf::Descriptor* DataGroup::descriptor() {
+  protobuf_AssignDescriptorsOnce();
+  return DataGroup_descriptor_;
+}
+
+const DataGroup& DataGroup::default_instance() {
+  if (default_instance_ == NULL) protobuf_AddDesc_protobuf_2fdata_2eproto();
+  return *default_instance_;
+}
+
+DataGroup* DataGroup::default_instance_ = NULL;
+
+DataGroup* DataGroup::New() const {
+  return new DataGroup;
+}
+
+void DataGroup::Clear() {
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    if (has_name()) {
+      if (name_ != &::google::protobuf::internal::kEmptyString) {
+        name_->clear();
+      }
+    }
+  }
+  channels_.Clear();
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+  mutable_unknown_fields()->Clear();
+}
+
+bool DataGroup::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!(EXPRESSION)) return false
+  ::google::protobuf::uint32 tag;
+  while ((tag = input->ReadTag()) != 0) {
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // optional string name = 1;
+      case 1: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_name()));
+          ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+            this->name().data(), this->name().length(),
+            ::google::protobuf::internal::WireFormat::PARSE);
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(18)) goto parse_channels;
+        break;
+      }
+
+      // repeated uint32 channels = 2 [packed = true];
+      case 2: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_channels:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPackedPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, this->mutable_channels())));
+        } else if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag)
+                   == ::google::protobuf::internal::WireFormatLite::
+                      WIRETYPE_VARINT) {
+          DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitiveNoInline<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 1, 18, input, this->mutable_channels())));
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectAtEnd()) return true;
+        break;
+      }
+
+      default: {
+      handle_uninterpreted:
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
+          return true;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+  return true;
+#undef DO_
+}
+
+void DataGroup::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // optional string name = 1;
+  if (has_name()) {
+    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+      this->name().data(), this->name().length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE);
+    ::google::protobuf::internal::WireFormatLite::WriteString(
+      1, this->name(), output);
+  }
+
+  // repeated uint32 channels = 2 [packed = true];
+  if (this->channels_size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteTag(2, ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
+    output->WriteVarint32(_channels_cached_byte_size_);
+  }
+  for (int i = 0; i < this->channels_size(); i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32NoTag(
+      this->channels(i), output);
+  }
+
+  if (!unknown_fields().empty()) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        unknown_fields(), output);
+  }
+}
+
+::google::protobuf::uint8* DataGroup::SerializeWithCachedSizesToArray(
+    ::google::protobuf::uint8* target) const {
+  // optional string name = 1;
+  if (has_name()) {
+    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+      this->name().data(), this->name().length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE);
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        1, this->name(), target);
+  }
+
+  // repeated uint32 channels = 2 [packed = true];
+  if (this->channels_size() > 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteTagToArray(
+      2,
+      ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
+      target);
+    target = ::google::protobuf::io::CodedOutputStream::WriteVarint32ToArray(
+      _channels_cached_byte_size_, target);
+  }
+  for (int i = 0; i < this->channels_size(); i++) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteUInt32NoTagToArray(this->channels(i), target);
+  }
+
+  if (!unknown_fields().empty()) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        unknown_fields(), target);
+  }
+  return target;
+}
+
+int DataGroup::ByteSize() const {
+  int total_size = 0;
+
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    // optional string name = 1;
+    if (has_name()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::StringSize(
+          this->name());
+    }
+
+  }
+  // repeated uint32 channels = 2 [packed = true];
+  {
+    int data_size = 0;
+    for (int i = 0; i < this->channels_size(); i++) {
+      data_size += ::google::protobuf::internal::WireFormatLite::
+        UInt32Size(this->channels(i));
+    }
+    if (data_size > 0) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(data_size);
+    }
+    GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+    _channels_cached_byte_size_ = data_size;
+    GOOGLE_SAFE_CONCURRENT_WRITES_END();
+    total_size += data_size;
+  }
+
+  if (!unknown_fields().empty()) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        unknown_fields());
+  }
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = total_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void DataGroup::MergeFrom(const ::google::protobuf::Message& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  const DataGroup* source =
+    ::google::protobuf::internal::dynamic_cast_if_available<const DataGroup*>(
+      &from);
+  if (source == NULL) {
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+    MergeFrom(*source);
+  }
+}
+
+void DataGroup::MergeFrom(const DataGroup& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  channels_.MergeFrom(from.channels_);
+  if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    if (from.has_name()) {
+      set_name(from.name());
+    }
+  }
+  mutable_unknown_fields()->MergeFrom(from.unknown_fields());
+}
+
+void DataGroup::CopyFrom(const ::google::protobuf::Message& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void DataGroup::CopyFrom(const DataGroup& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool DataGroup::IsInitialized() const {
+
+  return true;
+}
+
+void DataGroup::Swap(DataGroup* other) {
+  if (other != this) {
+    std::swap(name_, other->name_);
+    channels_.Swap(&other->channels_);
+    std::swap(_has_bits_[0], other->_has_bits_[0]);
+    _unknown_fields_.Swap(&other->_unknown_fields_);
+    std::swap(_cached_size_, other->_cached_size_);
+  }
+}
+
+::google::protobuf::Metadata DataGroup::GetMetadata() const {
+  protobuf_AssignDescriptorsOnce();
+  ::google::protobuf::Metadata metadata;
+  metadata.descriptor = DataGroup_descriptor_;
+  metadata.reflection = DataGroup_reflection_;
+  return metadata;
+}
+
+
+// ===================================================================
+
+#ifndef _MSC_VER
+const int DataLabel::kChannelFieldNumber;
 const int DataLabel::kValueFieldNumber;
-const int DataLabel::kFieldNameFieldNumber;
+const int DataLabel::kLabelFieldNumber;
 #endif  // !_MSC_VER
 
 DataLabel::DataLabel()
@@ -1061,9 +1379,9 @@ DataLabel::DataLabel(const DataLabel& from)
 
 void DataLabel::SharedCtor() {
   _cached_size_ = 0;
-  handle_ = 0u;
+  channel_ = 0u;
   value_ = 0u;
-  field_name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  label_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -1072,8 +1390,8 @@ DataLabel::~DataLabel() {
 }
 
 void DataLabel::SharedDtor() {
-  if (field_name_ != &::google::protobuf::internal::kEmptyString) {
-    delete field_name_;
+  if (label_ != &::google::protobuf::internal::kEmptyString) {
+    delete label_;
   }
   if (this != default_instance_) {
   }
@@ -1102,11 +1420,11 @@ DataLabel* DataLabel::New() const {
 
 void DataLabel::Clear() {
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    handle_ = 0u;
+    channel_ = 0u;
     value_ = 0u;
-    if (has_field_name()) {
-      if (field_name_ != &::google::protobuf::internal::kEmptyString) {
-        field_name_->clear();
+    if (has_label()) {
+      if (label_ != &::google::protobuf::internal::kEmptyString) {
+        label_->clear();
       }
     }
   }
@@ -1120,14 +1438,14 @@ bool DataLabel::MergePartialFromCodedStream(
   ::google::protobuf::uint32 tag;
   while ((tag = input->ReadTag()) != 0) {
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // optional uint32 handle = 1;
+      // optional uint32 channel = 1;
       case 1: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
-                 input, &handle_)));
-          set_has_handle();
+                 input, &channel_)));
+          set_has_channel();
         } else {
           goto handle_uninterpreted;
         }
@@ -1147,19 +1465,19 @@ bool DataLabel::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(26)) goto parse_field_name;
+        if (input->ExpectTag(26)) goto parse_label;
         break;
       }
 
-      // optional string field_name = 3;
+      // optional string label = 3;
       case 3: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
-         parse_field_name:
+         parse_label:
           DO_(::google::protobuf::internal::WireFormatLite::ReadString(
-                input, this->mutable_field_name()));
+                input, this->mutable_label()));
           ::google::protobuf::internal::WireFormat::VerifyUTF8String(
-            this->field_name().data(), this->field_name().length(),
+            this->label().data(), this->label().length(),
             ::google::protobuf::internal::WireFormat::PARSE);
         } else {
           goto handle_uninterpreted;
@@ -1186,9 +1504,9 @@ bool DataLabel::MergePartialFromCodedStream(
 
 void DataLabel::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // optional uint32 handle = 1;
-  if (has_handle()) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(1, this->handle(), output);
+  // optional uint32 channel = 1;
+  if (has_channel()) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(1, this->channel(), output);
   }
 
   // optional uint32 value = 2;
@@ -1196,13 +1514,13 @@ void DataLabel::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteUInt32(2, this->value(), output);
   }
 
-  // optional string field_name = 3;
-  if (has_field_name()) {
+  // optional string label = 3;
+  if (has_label()) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8String(
-      this->field_name().data(), this->field_name().length(),
+      this->label().data(), this->label().length(),
       ::google::protobuf::internal::WireFormat::SERIALIZE);
     ::google::protobuf::internal::WireFormatLite::WriteString(
-      3, this->field_name(), output);
+      3, this->label(), output);
   }
 
   if (!unknown_fields().empty()) {
@@ -1213,9 +1531,9 @@ void DataLabel::SerializeWithCachedSizes(
 
 ::google::protobuf::uint8* DataLabel::SerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
-  // optional uint32 handle = 1;
-  if (has_handle()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(1, this->handle(), target);
+  // optional uint32 channel = 1;
+  if (has_channel()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(1, this->channel(), target);
   }
 
   // optional uint32 value = 2;
@@ -1223,14 +1541,14 @@ void DataLabel::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(2, this->value(), target);
   }
 
-  // optional string field_name = 3;
-  if (has_field_name()) {
+  // optional string label = 3;
+  if (has_label()) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8String(
-      this->field_name().data(), this->field_name().length(),
+      this->label().data(), this->label().length(),
       ::google::protobuf::internal::WireFormat::SERIALIZE);
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        3, this->field_name(), target);
+        3, this->label(), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -1244,11 +1562,11 @@ int DataLabel::ByteSize() const {
   int total_size = 0;
 
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    // optional uint32 handle = 1;
-    if (has_handle()) {
+    // optional uint32 channel = 1;
+    if (has_channel()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::UInt32Size(
-          this->handle());
+          this->channel());
     }
 
     // optional uint32 value = 2;
@@ -1258,11 +1576,11 @@ int DataLabel::ByteSize() const {
           this->value());
     }
 
-    // optional string field_name = 3;
-    if (has_field_name()) {
+    // optional string label = 3;
+    if (has_label()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::StringSize(
-          this->field_name());
+          this->label());
     }
 
   }
@@ -1292,14 +1610,14 @@ void DataLabel::MergeFrom(const ::google::protobuf::Message& from) {
 void DataLabel::MergeFrom(const DataLabel& from) {
   GOOGLE_CHECK_NE(&from, this);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    if (from.has_handle()) {
-      set_handle(from.handle());
+    if (from.has_channel()) {
+      set_channel(from.channel());
     }
     if (from.has_value()) {
       set_value(from.value());
     }
-    if (from.has_field_name()) {
-      set_field_name(from.field_name());
+    if (from.has_label()) {
+      set_label(from.label());
     }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
@@ -1324,9 +1642,9 @@ bool DataLabel::IsInitialized() const {
 
 void DataLabel::Swap(DataLabel* other) {
   if (other != this) {
-    std::swap(handle_, other->handle_);
+    std::swap(channel_, other->channel_);
     std::swap(value_, other->value_);
-    std::swap(field_name_, other->field_name_);
+    std::swap(label_, other->label_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);
@@ -1346,7 +1664,8 @@ void DataLabel::Swap(DataLabel* other) {
 
 #ifndef _MSC_VER
 const int Packet::kDataFieldNumber;
-const int Packet::kDataRegistrationsFieldNumber;
+const int Packet::kDataChannelsFieldNumber;
+const int Packet::kDataGroupsFieldNumber;
 const int Packet::kDataLabelsFieldNumber;
 const int Packet::kConsoleOutputFieldNumber;
 const int Packet::kStatusFieldNumber;
@@ -1428,7 +1747,8 @@ void Packet::Clear() {
       }
     }
   }
-  data_registrations_.Clear();
+  data_channels_.Clear();
+  data_groups_.Clear();
   data_labels_.Clear();
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
@@ -1449,27 +1769,42 @@ bool Packet::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(18)) goto parse_data_registrations;
+        if (input->ExpectTag(18)) goto parse_data_channels;
         break;
       }
 
-      // repeated .DataRegistration data_registrations = 2;
+      // repeated .DataChannel data_channels = 2;
       case 2: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
-         parse_data_registrations:
+         parse_data_channels:
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
-                input, add_data_registrations()));
+                input, add_data_channels()));
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(18)) goto parse_data_registrations;
-        if (input->ExpectTag(26)) goto parse_data_labels;
+        if (input->ExpectTag(18)) goto parse_data_channels;
+        if (input->ExpectTag(26)) goto parse_data_groups;
         break;
       }
 
-      // repeated .DataLabel data_labels = 3;
+      // repeated .DataGroup data_groups = 3;
       case 3: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_data_groups:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+                input, add_data_groups()));
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(26)) goto parse_data_groups;
+        if (input->ExpectTag(34)) goto parse_data_labels;
+        break;
+      }
+
+      // repeated .DataLabel data_labels = 4;
+      case 4: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
          parse_data_labels:
@@ -1478,13 +1813,13 @@ bool Packet::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(26)) goto parse_data_labels;
-        if (input->ExpectTag(34)) goto parse_console_output;
+        if (input->ExpectTag(34)) goto parse_data_labels;
+        if (input->ExpectTag(42)) goto parse_console_output;
         break;
       }
 
-      // optional string console_output = 4;
-      case 4: {
+      // optional string console_output = 5;
+      case 5: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
          parse_console_output:
@@ -1496,12 +1831,12 @@ bool Packet::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(42)) goto parse_status;
+        if (input->ExpectTag(50)) goto parse_status;
         break;
       }
 
-      // optional string status = 5;
-      case 5: {
+      // optional string status = 6;
+      case 6: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
          parse_status:
@@ -1541,34 +1876,40 @@ void Packet::SerializeWithCachedSizes(
       1, this->data(), output);
   }
 
-  // repeated .DataRegistration data_registrations = 2;
-  for (int i = 0; i < this->data_registrations_size(); i++) {
+  // repeated .DataChannel data_channels = 2;
+  for (int i = 0; i < this->data_channels_size(); i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      2, this->data_registrations(i), output);
+      2, this->data_channels(i), output);
   }
 
-  // repeated .DataLabel data_labels = 3;
+  // repeated .DataGroup data_groups = 3;
+  for (int i = 0; i < this->data_groups_size(); i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      3, this->data_groups(i), output);
+  }
+
+  // repeated .DataLabel data_labels = 4;
   for (int i = 0; i < this->data_labels_size(); i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      3, this->data_labels(i), output);
+      4, this->data_labels(i), output);
   }
 
-  // optional string console_output = 4;
+  // optional string console_output = 5;
   if (has_console_output()) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8String(
       this->console_output().data(), this->console_output().length(),
       ::google::protobuf::internal::WireFormat::SERIALIZE);
     ::google::protobuf::internal::WireFormatLite::WriteString(
-      4, this->console_output(), output);
+      5, this->console_output(), output);
   }
 
-  // optional string status = 5;
+  // optional string status = 6;
   if (has_status()) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8String(
       this->status().data(), this->status().length(),
       ::google::protobuf::internal::WireFormat::SERIALIZE);
     ::google::protobuf::internal::WireFormatLite::WriteString(
-      5, this->status(), output);
+      6, this->status(), output);
   }
 
   if (!unknown_fields().empty()) {
@@ -1586,38 +1927,45 @@ void Packet::SerializeWithCachedSizes(
         1, this->data(), target);
   }
 
-  // repeated .DataRegistration data_registrations = 2;
-  for (int i = 0; i < this->data_registrations_size(); i++) {
+  // repeated .DataChannel data_channels = 2;
+  for (int i = 0; i < this->data_channels_size(); i++) {
     target = ::google::protobuf::internal::WireFormatLite::
       WriteMessageNoVirtualToArray(
-        2, this->data_registrations(i), target);
+        2, this->data_channels(i), target);
   }
 
-  // repeated .DataLabel data_labels = 3;
+  // repeated .DataGroup data_groups = 3;
+  for (int i = 0; i < this->data_groups_size(); i++) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteMessageNoVirtualToArray(
+        3, this->data_groups(i), target);
+  }
+
+  // repeated .DataLabel data_labels = 4;
   for (int i = 0; i < this->data_labels_size(); i++) {
     target = ::google::protobuf::internal::WireFormatLite::
       WriteMessageNoVirtualToArray(
-        3, this->data_labels(i), target);
+        4, this->data_labels(i), target);
   }
 
-  // optional string console_output = 4;
+  // optional string console_output = 5;
   if (has_console_output()) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8String(
       this->console_output().data(), this->console_output().length(),
       ::google::protobuf::internal::WireFormat::SERIALIZE);
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        4, this->console_output(), target);
+        5, this->console_output(), target);
   }
 
-  // optional string status = 5;
+  // optional string status = 6;
   if (has_status()) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8String(
       this->status().data(), this->status().length(),
       ::google::protobuf::internal::WireFormat::SERIALIZE);
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        5, this->status(), target);
+        6, this->status(), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -1638,14 +1986,14 @@ int Packet::ByteSize() const {
           this->data());
     }
 
-    // optional string console_output = 4;
+    // optional string console_output = 5;
     if (has_console_output()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::StringSize(
           this->console_output());
     }
 
-    // optional string status = 5;
+    // optional string status = 6;
     if (has_status()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::StringSize(
@@ -1653,15 +2001,23 @@ int Packet::ByteSize() const {
     }
 
   }
-  // repeated .DataRegistration data_registrations = 2;
-  total_size += 1 * this->data_registrations_size();
-  for (int i = 0; i < this->data_registrations_size(); i++) {
+  // repeated .DataChannel data_channels = 2;
+  total_size += 1 * this->data_channels_size();
+  for (int i = 0; i < this->data_channels_size(); i++) {
     total_size +=
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
-        this->data_registrations(i));
+        this->data_channels(i));
   }
 
-  // repeated .DataLabel data_labels = 3;
+  // repeated .DataGroup data_groups = 3;
+  total_size += 1 * this->data_groups_size();
+  for (int i = 0; i < this->data_groups_size(); i++) {
+    total_size +=
+      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+        this->data_groups(i));
+  }
+
+  // repeated .DataLabel data_labels = 4;
   total_size += 1 * this->data_labels_size();
   for (int i = 0; i < this->data_labels_size(); i++) {
     total_size +=
@@ -1694,7 +2050,8 @@ void Packet::MergeFrom(const ::google::protobuf::Message& from) {
 
 void Packet::MergeFrom(const Packet& from) {
   GOOGLE_CHECK_NE(&from, this);
-  data_registrations_.MergeFrom(from.data_registrations_);
+  data_channels_.MergeFrom(from.data_channels_);
+  data_groups_.MergeFrom(from.data_groups_);
   data_labels_.MergeFrom(from.data_labels_);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     if (from.has_data()) {
@@ -1730,7 +2087,8 @@ bool Packet::IsInitialized() const {
 void Packet::Swap(Packet* other) {
   if (other != this) {
     std::swap(data_, other->data_);
-    data_registrations_.Swap(&other->data_registrations_);
+    data_channels_.Swap(&other->data_channels_);
+    data_groups_.Swap(&other->data_groups_);
     data_labels_.Swap(&other->data_labels_);
     std::swap(console_output_, other->console_output_);
     std::swap(status_, other->status_);
