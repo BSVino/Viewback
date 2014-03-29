@@ -70,6 +70,8 @@ void CViewbackClient::Update()
 				m_aDataGroups.clear();
 				m_aMeta.clear();
 				m_aUnhandledMessages.clear();
+				m_flLatestDataTime = 0;
+				m_flTimeReceivedLatestData = 0;
 				iStartPacket = i + 1;
 
 				m_aDataChannels.resize(aPackets[i].data_channels_size());
