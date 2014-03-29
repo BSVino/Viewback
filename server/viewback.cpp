@@ -514,7 +514,18 @@ void vb_server_update(double current_time_seconds)
 				size_t message_actual_length = vb_write_length_prepended_message(&packet, message, message_predicted_length, &Packet_serialize);
 
 				if (message_actual_length)
-					send(VB->connections[i].socket, (const char*)message, message_actual_length, 0);
+				{
+					int bytes_sent = send(VB->connections[i].socket, (const char*)message, message_actual_length, 0);
+
+					if (bytes_sent < 0)
+					{
+						VBPrintf("Error sending to %d, disconnected.\n", VB->connections[i].socket);
+						VB->connections[i].socket = VB_INVALID_SOCKET;
+						continue;
+					}
+
+					VBAssert((size_t)bytes_sent == message_actual_length);
+				}
 			}
 			else if (strncmp(mesg, "console: ", 9) == 0)
 			{
@@ -538,7 +549,10 @@ void vb_send_to_all(void* message, size_t message_length)
 		{
 			VBPrintf("Error sending to %d, disconnected.\n", VB->connections[i].socket);
 			VB->connections[i].socket = VB_INVALID_SOCKET;
+			continue;
 		}
+
+		VBAssert((size_t)bytes_sent == message_length);
 	}
 }
 

@@ -194,6 +194,8 @@ void vb_server_shutdown();
 /*
 	These methods send data to the monitor. If you use a handle that was
 	registered as an int but you try to send it as a float, it will fail.
+	These functions use blocking send() and may block if the send buffer
+	is full.
 */
 int vb_data_send_int(vb_channel_handle_t handle, int value);
 int vb_data_send_float(vb_channel_handle_t handle, float value);
