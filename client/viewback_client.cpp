@@ -67,6 +67,7 @@ void CViewbackClient::Update()
 
 				// Disregard any data which came in before the registration packet, it may be from another server or old connection.
 				m_aData.clear();
+				m_aDataGroups.clear();
 				m_aMeta.clear();
 				m_aUnhandledMessages.clear();
 				iStartPacket = i + 1;
