@@ -115,6 +115,8 @@ void CViewbackDataThread::ThreadMain(CViewbackDataThread* pThis)
 
 void CViewbackDataThread::Pump()
 {
+	MaintainDrops();
+
 	char msgbuf[MSGBUFSIZE];
 
 	vector<char> aMsgBuf;
@@ -157,6 +159,14 @@ void CViewbackDataThread::Pump()
 			break;
 	}
 
+	// There's a partial packet left over from last time, tack it onto the front.
+	if (m_aLeftover.size())
+	{
+		m_aLeftover.insert(m_aLeftover.end(), aMsgBuf.begin(), aMsgBuf.end());
+		aMsgBuf.clear();
+		std::swap(m_aLeftover, aMsgBuf);
+	}
+
 	size_t iCurrentPacket = 0;
 	char* pMsgBuf = aMsgBuf.data();
 
@@ -164,6 +174,14 @@ void CViewbackDataThread::Pump()
 	{
 		// The first item will be the packet size.
 		size_t iPacketSize = ntohl(*(size_t*)(&pMsgBuf[iCurrentPacket]));
+
+		// For some reason we didn't receive all of the bytes for this packet.
+		// Stuff it in the leftover and bail.
+		if (iCurrentPacket + sizeof(size_t)+iPacketSize > aMsgBuf.size())
+		{
+			m_aLeftover.insert(m_aLeftover.end(), aMsgBuf.begin() + iCurrentPacket, aMsgBuf.end());
+			break;
+		}
 
 		// Fast forward sizeof(size_t) bytes to skip the packet size, then parse the next item.
 		Packet packet;
@@ -174,10 +192,6 @@ void CViewbackDataThread::Pump()
 		// Fast forward past the packet size and the packet itself.
 		iCurrentPacket += sizeof(size_t)+iPacketSize;
 	}
-
-	VBAssert(iCurrentPacket == aMsgBuf.size());
-
-	MaintainDrops();
 }
 
 void CViewbackDataThread::MaintainDrops()

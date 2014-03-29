@@ -45,6 +45,8 @@ private:
 
 	std::vector<Packet> m_aMessages;
 
+	std::vector<char>   m_aLeftover;
+
 	// Thread signalling.
 	static std::atomic<bool> s_bRunning;
 
