@@ -132,6 +132,7 @@ void CViewbackDataThread::Pump()
 	// 0 always means the connection was lost.
 	if (iBytesRead == 0)
 	{
+		vb_socket_close(m_socket);
 		s_bConnected = false;
 		return;
 	}
@@ -143,6 +144,7 @@ void CViewbackDataThread::Pump()
 			return;
 
 		// There was a real error, we're not connected anymore.
+		vb_socket_close(m_socket);
 		s_bConnected = false;
 		return;
 	}
