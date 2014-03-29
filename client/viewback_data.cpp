@@ -119,53 +119,45 @@ void CViewbackDataThread::Pump()
 
 	char msgbuf[MSGBUFSIZE];
 
-	vector<char> aMsgBuf;
-
 	int iBytesRead;
-	while (true)
+
+	vb_set_blocking(m_socket, 0);
+
+	iBytesRead = recv(m_socket, msgbuf, MSGBUFSIZE, 0);
+
+	int iError = vb_socket_error();
+
+	vb_set_blocking(m_socket, 1);
+
+	// 0 always means the connection was lost.
+	if (iBytesRead == 0)
 	{
-		vb_set_blocking(m_socket, 0);
-
-		if ((iBytesRead = recv(m_socket, msgbuf, MSGBUFSIZE, 0)) < 0)
-		{
-			if (!vb_is_blocking_error(vb_socket_error()))
-			{
-				s_bConnected = false;
-				return;
-			}
-
-			MaintainDrops();
-			continue;
-		}
-
-		vb_set_blocking(m_socket, 1);
-
-		if (iBytesRead == 0)
-		{
-			if (!vb_is_blocking_error(vb_socket_error()))
-			{
-				s_bConnected = false;
-				return;
-			}
-
-			MaintainDrops();
-			continue;
-		}
-
-		vector<char> aCharsRead(msgbuf, msgbuf + iBytesRead);
-		aMsgBuf.insert(aMsgBuf.end(), aCharsRead.begin(), aCharsRead.end());
-
-		if (iBytesRead < MSGBUFSIZE)
-			break;
+		s_bConnected = false;
+		return;
 	}
+
+	if (iBytesRead < 0)
+	{
+		// It would have blocked, meaning there's no data available.
+		if (vb_is_blocking_error(iError))
+			return;
+
+		// There was a real error, we're not connected anymore.
+		s_bConnected = false;
+		return;
+	}
+
+	vector<char> aMsgBuf;
 
 	// There's a partial packet left over from last time, tack it onto the front.
 	if (m_aLeftover.size())
 	{
-		m_aLeftover.insert(m_aLeftover.end(), aMsgBuf.begin(), aMsgBuf.end());
-		aMsgBuf.clear();
-		std::swap(m_aLeftover, aMsgBuf);
+		aMsgBuf.insert(aMsgBuf.end(), m_aLeftover.begin(), m_aLeftover.end());
+		m_aLeftover.clear();
 	}
+
+	vector<char> aBytes(msgbuf, msgbuf + iBytesRead);
+	aMsgBuf.insert(aMsgBuf.end(), aBytes.begin(), aBytes.end());
 
 	size_t iCurrentPacket = 0;
 	char* pMsgBuf = aMsgBuf.data();
