@@ -27,6 +27,7 @@
 { \
 	if (!(x)) \
 	{ \
+		VBPrintf("Viewback assert failed: " #x " file " __FILE__ " line %d\n", __LINE__); \
 		VBDebugBreak(); \
 	} \
 } \
