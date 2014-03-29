@@ -18,22 +18,22 @@ static int vb_socket_error(void)
 	return errno;
 }
 
-static int vb_valid_socket(vb_socket_t socket)
+static int vb_socket_valid(vb_socket_t socket)
 {
 	return socket > 0;
 }
 
-static void vb_close_socket(vb_socket_t socket)
+static void vb_socket_close(vb_socket_t socket)
 {
 	close(socket);
 }
 
-static int vb_is_blocking_error(int error)
+static int vb_socket_is_blocking_error(int error)
 {
 	return EAGAIN == error;
 }
 
-static int vb_set_blocking(vb_socket_t socket, int blocking)
+static int vb_socket_set_blocking(vb_socket_t socket, int blocking)
 {
 	return fcntl(socket, F_SETFL, O_NONBLOCK, !blocking);
 }

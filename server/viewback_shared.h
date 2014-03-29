@@ -51,8 +51,8 @@ public:
 
 	~CCleanupSocket()
 	{
-		if (!_success && vb_valid_socket(_socket))
-			vb_close_socket(_socket);
+		if (!_success && vb_socket_valid(_socket))
+			vb_socket_close(_socket);
 	}
 
 public:
