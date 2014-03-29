@@ -56,7 +56,7 @@ int main(int argc, const char** args)
 
 	vb_config_t config;
 	vb_config_initialize(&config);
-	config.num_data_channels = 4;
+	config.num_data_channels = 10;
 	config.num_data_groups = 3;
 	config.num_data_group_members = 8;
 	config.num_data_labels = 4;
@@ -94,10 +94,18 @@ int main(int argc, const char** args)
 
 	vb_channel_handle_t vb_keydown, vb_player, vb_health, vb_mousepos;
 
+	vb_channel_handle_t vb1, vb2, vb3, vb4, vb5, vb6;
+
 	if (!vb_data_add_channel("Key down", VB_DATATYPE_INT, &vb_keydown) ||
 		!vb_data_add_channel("Player", VB_DATATYPE_INT, &vb_player) ||
 		!vb_data_add_channel("Health", VB_DATATYPE_FLOAT, &vb_health) ||
-		!vb_data_add_channel("Mouse", VB_DATATYPE_VECTOR, &vb_mousepos))
+		!vb_data_add_channel("Mouse", VB_DATATYPE_VECTOR, &vb_mousepos) ||
+		!vb_data_add_channel("Test1", VB_DATATYPE_FLOAT, &vb1) ||
+		!vb_data_add_channel("Test2", VB_DATATYPE_FLOAT, &vb2) ||
+		!vb_data_add_channel("Test3", VB_DATATYPE_FLOAT, &vb3) ||
+		!vb_data_add_channel("Test4", VB_DATATYPE_VECTOR, &vb4) ||
+		!vb_data_add_channel("Test5", VB_DATATYPE_VECTOR, &vb5) ||
+		!vb_data_add_channel("Test6", VB_DATATYPE_VECTOR, &vb6))
 	{
 		printf("Couldn't register data channels\n");
 		return 1;
@@ -153,6 +161,16 @@ int main(int argc, const char** args)
 	float mouse_x = 0;
 	float mouse_y = 0;
 
+	float t1 = 100;
+	float t2 = 100;
+	float t3 = 100;
+	float t4x = 0;
+	float t4y = 0;
+	float t5x = 0;
+	float t5y = 0;
+	float t6x = 0;
+	float t6y = 0;
+
 	struct timeb initial_time_millis;
 	ftime(&initial_time_millis);
 
@@ -180,6 +198,27 @@ int main(int argc, const char** args)
 		mouse_x += RemapVal((float)(rand() % 100), 0, 99, -1, 1)*10;
 		mouse_y += RemapVal((float)(rand() % 100), 0, 99, -1, 1)*10;
 
+		mouse_x *= 0.99f;
+		mouse_y *= 0.99f;
+
+		t1 += RemapVal((float)(rand() % 100), 0, 99, -1, 1);
+		t2 += RemapVal((float)(rand() % 100), 0, 99, -1, 1);
+		t3 += RemapVal((float)(rand() % 100), 0, 99, -1, 1);
+
+		t4x += RemapVal((float)(rand() % 100), 0, 99, -1, 1) * 10;
+		t4y += RemapVal((float)(rand() % 100), 0, 99, -1, 1) * 10;
+		t5x += RemapVal((float)(rand() % 100), 0, 99, -1, 1) * 10;
+		t5y += RemapVal((float)(rand() % 100), 0, 99, -1, 1) * 10;
+		t6x += RemapVal((float)(rand() % 100), 0, 99, -1, 1) * 10;
+		t6y += RemapVal((float)(rand() % 100), 0, 99, -1, 1) * 10;
+
+		t4x *= 0.99f;
+		t4y *= 0.99f;
+		t5x *= 0.99f;
+		t5y *= 0.99f;
+		t6x *= 0.99f;
+		t6y *= 0.99f;
+
 		key_down = rand() % 2;
 		player = rand() % 4;
 
@@ -201,6 +240,19 @@ int main(int argc, const char** args)
 		if (!vb_data_send_vector(vb_mousepos, mouse_x, mouse_y, 0))
 			success = false;
 		if (!vb_data_send_int(vb_player, player))
+			success = false;
+
+		if (!vb_data_send_float(vb1, t1))
+			success = false;
+		if (!vb_data_send_float(vb2, t2))
+			success = false;
+		if (!vb_data_send_float(vb3, t3))
+			success = false;
+		if (!vb_data_send_vector(vb4, t4x, t4y, 0))
+			success = false;
+		if (!vb_data_send_vector(vb5, t5x, t5y, 0))
+			success = false;
+		if (!vb_data_send_vector(vb6, t6x, t6y, 0))
 			success = false;
 
 		time_t current_time;
