@@ -1,5 +1,7 @@
 #pragma once
 
+#pragma warning(disable: 4201) /* nonstandard extension used : nameless struct/union */
+
 static_assert(sizeof(unsigned long long int) == 8, "unsigned long long int must be 64 bits.");
 
 #ifdef VIEWBACK_TIME_DOUBLE
