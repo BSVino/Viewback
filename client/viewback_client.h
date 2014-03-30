@@ -68,6 +68,7 @@ public:
 		m_clrColor = VBVector3(1, 1, 1);
 		m_flDisplayDuration = 1;
 		m_bVisible = true;
+		m_bActive = true;
 	}
 
 public:
@@ -75,6 +76,7 @@ public:
 	VBVector3 m_clrColor;
 	float     m_flDisplayDuration; // In the 2D view, how many seconds worth of data should the monitor show?
 	bool      m_bVisible;
+	bool      m_bActive;
 };
 
 typedef void(*ConsoleOutputCallback)(const char*);
