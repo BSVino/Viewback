@@ -3,6 +3,73 @@
 static_assert(sizeof(unsigned long long int) == 8, "unsigned long long int must be 64 bits.");
 
 
+// ============= Viewback stuff =============
+
+typedef struct
+{
+	const char*    name;
+	vb_data_type_t type;
+	float          range_min;
+	float          range_max;
+} vb_data_channel_t;
+
+typedef struct
+{
+	const char* name;
+} vb_data_group_t;
+
+typedef struct
+{
+	vb_group_handle_t   group;
+	vb_channel_handle_t channel;
+} vb_data_group_member_t;
+
+typedef struct
+{
+	vb_channel_handle_t handle;
+	int                 value;
+	const char*         name;
+} vb_data_label_t;
+
+typedef struct
+{
+	vb_socket_t socket;
+} vb_connection_t;
+
+typedef struct
+{
+	vb_config_t config;
+
+	vb_socket_t        multicast_socket;
+	struct sockaddr_in multicast_addr;
+	time_t             last_multicast;
+	vb_socket_t        tcp_socket;
+
+	vb_data_channel_t* channels;
+	size_t             next_channel;
+
+	vb_data_group_t* groups;
+	size_t           next_group;
+
+	vb_data_group_member_t* group_members;
+	size_t                  next_group_member;
+
+	vb_data_label_t* labels;
+	size_t           next_label;
+
+	vb_connection_t* connections;
+	bool             server_active;
+
+#ifdef VIEWBACK_TIME_DOUBLE
+	double    current_time;
+#else
+	vb_uint64 current_time_ms;
+#endif
+} vb_t;
+
+
+
+
 
 // ============= Protobuf stuff =============
 
@@ -78,66 +145,3 @@ size_t Packet_serialize(struct Packet *_Packet, void *_buffer, size_t length);
 
 
 
-// ============= Viewback stuff =============
-
-typedef struct
-{
-	const char*    name;
-	vb_data_type_t type;
-	float          range_min;
-	float          range_max;
-} vb_data_channel_t;
-
-typedef struct
-{
-	const char* name;
-} vb_data_group_t;
-
-typedef struct
-{
-	vb_group_handle_t   group;
-	vb_channel_handle_t channel;
-} vb_data_group_member_t;
-
-typedef struct
-{
-	vb_channel_handle_t handle;
-	int                 value;
-	const char*         name;
-} vb_data_label_t;
-
-typedef struct
-{
-	vb_socket_t socket;
-} vb_connection_t;
-
-typedef struct
-{
-	vb_config_t config;
-
-	vb_socket_t        multicast_socket;
-	struct sockaddr_in multicast_addr;
-	time_t             last_multicast;
-	vb_socket_t        tcp_socket;
-
-	vb_data_channel_t* channels;
-	size_t             next_channel;
-
-	vb_data_group_t* groups;
-	size_t           next_group;
-
-	vb_data_group_member_t* group_members;
-	size_t                  next_group_member;
-
-	vb_data_label_t* labels;
-	size_t           next_label;
-
-	vb_connection_t* connections;
-	bool             server_active;
-
-#ifdef VIEWBACK_TIME_DOUBLE
-	double    current_time;
-#else
-	vb_uint64 current_time_ms;
-#endif
-} vb_t;
