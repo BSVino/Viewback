@@ -14,3 +14,13 @@ set (GAME_C_SOURCES
 )
 
 add_executable (game_c ${GAME_C_SOURCES})
+
+set (GAME_DOUBLE_SOURCES
+	game.cpp
+	../server/viewback.cpp
+)
+
+add_executable (game_double ${GAME_DOUBLE_SOURCES})
+
+set_target_properties (game_double PROPERTIES COMPILE_DEFINITIONS "VIEWBACK_TIME_DOUBLE")
+

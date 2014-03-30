@@ -21,7 +21,8 @@ message Data {
 	optional float data_float_x  = 5;
 	optional float data_float_y  = 6;
 	optional float data_float_z  = 7;
-	optional double time         = 8;
+	optional double time_double  = 8;
+	optional uint64 time_uint64  = 9;
 }
 
 message DataChannel {

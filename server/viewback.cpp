@@ -387,7 +387,11 @@ bool vb_socket_send(vb_socket_t& socket, const char* message, size_t message_len
 	return true;
 }
 
+#ifdef VIEWBACK_TIME_DOUBLE
 void vb_server_update(double current_time_seconds)
+#else
+void vb_server_update(vb_uint64 current_time_milliseconds)
+#endif
 {
 	if (!VB)
 		return;
@@ -395,7 +399,11 @@ void vb_server_update(double current_time_seconds)
 	if (!VB->server_active)
 		return;
 
+#ifdef VIEWBACK_TIME_DOUBLE
 	VB->current_time = current_time_seconds;
+#else
+	VB->current_time_ms = current_time_milliseconds;
+#endif
 
 	time_t current_time;
 	time(&current_time);
@@ -808,6 +816,24 @@ int write_raw_varint32(unsigned long value, void *_buffer, int offset)
 	return offset;
 }
 
+int write_raw_varint64(unsigned long long value, void *_buffer, int offset)
+{
+	while (1)
+	{
+		if ((value & ~0x7F) == 0)
+		{
+			offset = write_raw_byte((char)value, _buffer, offset);
+			return offset;
+		}
+		else
+		{
+			offset = write_raw_byte((char)((value & 0x7F) | 0x80), _buffer, offset);
+			value = value >> 7;
+		}
+	}
+	return offset;
+}
+
 #define PB_WIRE_TYPE_VARINT           0
 #define PB_WIRE_TYPE_64BIT            1
 #define PB_WIRE_TYPE_LENGTH_DELIMITED 2
@@ -888,9 +914,14 @@ int Data_write(struct Data *_Data, void *_buffer, int offset)
 		offset = write_raw_little_endian32(*data_float_z_ptr, _buffer, offset);
 	}
 
-	unsigned long long *data_time = (unsigned long long *)&_Data->_time;
+#ifdef VIEWBACK_TIME_DOUBLE
+	unsigned long long *data_time = (unsigned long long *)&_Data->_time_double;
 	offset = write_wire_format(8, PB_WIRE_TYPE_64BIT, _buffer, offset);
 	offset = write_raw_little_endian64(*data_time, _buffer, offset);
+#else
+	offset = write_wire_format(9, PB_WIRE_TYPE_VARINT, _buffer, offset);
+	offset = write_raw_varint64(_Data->_time_uint64, _buffer, offset);
+#endif
 
 	return offset;
 }
@@ -1122,7 +1153,12 @@ void Packet_initialize_data(struct Packet* packet, struct Data* data, vb_data_ty
 	memset(data, 0, sizeof(struct Data));
 
 	data->_type = type;
-	data->_time = VB->current_time;
+
+#ifdef VIEWBACK_TIME_DOUBLE
+	data->_time_double = VB->current_time;
+#else
+	data->_time_uint64 = VB->current_time_ms;
+#endif
 }
 
 void Packet_initialize_registrations(struct Packet* packet, struct DataChannel* data_channels, size_t channels, struct DataGroup* data_groups, size_t groups, struct DataLabel* data_labels, size_t labels)

@@ -178,16 +178,23 @@ int main(int argc, const char** args)
 	last_update.time = 0;
 	last_update.millitm = 0;
 
+	// Pretend the game has been running for a year, to locate deep run problems.
+	initial_time_millis.time -= 60 * 60 * 24 * 365;
+
 	while (true)
 	{
 		struct timeb current_time_millis;
 		ftime(&current_time_millis);
 
-		double current_time_double = (current_time_millis.time - initial_time_millis.time) + (float)(current_time_millis.millitm - initial_time_millis.millitm) / 1000;
-
+#ifdef VIEWBACK_TIME_DOUBLE
+		double current_time_double = (current_time_millis.time - initial_time_millis.time) + (double)(current_time_millis.millitm - initial_time_millis.millitm) / 1000;
 		vb_server_update(current_time_double);
+#else
+		vb_uint64 current_time_ms = (current_time_millis.time - initial_time_millis.time)*1000 + (current_time_millis.millitm - initial_time_millis.millitm);
+		vb_server_update(current_time_ms);
+#endif
 
-		double last_update_double = (current_time_millis.time - last_update.time) + (float)(current_time_millis.millitm - last_update.millitm) / 1000;
+		double last_update_double = (current_time_millis.time - last_update.time) + (double)(current_time_millis.millitm - last_update.millitm) / 1000;
 		if (last_update_double < 0.2)
 			continue;
 

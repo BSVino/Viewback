@@ -23,6 +23,10 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 extern "C" {
 #endif
 
+#if !defined(VIEWBACK_TIME_DOUBLE)
+typedef unsigned long long vb_uint64;
+#endif
+
 /*
 	Viewback - A tool for designing video games written by Jorge Rodriguez
 	Some code unscrupulously stolen from Webby https://github.com/deplinenoise/webby
@@ -181,7 +185,11 @@ int vb_server_create();
 	Call every frame. It should take only minimal processing and never does
 	memory allocations.
 */
+#ifdef VIEWBACK_TIME_DOUBLE
 void vb_server_update(double current_time_seconds);
+#else
+void vb_server_update(vb_uint64 current_time_milliseconds);
+#endif
 
 /*
 	Closes all sockets. After shutdown you can add more channels or reset the

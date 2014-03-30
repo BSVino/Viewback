@@ -299,6 +299,15 @@ string CViewbackClient::GetLabelForValue(size_t iHandle, int iValue)
 
 void CViewbackClient::StashData(const Data* pData)
 {
+	VBAssert(pData->has_time_double() || pData->time_uint64());
+
+	double flTime = 0;
+
+	if (pData->has_time_double())
+		flTime = pData->time_double();
+	else if (pData->has_time_uint64())
+		flTime = ((double)pData->time_uint64()) / 1000;
+
 	switch (TypeForHandle(pData->handle()))
 	{
 	case VB_DATATYPE_NONE:
@@ -307,21 +316,21 @@ void CViewbackClient::StashData(const Data* pData)
 		break;
 
 	case VB_DATATYPE_INT:
-		m_aData[pData->handle()].m_aIntData.push_back(CViewbackDataList::DataPair<int>(pData->time(), pData->data_int()));
+		m_aData[pData->handle()].m_aIntData.push_back(CViewbackDataList::DataPair<int>(flTime, pData->data_int()));
 		break;
 
 	case VB_DATATYPE_FLOAT:
-		m_aData[pData->handle()].m_aFloatData.push_back(CViewbackDataList::DataPair<float>(pData->time(), pData->data_float()));
+		m_aData[pData->handle()].m_aFloatData.push_back(CViewbackDataList::DataPair<float>(flTime, pData->data_float()));
 		break;
 
 	case VB_DATATYPE_VECTOR:
-		m_aData[pData->handle()].m_aVectorData.push_back(CViewbackDataList::DataPair<VBVector3>(pData->time(), VBVector3(pData->data_float_x(), pData->data_float_y(), pData->data_float_z())));
+		m_aData[pData->handle()].m_aVectorData.push_back(CViewbackDataList::DataPair<VBVector3>(flTime, VBVector3(pData->data_float_x(), pData->data_float_y(), pData->data_float_z())));
 		break;
 	}
 
-	if (pData->time() > m_flLatestDataTime)
+	if (flTime > m_flLatestDataTime)
 	{
-		m_flLatestDataTime = pData->time();
+		m_flLatestDataTime = flTime;
 
 		struct timeb now;
 		now.time = 0;

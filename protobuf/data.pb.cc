@@ -45,14 +45,15 @@ void protobuf_AssignDesc_protobuf_2fdata_2eproto() {
       "protobuf/data.proto");
   GOOGLE_CHECK(file != NULL);
   Data_descriptor_ = file->message_type(0);
-  static const int Data_offsets_[7] = {
+  static const int Data_offsets_[8] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Data, handle_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Data, data_int_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Data, data_float_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Data, data_float_x_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Data, data_float_y_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Data, data_float_z_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Data, time_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Data, time_double_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Data, time_uint64_),
   };
   Data_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -184,23 +185,24 @@ void protobuf_AddDesc_protobuf_2fdata_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-    "\n\023protobuf/data.proto\"\214\001\n\004Data\022\016\n\006handle"
+    "\n\023protobuf/data.proto\"\250\001\n\004Data\022\016\n\006handle"
     "\030\001 \001(\r\022\020\n\010data_int\030\003 \001(\r\022\022\n\ndata_float\030\004"
     " \001(\002\022\024\n\014data_float_x\030\005 \001(\002\022\024\n\014data_float"
-    "_y\030\006 \001(\002\022\024\n\014data_float_z\030\007 \001(\002\022\014\n\004time\030\010"
-    " \001(\001\"p\n\013DataChannel\022\014\n\004name\030\001 \001(\t\022\035\n\004typ"
-    "e\030\002 \001(\0162\017.vb_data_type_t\022\016\n\006handle\030\003 \001(\r"
-    "\022\021\n\trange_min\030\004 \001(\002\022\021\n\trange_max\030\005 \001(\002\"/"
-    "\n\tDataGroup\022\014\n\004name\030\001 \001(\t\022\024\n\010channels\030\002 "
-    "\003(\rB\002\020\001\":\n\tDataLabel\022\017\n\007channel\030\001 \001(\r\022\r\n"
-    "\005value\030\002 \001(\r\022\r\n\005label\030\003 \001(\t\"\254\001\n\006Packet\022\023"
-    "\n\004data\030\001 \001(\0132\005.Data\022#\n\rdata_channels\030\002 \003"
-    "(\0132\014.DataChannel\022\037\n\013data_groups\030\003 \003(\0132\n."
-    "DataGroup\022\037\n\013data_labels\030\004 \003(\0132\n.DataLab"
-    "el\022\026\n\016console_output\030\005 \001(\t\022\016\n\006status\030\006 \001"
-    "(\t*j\n\016vb_data_type_t\022\024\n\020VB_DATATYPE_NONE"
-    "\020\000\022\023\n\017VB_DATATYPE_INT\020\001\022\025\n\021VB_DATATYPE_F"
-    "LOAT\020\002\022\026\n\022VB_DATATYPE_VECTOR\020\003", 670);
+    "_y\030\006 \001(\002\022\024\n\014data_float_z\030\007 \001(\002\022\023\n\013time_d"
+    "ouble\030\010 \001(\001\022\023\n\013time_uint64\030\t \001(\004\"p\n\013Data"
+    "Channel\022\014\n\004name\030\001 \001(\t\022\035\n\004type\030\002 \001(\0162\017.vb"
+    "_data_type_t\022\016\n\006handle\030\003 \001(\r\022\021\n\trange_mi"
+    "n\030\004 \001(\002\022\021\n\trange_max\030\005 \001(\002\"/\n\tDataGroup\022"
+    "\014\n\004name\030\001 \001(\t\022\024\n\010channels\030\002 \003(\rB\002\020\001\":\n\tD"
+    "ataLabel\022\017\n\007channel\030\001 \001(\r\022\r\n\005value\030\002 \001(\r"
+    "\022\r\n\005label\030\003 \001(\t\"\254\001\n\006Packet\022\023\n\004data\030\001 \001(\013"
+    "2\005.Data\022#\n\rdata_channels\030\002 \003(\0132\014.DataCha"
+    "nnel\022\037\n\013data_groups\030\003 \003(\0132\n.DataGroup\022\037\n"
+    "\013data_labels\030\004 \003(\0132\n.DataLabel\022\026\n\016consol"
+    "e_output\030\005 \001(\t\022\016\n\006status\030\006 \001(\t*j\n\016vb_dat"
+    "a_type_t\022\024\n\020VB_DATATYPE_NONE\020\000\022\023\n\017VB_DAT"
+    "ATYPE_INT\020\001\022\025\n\021VB_DATATYPE_FLOAT\020\002\022\026\n\022VB"
+    "_DATATYPE_VECTOR\020\003", 698);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "protobuf/data.proto", &protobuf_RegisterTypes);
   Data::default_instance_ = new Data();
@@ -248,7 +250,8 @@ const int Data::kDataFloatFieldNumber;
 const int Data::kDataFloatXFieldNumber;
 const int Data::kDataFloatYFieldNumber;
 const int Data::kDataFloatZFieldNumber;
-const int Data::kTimeFieldNumber;
+const int Data::kTimeDoubleFieldNumber;
+const int Data::kTimeUint64FieldNumber;
 #endif  // !_MSC_VER
 
 Data::Data()
@@ -273,7 +276,8 @@ void Data::SharedCtor() {
   data_float_x_ = 0;
   data_float_y_ = 0;
   data_float_z_ = 0;
-  time_ = 0;
+  time_double_ = 0;
+  time_uint64_ = GOOGLE_ULONGLONG(0);
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -315,7 +319,8 @@ void Data::Clear() {
     data_float_x_ = 0;
     data_float_y_ = 0;
     data_float_z_ = 0;
-    time_ = 0;
+    time_double_ = 0;
+    time_uint64_ = GOOGLE_ULONGLONG(0);
   }
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
@@ -418,19 +423,35 @@ bool Data::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(65)) goto parse_time;
+        if (input->ExpectTag(65)) goto parse_time_double;
         break;
       }
 
-      // optional double time = 8;
+      // optional double time_double = 8;
       case 8: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_FIXED64) {
-         parse_time:
+         parse_time_double:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    double, ::google::protobuf::internal::WireFormatLite::TYPE_DOUBLE>(
-                 input, &time_)));
-          set_has_time();
+                 input, &time_double_)));
+          set_has_time_double();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(72)) goto parse_time_uint64;
+        break;
+      }
+
+      // optional uint64 time_uint64 = 9;
+      case 9: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_time_uint64:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
+                 input, &time_uint64_)));
+          set_has_time_uint64();
         } else {
           goto handle_uninterpreted;
         }
@@ -486,9 +507,14 @@ void Data::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteFloat(7, this->data_float_z(), output);
   }
 
-  // optional double time = 8;
-  if (has_time()) {
-    ::google::protobuf::internal::WireFormatLite::WriteDouble(8, this->time(), output);
+  // optional double time_double = 8;
+  if (has_time_double()) {
+    ::google::protobuf::internal::WireFormatLite::WriteDouble(8, this->time_double(), output);
+  }
+
+  // optional uint64 time_uint64 = 9;
+  if (has_time_uint64()) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(9, this->time_uint64(), output);
   }
 
   if (!unknown_fields().empty()) {
@@ -529,9 +555,14 @@ void Data::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(7, this->data_float_z(), target);
   }
 
-  // optional double time = 8;
-  if (has_time()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteDoubleToArray(8, this->time(), target);
+  // optional double time_double = 8;
+  if (has_time_double()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteDoubleToArray(8, this->time_double(), target);
+  }
+
+  // optional uint64 time_uint64 = 9;
+  if (has_time_uint64()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(9, this->time_uint64(), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -579,9 +610,16 @@ int Data::ByteSize() const {
       total_size += 1 + 4;
     }
 
-    // optional double time = 8;
-    if (has_time()) {
+    // optional double time_double = 8;
+    if (has_time_double()) {
       total_size += 1 + 8;
+    }
+
+    // optional uint64 time_uint64 = 9;
+    if (has_time_uint64()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::UInt64Size(
+          this->time_uint64());
     }
 
   }
@@ -629,8 +667,11 @@ void Data::MergeFrom(const Data& from) {
     if (from.has_data_float_z()) {
       set_data_float_z(from.data_float_z());
     }
-    if (from.has_time()) {
-      set_time(from.time());
+    if (from.has_time_double()) {
+      set_time_double(from.time_double());
+    }
+    if (from.has_time_uint64()) {
+      set_time_uint64(from.time_uint64());
     }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
@@ -661,7 +702,8 @@ void Data::Swap(Data* other) {
     std::swap(data_float_x_, other->data_float_x_);
     std::swap(data_float_y_, other->data_float_y_);
     std::swap(data_float_z_, other->data_float_z_);
-    std::swap(time_, other->time_);
+    std::swap(time_double_, other->time_double_);
+    std::swap(time_uint64_, other->time_uint64_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);

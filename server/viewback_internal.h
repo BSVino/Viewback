@@ -1,5 +1,6 @@
 #pragma once
 
+static_assert(sizeof(unsigned long long int) == 8, "unsigned long long int must be 64 bits.");
 
 
 
@@ -21,7 +22,12 @@ struct Data {
 	float          _data_float_x;
 	float          _data_float_y;
 	float          _data_float_z;
-	double         _time;
+
+#ifdef VIEWBACK_TIME_DOUBLE
+	double                 _time_double;
+#else
+	unsigned long long int _time_uint64;
+#endif
 };
 
 struct DataChannel {
@@ -129,5 +135,9 @@ typedef struct
 	vb_connection_t* connections;
 	bool             server_active;
 
-	double current_time;
+#ifdef VIEWBACK_TIME_DOUBLE
+	double    current_time;
+#else
+	vb_uint64 current_time_ms;
+#endif
 } vb_t;
