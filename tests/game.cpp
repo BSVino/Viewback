@@ -200,7 +200,8 @@ int main(int argc, const char** args)
 
 		ftime(&last_update);
 
-		health += RemapVal((float)(rand() % 100), 0, 99, -1, 1);
+		if (rand() % 4 == 0)
+			health += RemapVal((float)(rand() % 100), 0, 99, -1, 1);
 
 		mouse_x += RemapVal((float)(rand() % 100), 0, 99, -1, 1)*10;
 		mouse_y += RemapVal((float)(rand() % 100), 0, 99, -1, 1)*10;
@@ -208,9 +209,12 @@ int main(int argc, const char** args)
 		mouse_x *= 0.99f;
 		mouse_y *= 0.99f;
 
-		t1 += RemapVal((float)(rand() % 100), 0, 99, -1, 1);
-		t2 += RemapVal((float)(rand() % 100), 0, 99, -1, 1);
-		t3 += RemapVal((float)(rand() % 100), 0, 99, -1, 1);
+		if (rand() % 4 == 0)
+			t1 += RemapVal((float)(rand() % 100), 0, 99, -1, 1);
+		if (rand() % 4 == 0)
+			t2 += RemapVal((float)(rand() % 100), 0, 99, -1, 1);
+		if (rand() % 4 == 0)
+			t3 += RemapVal((float)(rand() % 100), 0, 99, -1, 1);
 
 		t4x += RemapVal((float)(rand() % 100), 0, 99, -1, 1) * 10;
 		t4y += RemapVal((float)(rand() % 100), 0, 99, -1, 1) * 10;

@@ -308,6 +308,13 @@ void CViewbackClient::StashData(const Data* pData)
 	else if (pData->has_time_uint64())
 		flTime = ((double)pData->time_uint64()) / 1000;
 
+	double flMaintainTime = 0;
+
+	if (pData->has_maintain_time_double())
+		flMaintainTime = pData->maintain_time_double();
+	else if (pData->has_maintain_time_uint64())
+		flMaintainTime = ((double)pData->maintain_time_uint64()) / 1000;
+
 	switch (TypeForHandle(pData->handle()))
 	{
 	case VB_DATATYPE_NONE:
@@ -316,14 +323,41 @@ void CViewbackClient::StashData(const Data* pData)
 		break;
 
 	case VB_DATATYPE_INT:
+		if (pData->has_maintain_time_double() || pData->has_maintain_time_uint64())
+		{
+			// We threw out some data to save on network data. Now the client needs to "fake it" by
+			// maintaining the previous data value until flMaintainTime, which was the last time that
+			// we got from the server of the duplicate value.
+			if (m_aData[pData->handle()].m_aIntData.size() && flMaintainTime != m_aData[pData->handle()].m_aIntData.back().time)
+				m_aData[pData->handle()].m_aIntData.push_back(CViewbackDataList::DataPair<int>(flMaintainTime, m_aData[pData->handle()].m_aIntData.back().data));
+		}
+
 		m_aData[pData->handle()].m_aIntData.push_back(CViewbackDataList::DataPair<int>(flTime, pData->data_int()));
 		break;
 
 	case VB_DATATYPE_FLOAT:
+		if (pData->has_maintain_time_double() || pData->has_maintain_time_uint64())
+		{
+			// We threw out some data to save on network data. Now the client needs to "fake it" by
+			// maintaining the previous data value until flMaintainTime, which was the last time that
+			// we got from the server of the duplicate value.
+			if (m_aData[pData->handle()].m_aFloatData.size() && flMaintainTime != m_aData[pData->handle()].m_aFloatData.back().time)
+				m_aData[pData->handle()].m_aFloatData.push_back(CViewbackDataList::DataPair<float>(flMaintainTime, m_aData[pData->handle()].m_aFloatData.back().data));
+		}
+
 		m_aData[pData->handle()].m_aFloatData.push_back(CViewbackDataList::DataPair<float>(flTime, pData->data_float()));
 		break;
 
 	case VB_DATATYPE_VECTOR:
+		if (pData->has_maintain_time_double() || pData->has_maintain_time_uint64())
+		{
+			// We threw out some data to save on network data. Now the client needs to "fake it" by
+			// maintaining the previous data value until flMaintainTime, which was the last time that
+			// we got from the server of the duplicate value.
+			if (m_aData[pData->handle()].m_aVectorData.size() && flMaintainTime != m_aData[pData->handle()].m_aVectorData.back().time)
+				m_aData[pData->handle()].m_aVectorData.push_back(CViewbackDataList::DataPair<VBVector3>(flMaintainTime, m_aData[pData->handle()].m_aVectorData.back().data));
+		}
+
 		m_aData[pData->handle()].m_aVectorData.push_back(CViewbackDataList::DataPair<VBVector3>(flTime, VBVector3(pData->data_float_x(), pData->data_float_y(), pData->data_float_z())));
 		break;
 	}

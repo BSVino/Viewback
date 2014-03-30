@@ -388,9 +388,9 @@ bool vb_socket_send(vb_socket_t& socket, const char* message, size_t message_len
 }
 
 #ifdef VIEWBACK_TIME_DOUBLE
-void vb_server_update(double current_time_seconds)
+void vb_server_update(double current_game_time)
 #else
-void vb_server_update(vb_uint64 current_time_milliseconds)
+void vb_server_update(vb_uint64 current_game_time)
 #endif
 {
 	if (!VB)
@@ -399,11 +399,7 @@ void vb_server_update(vb_uint64 current_time_milliseconds)
 	if (!VB->server_active)
 		return;
 
-#ifdef VIEWBACK_TIME_DOUBLE
-	VB->current_time = current_time_seconds;
-#else
-	VB->current_time_ms = current_time_milliseconds;
-#endif
+	VB->current_time = current_game_time;
 
 	time_t current_time;
 	time(&current_time);
@@ -581,6 +577,22 @@ void vb_send_to_all(void* message, size_t message_length)
 	}
 }
 
+/*
+
+Maintain time trick:
+
+Data:     A A C B B B C D D A
+Tossed:     x     x x     x
+Maintain:   m->   m-m->   m->
+
+The data comes in A B C or D. If this value is equal to the previous value,
+this data gets tossed (marked by the x above.) Then the "maintain time"
+is set (marked by the m above) indicating that the client should maintain
+the previous value. Once a new value is received by the server, it is sent
+to the client along with the maintain time, indicated by >.
+
+*/
+
 int vb_data_send_int(vb_channel_handle_t handle, int value)
 {
 	if (!VB)
@@ -592,11 +604,26 @@ int vb_data_send_int(vb_channel_handle_t handle, int value)
 	if (handle >= VB->next_channel)
 		return 0;
 
-	if (VB->channels[handle].type != VB_DATATYPE_INT)
+	vb_data_channel_t& channel = VB->channels[handle];
+
+	if (channel.type != VB_DATATYPE_INT)
 		return 0;
 
 	if (!VB->server_active)
 		return 0;
+
+	if (channel.flags & CHANNEL_FLAG_INITIALIZED)
+	{
+		if (value == channel.last_int)
+		{
+			channel.maintain_time = VB->current_time;
+			return 1;
+		}
+	}
+	else
+		channel.flags |= CHANNEL_FLAG_INITIALIZED;
+
+	channel.last_int = value;
 
 	struct Packet packet;
 	struct Data data;
@@ -604,6 +631,12 @@ int vb_data_send_int(vb_channel_handle_t handle, int value)
 
 	data._handle = handle;
 	data._data_int = value;
+
+#ifdef VIEWBACK_TIME_DOUBLE
+	data._maintain_time_double = channel.maintain_time;
+#else
+	data._maintain_time_uint64 = channel.maintain_time;
+#endif
 
 	size_t message_predicted_length = Packet_get_message_size(&packet);
 	void* message = Packet_alloca(message_predicted_length);
@@ -614,6 +647,8 @@ int vb_data_send_int(vb_channel_handle_t handle, int value)
 		return 0;
 
 	vb_send_to_all(message, message_actual_length);
+
+	channel.maintain_time = 0;
 
 	return 1;
 }
@@ -629,11 +664,27 @@ int vb_data_send_float(vb_channel_handle_t handle, float value)
 	if (handle >= VB->next_channel)
 		return 0;
 
-	if (VB->channels[handle].type != VB_DATATYPE_FLOAT)
+	vb_data_channel_t& channel = VB->channels[handle];
+
+	if (channel.type != VB_DATATYPE_FLOAT)
 		return 0;
 
 	if (!VB->server_active)
 		return 0;
+
+	if (channel.flags & CHANNEL_FLAG_INITIALIZED)
+	{
+		// I'm okay with using float == here
+		if (value == channel.last_float)
+		{
+			channel.maintain_time = VB->current_time;
+			return 1;
+		}
+	}
+	else
+		channel.flags |= CHANNEL_FLAG_INITIALIZED;
+
+	channel.last_float = value;
 
 	struct Packet packet;
 	struct Data data;
@@ -641,6 +692,12 @@ int vb_data_send_float(vb_channel_handle_t handle, float value)
 
 	data._handle = handle;
 	data._data_float = value;
+
+#ifdef VIEWBACK_TIME_DOUBLE
+	data._maintain_time_double = channel.maintain_time;
+#else
+	data._maintain_time_uint64 = channel.maintain_time;
+#endif
 
 	size_t message_predicted_length = Packet_get_message_size(&packet);
 	void* message = Packet_alloca(message_predicted_length);
@@ -651,6 +708,8 @@ int vb_data_send_float(vb_channel_handle_t handle, float value)
 		return 0;
 
 	vb_send_to_all(message, message_actual_length);
+
+	channel.maintain_time = 0;
 
 	return 1;
 }
@@ -666,11 +725,29 @@ int vb_data_send_vector(vb_channel_handle_t handle, float x, float y, float z)
 	if (handle >= VB->next_channel)
 		return 0;
 
-	if (VB->channels[handle].type != VB_DATATYPE_VECTOR)
+	vb_data_channel_t& channel = VB->channels[handle];
+
+	if (channel.type != VB_DATATYPE_VECTOR)
 		return 0;
 
 	if (!VB->server_active)
 		return 0;
+
+	if (channel.flags & CHANNEL_FLAG_INITIALIZED)
+	{
+		// I'm okay with using float == here
+		if (x == channel.last_float_x && y == channel.last_float_y && z == channel.last_float_z)
+		{
+			channel.maintain_time = VB->current_time;
+			return 1;
+		}
+	}
+	else
+		channel.flags |= CHANNEL_FLAG_INITIALIZED;
+
+	channel.last_float_x = x;
+	channel.last_float_y = y;
+	channel.last_float_z = z;
 
 	struct Packet packet;
 	struct Data data;
@@ -681,6 +758,12 @@ int vb_data_send_vector(vb_channel_handle_t handle, float x, float y, float z)
 	data._data_float_y = y;
 	data._data_float_z = z;
 
+#ifdef VIEWBACK_TIME_DOUBLE
+	data._maintain_time_double = channel.maintain_time;
+#else
+	data._maintain_time_uint64 = channel.maintain_time;
+#endif
+
 	size_t message_predicted_length = Packet_get_message_size(&packet);
 	void* message = Packet_alloca(message_predicted_length);
 
@@ -690,6 +773,8 @@ int vb_data_send_vector(vb_channel_handle_t handle, float x, float y, float z)
 		return 0;
 
 	vb_send_to_all(message, message_actual_length);
+
+	channel.maintain_time = 0;
 
 	return 1;
 }
@@ -921,6 +1006,21 @@ int Data_write(struct Data *_Data, void *_buffer, int offset)
 #else
 	offset = write_wire_format(9, PB_WIRE_TYPE_VARINT, _buffer, offset);
 	offset = write_raw_varint64(_Data->_time_uint64, _buffer, offset);
+#endif
+
+#ifdef VIEWBACK_TIME_DOUBLE
+	if (_Data->_maintain_time_double)
+	{
+		unsigned long long *data_maintain_time = (unsigned long long *)&_Data->_maintain_time_double;
+		offset = write_wire_format(10, PB_WIRE_TYPE_64BIT, _buffer, offset);
+		offset = write_raw_little_endian64(*data_maintain_time, _buffer, offset);
+	}
+#else
+	if (_Data->_maintain_time_uint64)
+	{
+		offset = write_wire_format(11, PB_WIRE_TYPE_VARINT, _buffer, offset);
+		offset = write_raw_varint64(_Data->_maintain_time_uint64, _buffer, offset);
+	}
 #endif
 
 	return offset;
@@ -1157,7 +1257,7 @@ void Packet_initialize_data(struct Packet* packet, struct Data* data, vb_data_ty
 #ifdef VIEWBACK_TIME_DOUBLE
 	data->_time_double = VB->current_time;
 #else
-	data->_time_uint64 = VB->current_time_ms;
+	data->_time_uint64 = VB->current_time;
 #endif
 }
 
@@ -1257,6 +1357,16 @@ size_t Packet_get_message_size(struct Packet *_Packet)
 
 		size += 1; /* One byte for "time" field number and wire type */
 		size += 8; /* 8 bytes for a double. */
+
+#ifdef VIEWBACK_TIME_DOUBLE
+		if (_Packet->_data->_maintain_time_double)
+#else
+		if (_Packet->_data->_maintain_time_uint64)
+#endif
+		{
+			size += 1; /* One byte for "maintain_time" field number and wire type */
+			size += 8; /* 64 bits. */
+		}
 	}
 
 	if (_Packet->_data_channels_repeated_len)

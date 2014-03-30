@@ -171,6 +171,20 @@ class Data : public ::google::protobuf::Message {
   inline ::google::protobuf::uint64 time_uint64() const;
   inline void set_time_uint64(::google::protobuf::uint64 value);
 
+  // optional double maintain_time_double = 10;
+  inline bool has_maintain_time_double() const;
+  inline void clear_maintain_time_double();
+  static const int kMaintainTimeDoubleFieldNumber = 10;
+  inline double maintain_time_double() const;
+  inline void set_maintain_time_double(double value);
+
+  // optional uint64 maintain_time_uint64 = 11;
+  inline bool has_maintain_time_uint64() const;
+  inline void clear_maintain_time_uint64();
+  static const int kMaintainTimeUint64FieldNumber = 11;
+  inline ::google::protobuf::uint64 maintain_time_uint64() const;
+  inline void set_maintain_time_uint64(::google::protobuf::uint64 value);
+
   // @@protoc_insertion_point(class_scope:Data)
  private:
   inline void set_has_handle();
@@ -189,6 +203,10 @@ class Data : public ::google::protobuf::Message {
   inline void clear_has_time_double();
   inline void set_has_time_uint64();
   inline void clear_has_time_uint64();
+  inline void set_has_maintain_time_double();
+  inline void clear_has_maintain_time_double();
+  inline void set_has_maintain_time_uint64();
+  inline void clear_has_maintain_time_uint64();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -200,9 +218,11 @@ class Data : public ::google::protobuf::Message {
   float data_float_z_;
   double time_double_;
   ::google::protobuf::uint64 time_uint64_;
+  double maintain_time_double_;
+  ::google::protobuf::uint64 maintain_time_uint64_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(8 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(10 + 31) / 32];
 
   friend void  protobuf_AddDesc_protobuf_2fdata_2eproto();
   friend void protobuf_AssignDesc_protobuf_2fdata_2eproto();
@@ -880,6 +900,50 @@ inline ::google::protobuf::uint64 Data::time_uint64() const {
 inline void Data::set_time_uint64(::google::protobuf::uint64 value) {
   set_has_time_uint64();
   time_uint64_ = value;
+}
+
+// optional double maintain_time_double = 10;
+inline bool Data::has_maintain_time_double() const {
+  return (_has_bits_[0] & 0x00000100u) != 0;
+}
+inline void Data::set_has_maintain_time_double() {
+  _has_bits_[0] |= 0x00000100u;
+}
+inline void Data::clear_has_maintain_time_double() {
+  _has_bits_[0] &= ~0x00000100u;
+}
+inline void Data::clear_maintain_time_double() {
+  maintain_time_double_ = 0;
+  clear_has_maintain_time_double();
+}
+inline double Data::maintain_time_double() const {
+  return maintain_time_double_;
+}
+inline void Data::set_maintain_time_double(double value) {
+  set_has_maintain_time_double();
+  maintain_time_double_ = value;
+}
+
+// optional uint64 maintain_time_uint64 = 11;
+inline bool Data::has_maintain_time_uint64() const {
+  return (_has_bits_[0] & 0x00000200u) != 0;
+}
+inline void Data::set_has_maintain_time_uint64() {
+  _has_bits_[0] |= 0x00000200u;
+}
+inline void Data::clear_has_maintain_time_uint64() {
+  _has_bits_[0] &= ~0x00000200u;
+}
+inline void Data::clear_maintain_time_uint64() {
+  maintain_time_uint64_ = GOOGLE_ULONGLONG(0);
+  clear_has_maintain_time_uint64();
+}
+inline ::google::protobuf::uint64 Data::maintain_time_uint64() const {
+  return maintain_time_uint64_;
+}
+inline void Data::set_maintain_time_uint64(::google::protobuf::uint64 value) {
+  set_has_maintain_time_uint64();
+  maintain_time_uint64_ = value;
 }
 
 // -------------------------------------------------------------------

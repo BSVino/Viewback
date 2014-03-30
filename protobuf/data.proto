@@ -23,6 +23,8 @@ message Data {
 	optional float data_float_z  = 7;
 	optional double time_double  = 8;
 	optional uint64 time_uint64  = 9;
+	optional double maintain_time_double = 10;
+	optional uint64 maintain_time_uint64 = 11;
 }
 
 message DataChannel {

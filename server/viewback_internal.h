@@ -2,8 +2,17 @@
 
 static_assert(sizeof(unsigned long long int) == 8, "unsigned long long int must be 64 bits.");
 
+#ifdef VIEWBACK_TIME_DOUBLE
+typedef double vb_time_t;
+#else
+typedef vb_uint64 vb_time_t;
+#endif
+
 
 // ============= Viewback stuff =============
+
+#define CHANNEL_FLAG_INITIALIZED (1<<0)
+// If you add more than 8, bump the size of vb_data_channel_t::flags
 
 typedef struct
 {
@@ -11,6 +20,24 @@ typedef struct
 	vb_data_type_t type;
 	float          range_min;
 	float          range_max;
+
+	unsigned char  flags; // CHANNEL_FLAG_*
+
+	// If this is nonzero it means that we threw out some redundant data. Next
+	// time we send data to the client we should let it know we threw some out.
+	vb_time_t      maintain_time;
+
+	union
+	{
+		int   last_int;
+		float last_float;
+		struct
+		{
+			float last_float_x;
+			float last_float_y;
+			float last_float_z;
+		};
+	};
 } vb_data_channel_t;
 
 typedef struct
@@ -60,11 +87,7 @@ typedef struct
 	vb_connection_t* connections;
 	bool             server_active;
 
-#ifdef VIEWBACK_TIME_DOUBLE
-	double    current_time;
-#else
-	vb_uint64 current_time_ms;
-#endif
+	vb_time_t        current_time;
 } vb_t;
 
 
@@ -92,8 +115,10 @@ struct Data {
 
 #ifdef VIEWBACK_TIME_DOUBLE
 	double                 _time_double;
+	double                 _maintain_time_double;
 #else
 	unsigned long long int _time_uint64;
+	unsigned long long int _maintain_time_uint64;
 #endif
 };
 
