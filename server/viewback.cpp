@@ -401,6 +401,14 @@ void vb_server_update(vb_uint64 current_game_time)
 
 	VBAssert(current_game_time >= VB->current_time);
 
+	// This sort of thing can happen the header is compiled with VIEWBACK_TIME_DOUBLE
+	// and viewback.cpp is not.
+#ifdef VIEWBACK_TIME_DOUBLE
+	VBAssert(current_game_time - VB->current_time < 100);
+#else
+	VBAssert(current_game_time - VB->current_time < 100000);
+#endif
+
 	VB->current_time = current_game_time;
 
 	time_t current_time;
@@ -1367,7 +1375,7 @@ size_t Packet_get_message_size(struct Packet *_Packet)
 #endif
 		{
 			size += 1; /* One byte for "maintain_time" field number and wire type */
-			size += 8; /* 64 bits. */
+			size += 10; /* If it's a double it'll be 8 bits but if it's a 64 bit varint it could be as many as 10. */
 		}
 	}
 
