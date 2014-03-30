@@ -399,6 +399,8 @@ void vb_server_update(vb_uint64 current_game_time)
 	if (!VB->server_active)
 		return;
 
+	VBAssert(current_game_time >= VB->current_time);
+
 	VB->current_time = current_game_time;
 
 	time_t current_time;
