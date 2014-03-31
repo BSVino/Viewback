@@ -26,11 +26,13 @@ public:
 
 public:
 	static bool Run();
+	static void Shutdown();
 
 	static unsigned long GetServer() { return s_best_server; }
 
 private:
 	CViewbackServersThread() {};
+	static CViewbackServersThread& ServersThread();
 
 private:
 	bool Initialize();
@@ -47,4 +49,5 @@ private:
 	std::map<unsigned long, CServer> m_aServers;
 
 	static std::atomic<long> s_best_server;
+	static std::atomic<bool> s_bShutdown;
 };

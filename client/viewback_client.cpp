@@ -43,6 +43,12 @@ bool CViewbackClient::Initialize(RegistrationUpdateCallback pfnRegistration, Con
 	return CViewbackServersThread::Run();
 }
 
+void CViewbackClient::Shutdown()
+{
+	CViewbackServersThread::Shutdown();
+	CViewbackDataThread::Shutdown();
+}
+
 void CViewbackClient::Update()
 {
 	if (CViewbackDataThread::IsConnected())

@@ -43,6 +43,16 @@ bool CViewbackDataThread::Connect(unsigned long address, int port)
 	return DataThread().Initialize(address, port);
 }
 
+void CViewbackDataThread::Shutdown()
+{
+	if (s_bRunning)
+	{
+		s_bDisconnect = true;
+
+		pthread_join(DataThread().m_iThread, NULL);
+	}
+}
+
 bool CViewbackDataThread::Initialize(unsigned long address, int port)
 {
 	u_int yes=1;

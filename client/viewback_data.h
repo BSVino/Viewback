@@ -19,6 +19,7 @@ class CViewbackDataThread
 {
 public:
 	static bool Connect(unsigned long address, int iPort = 0);
+	static void Shutdown();
 	static bool IsConnected() { return s_bConnected; }
 	static void Disconnect();
 	static std::vector<Packet> GetData();

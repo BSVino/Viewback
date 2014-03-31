@@ -8,15 +8,38 @@
 
 using namespace std;
 
-bool CViewbackServersThread::Run()
+atomic<bool> CViewbackServersThread::s_bShutdown;
+
+CViewbackServersThread& CViewbackServersThread::ServersThread()
 {
 	static CViewbackServersThread t;
 
-	return t.Initialize();
+	return t;
+}
+
+bool CViewbackServersThread::Run()
+{
+	return ServersThread().Initialize();
+}
+
+void CViewbackServersThread::Shutdown()
+{
+	s_bShutdown = true;
+
+	pthread_cancel(ServersThread().m_iThread);
+
+	pthread_join(ServersThread().m_iThread, NULL);
+
+	ServersThread().m_aServers.clear();
+	vb_socket_close(ServersThread().m_socket);
+	s_best_server = 0;
 }
 
 bool CViewbackServersThread::Initialize()
 {
+	m_aServers.clear();
+	s_best_server = 0;
+
 	struct ip_mreq mreq;
 
 	u_int yes=1;
@@ -71,7 +94,7 @@ bool CViewbackServersThread::Initialize()
 
 void CViewbackServersThread::ThreadMain(CViewbackServersThread* pThis)
 {
-	while (true)
+	while (!s_bShutdown)
 		pThis->Pump();
 }
 

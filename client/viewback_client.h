@@ -91,6 +91,7 @@ public:
 	// http://codeisland.org/2012/udp-multicast-on-android/
 	// Viewback will not do this for you.
 	bool Initialize(RegistrationUpdateCallback pfnRegistration, ConsoleOutputCallback pfnConsoleOutput, DebugOutputCallback pfnDebugOutput = NULL);
+	void Shutdown();
 
 	void Update();
 
