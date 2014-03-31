@@ -403,10 +403,11 @@ void vb_server_update(vb_uint64 current_game_time)
 
 	// This sort of thing can happen the header is compiled with VIEWBACK_TIME_DOUBLE
 	// and viewback.cpp is not.
+	if (VB->current_time)
 #ifdef VIEWBACK_TIME_DOUBLE
-	VBAssert(current_game_time - VB->current_time < 100);
+		VBAssert(current_game_time - VB->current_time < 100);
 #else
-	VBAssert(current_game_time - VB->current_time < 100000);
+		VBAssert(current_game_time - VB->current_time < 100000);
 #endif
 
 	VB->current_time = current_game_time;

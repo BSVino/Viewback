@@ -209,17 +209,24 @@ int main(int argc, const char** args)
 		mouse_x *= 0.99f;
 		mouse_y *= 0.99f;
 
-		if (rand() % 4 == 0)
+		if (rand() % 40 == 0)
 			t1 += RemapVal((float)(rand() % 100), 0, 99, -1, 1);
 		if (rand() % 4 == 0)
 			t2 += RemapVal((float)(rand() % 100), 0, 99, -1, 1);
-		if (rand() % 4 == 0)
-			t3 += RemapVal((float)(rand() % 100), 0, 99, -1, 1);
+		t3 += RemapVal((float)(rand() % 100), 0, 99, -1, 1);
 
-		t4x += RemapVal((float)(rand() % 100), 0, 99, -1, 1) * 10;
-		t4y += RemapVal((float)(rand() % 100), 0, 99, -1, 1) * 10;
-		t5x += RemapVal((float)(rand() % 100), 0, 99, -1, 1) * 10;
-		t5y += RemapVal((float)(rand() % 100), 0, 99, -1, 1) * 10;
+		if (rand() % 40 == 0)
+		{
+			t4x += RemapVal((float)(rand() % 100), 0, 99, -1, 1) * 10;
+			t4y += RemapVal((float)(rand() % 100), 0, 99, -1, 1) * 10;
+		}
+
+		if (rand() % 4 == 0)
+		{
+			t5x += RemapVal((float)(rand() % 100), 0, 99, -1, 1) * 10;
+			t5y += RemapVal((float)(rand() % 100), 0, 99, -1, 1) * 10;
+		}
+
 		t6x += RemapVal((float)(rand() % 100), 0, 99, -1, 1) * 10;
 		t6y += RemapVal((float)(rand() % 100), 0, 99, -1, 1) * 10;
 

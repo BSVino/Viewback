@@ -183,17 +183,17 @@ void CViewbackClient::Update()
 			{
 				if (m_aDataChannels[i].m_eDataType == VB_DATATYPE_VECTOR)
 				{
-					while (m_aData[i].m_aVectorData.size() && m_aData[i].m_aVectorData.front().time < flNewest - m_aMeta[i].m_flDisplayDuration - 10)
+					while (m_aData[i].m_aVectorData.size() > 2 && m_aData[i].m_aVectorData.front().time < flNewest - m_aMeta[i].m_flDisplayDuration - 10)
 						m_aData[i].m_aVectorData.pop_front();
 				}
 				else if (m_aDataChannels[i].m_eDataType == VB_DATATYPE_FLOAT)
 				{
-					while (m_aData[i].m_aFloatData.size() && m_aData[i].m_aFloatData.front().time < m_flDataClearTime)
+					while (m_aData[i].m_aFloatData.size() > 2 && m_aData[i].m_aFloatData.front().time < m_flDataClearTime)
 						m_aData[i].m_aFloatData.pop_front();
 				}
 				else if (m_aDataChannels[i].m_eDataType == VB_DATATYPE_INT)
 				{
-					while (m_aData[i].m_aIntData.size() && m_aData[i].m_aIntData.front().time < m_flDataClearTime)
+					while (m_aData[i].m_aIntData.size() > 2 && m_aData[i].m_aIntData.front().time < m_flDataClearTime)
 						m_aData[i].m_aIntData.pop_front();
 				}
 				else
