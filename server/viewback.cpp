@@ -961,6 +961,57 @@ int vb_data_send_vector(vb_channel_handle_t handle, float x, float y, float z)
 	return 1;
 }
 
+int vb_data_send_int_s(const char* channel, int value)
+{
+	if (!channel)
+		return 0;
+
+	if (!channel[0])
+		return 0;
+
+	for (size_t i = 0; i < VB->next_channel; i++)
+	{
+		if (strcmp(VB->channels[i].name, channel) == 0 && VB->channels[i].type == VB_DATATYPE_INT)
+			return vb_data_send_int((vb_channel_handle_t)i, value);
+	}
+
+	return 0;
+}
+
+int vb_data_send_float_s(const char* channel, float value)
+{
+	if (!channel)
+		return 0;
+
+	if (!channel[0])
+		return 0;
+
+	for (size_t i = 0; i < VB->next_channel; i++)
+	{
+		if (strcmp(VB->channels[i].name, channel) == 0 && VB->channels[i].type == VB_DATATYPE_FLOAT)
+			return vb_data_send_float((vb_channel_handle_t)i, value);
+	}
+
+	return 0;
+}
+
+int vb_data_send_vector_s(const char* channel, float x, float y, float z)
+{
+	if (!channel)
+		return 0;
+
+	if (!channel[0])
+		return 0;
+
+	for (size_t i = 0; i < VB->next_channel; i++)
+	{
+		if (strcmp(VB->channels[i].name, channel) == 0 && VB->channels[i].type == VB_DATATYPE_VECTOR)
+			return vb_data_send_vector((vb_channel_handle_t)i, x, y, z);
+	}
+
+	return 0;
+}
+
 int vb_console_append(const char* text)
 {
 	if (!VB)

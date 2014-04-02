@@ -259,16 +259,16 @@ int main(int argc, const char** args)
 			success = false;
 		if (!vb_data_send_vector(vb_mousepos, mouse_x, mouse_y, 0))
 			success = false;
-		if (!vb_data_send_int(vb_player, player))
+		if (!vb_data_send_int_s("Player", player))
 			success = false;
 
-		if (!vb_data_send_float(vb1, t1))
+		if (!vb_data_send_float_s("Test1", t1))
 			success = false;
 		if (!vb_data_send_float(vb2, t2))
 			success = false;
 		if (!vb_data_send_float(vb3, t3))
 			success = false;
-		if (!vb_data_send_vector(vb4, t4x, t4y, 0))
+		if (!vb_data_send_vector_s("Test4", t4x, t4y, 0))
 			success = false;
 		if (!vb_data_send_vector(vb5, t5x, t5y, 0))
 			success = false;

@@ -210,6 +210,14 @@ int vb_data_send_float(vb_channel_handle_t handle, float value);
 int vb_data_send_vector(vb_channel_handle_t handle, float x, float y, float z);
 
 /*
+	These methods also send data to the monitor, but will look up the handle
+	for you using a linear search.
+*/
+int vb_data_send_int_s(const char* channel, int value);
+int vb_data_send_float_s(const char* channel, float value);
+int vb_data_send_vector_s(const char* channel, float x, float y, float z);
+
+/*
 	Any text that goes to your console can also be piped into Viewback for
 	display in the monitor.
 */
