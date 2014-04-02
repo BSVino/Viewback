@@ -18,7 +18,7 @@
 class CViewbackDataThread
 {
 public:
-	static bool Connect(unsigned long address, int iPort = 0);
+	static bool Connect(unsigned long address, unsigned short iPort = 0);
 	static void Shutdown();
 	static bool IsConnected() { return s_bConnected; }
 	static void Disconnect();
@@ -31,7 +31,7 @@ private:
 	static CViewbackDataThread& DataThread();
 
 private:
-	bool Initialize(unsigned long address, int port);
+	bool Initialize(unsigned long address, unsigned short port);
 
 	static void ThreadMain(CViewbackDataThread* pThis);
 

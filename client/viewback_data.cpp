@@ -24,7 +24,7 @@ CViewbackDataThread& CViewbackDataThread::DataThread()
 	return t;
 }
 
-bool CViewbackDataThread::Connect(unsigned long address, int port)
+bool CViewbackDataThread::Connect(unsigned long address, unsigned short port)
 {
 	if (s_bRunning)
 	{
@@ -53,10 +53,8 @@ void CViewbackDataThread::Shutdown()
 	}
 }
 
-bool CViewbackDataThread::Initialize(unsigned long address, int port)
+bool CViewbackDataThread::Initialize(unsigned long address, unsigned short port)
 {
-	u_int yes=1;
-
 	if ((m_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 	{
 		VBPrintf("Could not create data socket.\n");
@@ -81,7 +79,7 @@ bool CViewbackDataThread::Initialize(unsigned long address, int port)
 
 	// Start by requesting a list of data registrations from the server.
 	const char registrations[] = "registrations";
-	int bytes_sent = send(m_socket, (const char*)registrations, sizeof(registrations), 0);
+	send(m_socket, (const char*)registrations, sizeof(registrations), 0);
 
 	// Any data drops are lying around from last time, so clear them out.
 	s_aDataDrop.clear();
@@ -223,7 +221,7 @@ void CViewbackDataThread::MaintainDrops()
 		string sMessage = sCommand + "\0";
 
 		// Send it to the server
-		int bytes_sent = send(m_socket, sMessage.c_str(), sMessage.length()+1, 0); // +1 length for the terminal null
+		send(m_socket, sMessage.c_str(), sMessage.length()+1, 0); // +1 length for the terminal null
 	}
 }
 

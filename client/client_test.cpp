@@ -8,6 +8,8 @@
 #include <stdio.h>
 #include <random>
 
+#pragma warning(disable:4702) // unreachable code. The last part of main() is unreachable, which is okay since this is just a sample.
+
 void ConsoleOutput(const char* pszOutput)
 {
 	printf("Console output: %s", pszOutput);
@@ -40,7 +42,7 @@ int main()
 
 	srand((int)last_time);
 
-	while (true)
+	for (;;)
 	{
 		vb.Update();
 

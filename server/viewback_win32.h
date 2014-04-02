@@ -18,6 +18,8 @@ typedef int vb_socklen_t;
 #define VB_INVALID_SOCKET INVALID_SOCKET
 #define snprintf _snprintf
 
+#pragma warning(disable:4505) // unreferenced local function has been removed
+
 static int vb_socket_error(void)
 {
 	return WSAGetLastError();

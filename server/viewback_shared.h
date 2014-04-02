@@ -23,9 +23,21 @@
 #define VBDebugBreak() __debugbreak();
 #endif
 
+// If you hit this, this code path was left incomplete because it wasn't
+// necessary at the time. Since you're using it now you need to implement
+// it yourself.
+#define VBUnimplemented() \
+{ \
+	VBPrintf("Viewback unimplemented code reached in file " __FILE__ " line %d\n", __LINE__); \
+	VBDebugBreak(); \
+} \
+
 #define VBAssert(x) \
 { \
+	__pragma(warning(push)) \
+	__pragma(warning(disable:4127)) /* conditional expression is constant */ \
 	if (!(x)) \
+	__pragma(warning(pop)) \
 	{ \
 		VBPrintf("Viewback assert failed: " #x " file " __FILE__ " line %d\n", __LINE__); \
 		VBDebugBreak(); \

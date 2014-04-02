@@ -20,6 +20,8 @@
 #include <sstream>
 #include <cstring>
 
+#pragma warning(disable:4702) // unreachable code. The last part of main() is unreachable, which is okay since this is just a sample.
+
 using namespace std;
 
 void command_callback(const char* text)
@@ -68,7 +70,7 @@ int main(int argc, const char** args)
 		if (strcmp(args[i], "--port") == 0 && i < argc - 1)
 		{
 			i++;
-			config.port = atoi(args[i]);
+			config.port = (unsigned short)atoi(args[i]);
 		}
 		else if (strcmp(args[i], "--multicast-group") == 0 && i < argc - 1)
 		{
@@ -181,7 +183,7 @@ int main(int argc, const char** args)
 	// Pretend the game has been running for a year, to locate deep run problems.
 	initial_time_millis.time -= 60 * 60 * 24 * 365;
 
-	while (true)
+	for (;;)
 	{
 		struct timeb current_time_millis;
 		ftime(&current_time_millis);
@@ -287,6 +289,7 @@ int main(int argc, const char** args)
 			const char* output;
 			switch (rand() % 5)
 			{
+			default:
 			case 0:
 				output = ("Loading.\n");
 				break;

@@ -84,7 +84,7 @@ void CViewbackClient::Update()
 				m_aData.resize(aPackets[i].data_channels_size());
 				m_aMeta.resize(aPackets[i].data_channels_size());
 
-				for (int j = 0; j < aPackets[i].data_channels_size(); j++)
+				for (size_t j = 0; j < (size_t)aPackets[i].data_channels_size(); j++)
 				{
 					auto& oChannelProtobuf = aPackets[i].data_channels(j);
 
@@ -203,7 +203,7 @@ void CViewbackClient::Update()
 						m_aData[i].m_aIntData.pop_front();
 				}
 				else
-					VBAssert(false);
+					VBUnimplemented();
 			}
 
 			m_flNextDataClear = flNewest + 10;
@@ -256,7 +256,7 @@ bool CViewbackClient::HasConnection()
 	return CViewbackDataThread::IsConnected();
 }
 
-void CViewbackClient::Connect(const char* pszIP, int iPort)
+void CViewbackClient::Connect(const char* pszIP, unsigned short iPort)
 {
 	CViewbackDataThread::Disconnect();
 	m_bDisconnected = false;
