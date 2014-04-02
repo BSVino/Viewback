@@ -138,13 +138,13 @@ int vb_config_install(vb_config_t* config, void* memory, size_t memory_size);
 
 /*
 	Register a channel of data. You should provide an address to a handle and
-	store that handle somewhere.
+	store that handle somewhere. 'handle' can be NULL.
 */
 int vb_data_add_channel(const char* name, vb_data_type_t type, /*out*/ vb_channel_handle_t* handle);
 
 /*
 	Register a group of data. You should provide an address to a handle and store
-	that handle somewhere.
+	that handle somewhere. 'handle' can be NULL.
 */
 int vb_data_add_group(const char* name, /*out*/ vb_group_handle_t* handle);
 
@@ -174,7 +174,7 @@ int vb_data_get_label(vb_channel_handle_t handle, int value, /*out*/ const char*
 	Otherwise the chart will automatically fit the window. For vector data,
 	only the max is used.
 */
-int vb_data_set_range(vb_channel_handle_t handle, float min, float max);
+int vb_data_set_range(vb_channel_handle_t handle, float range_min, float range_max);
 
 /*
 	After registering all of your data, call this to start up the server.

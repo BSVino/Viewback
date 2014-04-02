@@ -5,6 +5,7 @@ include_directories (
 set (GAME_CPP_SOURCES
 	game.cpp
 	../server/viewback.cpp
+	../server/viewback_util.cpp
 )
 
 add_executable (game_cpp ${GAME_CPP_SOURCES})
@@ -18,6 +19,7 @@ add_executable (game_c ${GAME_C_SOURCES})
 set (GAME_DOUBLE_SOURCES
 	game.cpp
 	../server/viewback.cpp
+	../server/viewback_util.cpp
 )
 
 add_executable (game_double ${GAME_DOUBLE_SOURCES})

@@ -20,6 +20,7 @@ typedef vb_uint64 vb_time_t;
 // all channels, so it may be longer.
 typedef unsigned char vb_data_channel_mask_t;
 #define VB_CHANNEL_NONE ((vb_channel_handle_t)~0)
+#define VB_GROUP_NONE ((vb_group_handle_t)~0)
 
 typedef struct
 {

@@ -129,6 +129,12 @@ int vb_config_install(vb_config_t* config, void* memory, size_t memory_size)
 
 	VB->server_active = false;
 
+	if (!VB->config.multicast_group || !*VB->config.multicast_group)
+		VB->config.multicast_group = VB_DEFAULT_MULTICAST_ADDRESS;
+
+	if (!VB->config.port)
+		VB->config.port = VB_DEFAULT_PORT;
+
 	return 1;
 }
 
@@ -248,16 +254,14 @@ int vb_data_add_channel(const char* name, vb_data_type_t type, /*out*/ vb_channe
 	if (!name[0])
 		return 0;
 
-	if (!handle)
-		return 0;
-
 	if (VB->next_channel >= VB->config.num_data_channels)
 		return 0;
 
 	if (VB->server_active)
 		return 0;
 
-	*handle = (vb_channel_handle_t)VB->next_channel;
+	if (handle)
+		*handle = (vb_channel_handle_t)VB->next_channel;
 
 	VB->channels[VB->next_channel].name = name;
 	VB->channels[VB->next_channel].type = type;
@@ -278,16 +282,14 @@ int vb_data_add_group(const char* name, /*out*/ vb_group_handle_t* handle)
 	if (!name[0])
 		return 0;
 
-	if (!handle)
-		return 0;
-
 	if (VB->next_group >= VB->config.num_data_groups)
 		return 0;
 
 	if (VB->server_active)
 		return 0;
 
-	*handle = (vb_group_handle_t)VB->next_group;
+	if (handle)
+		*handle = (vb_group_handle_t)VB->next_group;
 
 	VB->groups[VB->next_group].name = name;
 
@@ -373,7 +375,7 @@ int vb_data_get_label(vb_channel_handle_t handle, int value, const char** label)
 	return false;
 }
 
-int vb_data_set_range(vb_channel_handle_t handle, float min, float max)
+int vb_data_set_range(vb_channel_handle_t handle, float range_min, float range_max)
 {
 	if (!VB)
 		return 0;
@@ -384,8 +386,8 @@ int vb_data_set_range(vb_channel_handle_t handle, float min, float max)
 	if (VB->server_active)
 		return 0;
 
-	VB->channels[handle].range_min = min;
-	VB->channels[handle].range_max = max;
+	VB->channels[handle].range_min = range_min;
+	VB->channels[handle].range_max = range_max;
 
 	return 1;
 }

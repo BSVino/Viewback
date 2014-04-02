@@ -1,4 +1,4 @@
-#include <viewback.h>
+#include <viewback_util.h>
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -56,99 +56,77 @@ int main(int argc, const char** args)
 		return 1;
 #endif
 
-	vb_config_t config;
-	vb_config_initialize(&config);
-	config.num_data_channels = 10;
-	config.num_data_groups = 3;
-	config.num_data_group_members = 8;
-	config.num_data_labels = 4;
-	config.debug_output_callback = &debug_printf;
-	config.command_callback = &command_callback;
+	vb_util_initialize();
+
+	unsigned short port = 0;
+	const char* multicast_group = NULL;
 
 	for (int i = 1; i < argc; i++)
 	{
 		if (strcmp(args[i], "--port") == 0 && i < argc - 1)
 		{
 			i++;
-			config.port = (unsigned short)atoi(args[i]);
+			port = (unsigned short)atoi(args[i]);
 		}
 		else if (strcmp(args[i], "--multicast-group") == 0 && i < argc - 1)
 		{
 			i++;
-			config.multicast_group = args[i];
+			multicast_group = args[i];
 		}
-	}
-
-	size_t memory_required = vb_config_get_memory_required(&config);
-
-	// User is responsible for freeing this memory.
-	// Here I use stack allocation so that it's automatically
-	// freed when the function returns. If you don't
-	// understand what that means, don't use alloca(),
-	// use some other memory allocation means instead.
-	void* memory = alloca(memory_required);
-
-	if (!vb_config_install(&config, memory, memory_required))
-	{
-		printf("Couldn't initialize Viewback.\n");
-		return 1;
 	}
 
 	vb_channel_handle_t vb_keydown, vb_player, vb_health, vb_mousepos;
 
 	vb_channel_handle_t vb1, vb2, vb3, vb4, vb5, vb6;
 
-	if (!vb_data_add_channel("Key down", VB_DATATYPE_INT, &vb_keydown) ||
-		!vb_data_add_channel("Player", VB_DATATYPE_INT, &vb_player) ||
-		!vb_data_add_channel("Health", VB_DATATYPE_FLOAT, &vb_health) ||
-		!vb_data_add_channel("Mouse", VB_DATATYPE_VECTOR, &vb_mousepos) ||
-		!vb_data_add_channel("Test1", VB_DATATYPE_FLOAT, &vb1) ||
-		!vb_data_add_channel("Test2", VB_DATATYPE_FLOAT, &vb2) ||
-		!vb_data_add_channel("Test3", VB_DATATYPE_FLOAT, &vb3) ||
-		!vb_data_add_channel("Test4", VB_DATATYPE_VECTOR, &vb4) ||
-		!vb_data_add_channel("Test5", VB_DATATYPE_VECTOR, &vb5) ||
-		!vb_data_add_channel("Test6", VB_DATATYPE_VECTOR, &vb6))
-	{
-		printf("Couldn't register data channels\n");
-		return 1;
-	}
+	vb_util_add_channel("Key down", VB_DATATYPE_INT, &vb_keydown);
+	vb_util_add_channel("Player", VB_DATATYPE_INT, &vb_player);
+	vb_util_add_channel("Health", VB_DATATYPE_FLOAT, &vb_health);
+	vb_util_add_channel("Mouse", VB_DATATYPE_VECTOR, &vb_mousepos);
+	vb_util_add_channel("Test1", VB_DATATYPE_FLOAT, &vb1);
+	vb_util_add_channel("Test2", VB_DATATYPE_FLOAT, &vb2);
+	vb_util_add_channel("Test3", VB_DATATYPE_FLOAT, &vb3);
+	vb_util_add_channel("Test4", VB_DATATYPE_VECTOR, &vb4);
+	vb_util_add_channel("Test5", VB_DATATYPE_VECTOR, &vb5);
+	vb_util_add_channel("Test6", VB_DATATYPE_VECTOR, &vb6);
 
 	vb_group_handle_t vb_group1, vb_group2, vb_group3;
-	if (!vb_data_add_group("Group1", &vb_group1) ||
-		!vb_data_add_group("Group2", &vb_group2) ||
-		!vb_data_add_group("Group3", &vb_group3))
-	{
-		printf("Couldn't register data groups\n");
-		return 1;
-	}
+	
+	vb_util_add_group("Group1", &vb_group1);
+	vb_util_add_group("Group2", &vb_group2);
+	vb_util_add_group("Group3", &vb_group3);
 
-	if (!vb_data_add_channel_to_group(vb_group1, vb_keydown) ||
-		!vb_data_add_channel_to_group(vb_group1, vb_player) ||
-		!vb_data_add_channel_to_group(vb_group1, vb_health) ||
-		!vb_data_add_channel_to_group(vb_group2, vb_player) ||
-		!vb_data_add_channel_to_group(vb_group2, vb_health) ||
-		!vb_data_add_channel_to_group(vb_group2, vb_mousepos) ||
-		!vb_data_add_channel_to_group(vb_group3, vb_keydown) ||
-		!vb_data_add_channel_to_group(vb_group3, vb_mousepos))
+	if (!vb_util_add_channel_to_group_s("Group1", "Key down") ||
+		!vb_util_add_channel_to_group_s("Group1", "Player") ||
+		!vb_util_add_channel_to_group_s("Group1", "Health") ||
+		!vb_util_add_channel_to_group_s("Group2", "Player") ||
+		!vb_util_add_channel_to_group_s("Group2", "Health") ||
+		!vb_util_add_channel_to_group_s("Group2", "Mouse") ||
+		!vb_util_add_channel_to_group_s("Group3", "Key down") ||
+		!vb_util_add_channel_to_group_s("Group3", "Mouse"))
 	{
 		printf("Couldn't set up groups\n");
 		return 1;
 	}
 
-	if (!vb_data_add_label(vb_player, 0, "Dead") ||
-		!vb_data_add_label(vb_player, 1, "Alive") ||
-		!vb_data_add_label(vb_player, 2, "Transient") ||
-		!vb_data_add_label(vb_player, 3, "Philosophical"))
+	if (!vb_util_add_label_s("Player", 0, "Dead") ||
+		!vb_util_add_label_s("Player", 1, "Alive") ||
+		!vb_util_add_label_s("Player", 2, "Transient") ||
+		!vb_util_add_label_s("Player", 3, "Philosophical"))
 	{
 		printf("Couldn't register labels\n");
 		return 1;
 	}
 
-	// if (!vb_data_set_range(vb_health, 0, 150)) {}
-
-	if (!vb_server_create())
+	if (!vb_util_set_range_s("Health", 0, 150))
 	{
-		printf("Couldn't create Viewback server\n");
+		printf("Couldn't set range\n");
+		return 1;
+	}
+
+	if (!vb_util_server_create(4, &debug_printf, &command_callback, multicast_group, port))
+	{
+		printf("Couldn't install config\n");
 		return 1;
 	}
 
