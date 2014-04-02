@@ -16,6 +16,11 @@ typedef vb_uint64 vb_time_t;
 #define CHANNEL_FLAG_INITIALIZED (1<<0)
 // If you add more than 8, bump the size of vb_data_channel_t::flags
 
+// This isn't really always 1 byte long. It's a bit mask large enough to hold
+// all channels, so it may be longer.
+typedef unsigned char vb_data_channel_mask_t;
+#define VB_CHANNEL_NONE ((vb_channel_handle_t)~0)
+
 typedef struct
 {
 	const char*    name;
@@ -63,6 +68,8 @@ typedef struct
 typedef struct
 {
 	vb_socket_t socket;
+
+	vb_data_channel_mask_t* active_channels;
 } vb_connection_t;
 
 typedef struct

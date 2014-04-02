@@ -12,14 +12,22 @@ public:
 	CViewbackDataChannel()
 	{
 		m_flMin = m_flMax = 0;
+		m_bActive = false;
 	}
 
 public:
 	unsigned int   m_iHandle;
-	std::string    m_sFieldName;
+	std::string    m_sName;
 	vb_data_type_t m_eDataType;
-	float          m_flMin;
-	float          m_flMax;
+
+	float m_flMin;
+	float m_flMax;
+
+	// If the channel is active, the server will send data. All channels
+	// start as inactive. Changing the status is done with server commands.
+	// The server never informs the client of which channels are active or
+	// inactive, it's the client's job to keep track of that.
+	bool m_bActive;
 
 	std::map<int, std::string> m_asLabels;
 };
@@ -68,7 +76,6 @@ public:
 		m_clrColor = VBVector3(1, 1, 1);
 		m_flDisplayDuration = 1;
 		m_bVisible = true;
-		m_bActive = true;
 	}
 
 public:
@@ -76,7 +83,6 @@ public:
 	VBVector3 m_clrColor;
 	float     m_flDisplayDuration; // In the 2D view, how many seconds worth of data should the monitor show?
 	bool      m_bVisible;
-	bool      m_bActive;
 };
 
 typedef void(*ConsoleOutputCallback)(const char*);
@@ -99,6 +105,12 @@ public:
 	void Connect(const char* pszIP, int iPort); // Does not resolve hostnames, pass an IP.
 	void FindServer(); // Connect to the first server you can find by multicast.
 	void Disconnect();
+
+	// Deactivated channels will not be sent to the client.
+	// All channels are deactivated by default.
+	void ActivateChannel(size_t iChannel);
+	void DeactivateChannel(size_t iChannel);
+	void ActivateGroup(size_t iGroup);
 
 	void SendConsoleCommand(const std::string& sCommand);
 	DebugOutputCallback GetDebugOutputCallback() { return m_pfnDebugOutput; }

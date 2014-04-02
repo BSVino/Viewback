@@ -52,7 +52,7 @@ int main()
 			{
 				auto& oRegistration = vb.GetChannels()[i];
 				auto& oData = vb.GetData()[i];
-				printf("%s (%d):", oRegistration.m_sFieldName.c_str(), oData.m_aIntData.size() + oData.m_aFloatData.size() + oData.m_aVectorData.size());
+				printf("%s (%d):", oRegistration.m_sName.c_str(), oData.m_aIntData.size() + oData.m_aFloatData.size() + oData.m_aVectorData.size());
 
 				switch (oRegistration.m_eDataType)
 				{
@@ -106,6 +106,21 @@ int main()
 
 				printf("Sending command: %s\n", pszCommand);
 				vb.SendConsoleCommand(pszCommand);
+			}
+
+			if (vb.GetChannels().size() && rand() % 2)
+			{
+				int iChannel = rand() % vb.GetChannels().size();
+				if (vb.GetChannels()[iChannel].m_bActive)
+				{
+					printf("Deactivating channel %d - \"%s\"\n", iChannel, vb.GetChannels()[iChannel].m_sName.c_str());
+					vb.DeactivateChannel(iChannel);
+				}
+				else
+				{
+					printf("Activate channel %d - \"%s\"\n", iChannel, vb.GetChannels()[iChannel].m_sName.c_str());
+					vb.ActivateChannel(iChannel);
+				}
 			}
 
 			last_time = now;

@@ -95,7 +95,7 @@ void CViewbackClient::Update()
 
 					auto& oChannel = m_aDataChannels[oChannelProtobuf.handle()];
 					oChannel.m_iHandle = oChannelProtobuf.handle();
-					oChannel.m_sFieldName = oChannelProtobuf.name();
+					oChannel.m_sName = oChannelProtobuf.name();
 					oChannel.m_eDataType = oChannelProtobuf.type();
 
 					if (oChannelProtobuf.has_range_min())
@@ -274,10 +274,47 @@ void CViewbackClient::Disconnect()
 	CViewbackDataThread::Disconnect();
 }
 
+void CViewbackClient::ActivateChannel(size_t iChannel)
+{
+	char aoeu[10];
+	sprintf(aoeu, "%d", iChannel);
+
+	// This list is pumped into the data thread during the Update().
+	m_sOutgoingCommands.push_back(std::string("activate: ") + aoeu);
+
+	m_aDataChannels[iChannel].m_bActive = true;
+}
+
+void CViewbackClient::DeactivateChannel(size_t iChannel)
+{
+	char aoeu[10];
+	sprintf(aoeu, "%d", iChannel);
+
+	// This list is pumped into the data thread during the Update().
+	m_sOutgoingCommands.push_back(std::string("deactivate: ") + aoeu);
+
+	m_aDataChannels[iChannel].m_bActive = false;
+}
+
+void CViewbackClient::ActivateGroup(size_t iGroup)
+{
+	char aoeu[10];
+	sprintf(aoeu, "%d", iGroup);
+
+	// This list is pumped into the data thread during the Update().
+	m_sOutgoingCommands.push_back(std::string("group: ") + aoeu);
+
+	for (auto& oChannel : m_aDataChannels)
+		oChannel.m_bActive = false;
+
+	for (auto& i : m_aDataGroups[iGroup].m_iChannels)
+		m_aDataChannels[i].m_bActive = true;
+}
+
 void CViewbackClient::SendConsoleCommand(const string& sCommand)
 {
 	// This list is pumped into the data thread during the Update().
-	m_sOutgoingCommands.push_back(sCommand);
+	m_sOutgoingCommands.push_back("console: " + sCommand);
 }
 
 vb_data_type_t CViewbackClient::TypeForHandle(size_t iHandle)

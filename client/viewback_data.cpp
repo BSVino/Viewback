@@ -220,7 +220,7 @@ void CViewbackDataThread::MaintainDrops()
 		string sCommand = s_sCommandDrop;
 		s_bCommandDropReady = true;
 
-		string sMessage = "console: " + sCommand + "\0";
+		string sMessage = sCommand + "\0";
 
 		// Send it to the server
 		int bytes_sent = send(m_socket, sMessage.c_str(), sMessage.length()+1, 0); // +1 length for the terminal null

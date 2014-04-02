@@ -42,6 +42,28 @@ void vb_config_initialize(vb_config_t* config)
 	config->max_connections = 4;
 }
 
+size_t vb_config_get_channel_mask_length(vb_config_t* config)
+{
+	if (!config)
+		return 0;
+
+	int channels = config->num_data_channels;
+
+	if (channels <= 8)
+		return 1;
+
+	if (channels <= 16)
+		return 2;
+
+	if (channels % 32 == 0)
+		// if channels == 32, we want to return 1
+		return channels / 32;
+	else
+		// if channels == 31, we want to return 1
+		// if channels == 32, we want to return 2
+		return channels / 32 + 1;
+}
+
 size_t vb_config_get_memory_required(vb_config_t* config)
 {
 	if (!config)
@@ -59,7 +81,8 @@ size_t vb_config_get_memory_required(vb_config_t* config)
 		config->num_data_groups * sizeof(vb_data_group_t)+
 		config->num_data_group_members * sizeof(vb_data_group_member_t)+
 		config->num_data_labels * sizeof(vb_data_label_t)+
-		config->max_connections * sizeof(vb_connection_t);
+		config->max_connections * sizeof(vb_connection_t)+
+		config->max_connections * vb_config_get_channel_mask_length(config);
 }
 
 static vb_t* VB;
@@ -93,13 +116,125 @@ int vb_config_install(vb_config_t* config, void* memory, size_t memory_size)
 	VB->group_members = (vb_data_group_member_t*)((char*)VB->groups + sizeof(vb_data_group_t)*config->num_data_groups);
 	VB->labels = (vb_data_label_t*)((char*)VB->group_members + sizeof(vb_data_group_member_t)*config->num_data_group_members);
 	VB->connections = (vb_connection_t*)((char*)VB->labels + sizeof(vb_data_label_t)*config->num_data_labels);
+	char* active_channels = (char*)VB->connections + sizeof(vb_connection_t)*config->max_connections;
+
+	char* memory_end = active_channels + vb_config_get_channel_mask_length(config)*config->max_connections;
+	VBAssert(memory_end == (char*)memory + memory_size);
 
 	for (size_t i = 0; i < config->max_connections; i++)
+	{
 		VB->connections[i].socket = VB_INVALID_SOCKET;
+		VB->connections[i].active_channels = (vb_data_channel_mask_t*)(active_channels + i * vb_config_get_channel_mask_length(config));
+	}
 
 	VB->server_active = false;
 
 	return 1;
+}
+
+bool vb_data_is_channel_active(vb_channel_handle_t channel, size_t connection)
+{
+	if (!VB)
+		return false;
+
+	if (!VB->server_active)
+		return false;
+
+	if (channel == VB_CHANNEL_NONE)
+		return true;
+
+	if (channel < 0)
+		return false;
+
+	if (channel >= VB->next_channel)
+		return false;
+
+	if (connection < 0)
+		return false;
+
+	if (connection >= VB->config.max_connections)
+		return false;
+
+	if (VB->connections[connection].socket == VB_INVALID_SOCKET)
+		return false;
+
+	char* mask = (char*)VB->connections[connection].active_channels;
+
+	while (channel > 8)
+	{
+		channel -= 8;
+		mask += 1;
+	}
+
+	return !!((*mask) & (1<<channel));
+}
+
+void vb_data_channel_activate(vb_channel_handle_t channel, size_t connection)
+{
+	if (!VB)
+		return;
+
+	if (!VB->server_active)
+		return;
+
+	if (channel < 0)
+		return;
+
+	if (channel >= VB->next_channel)
+		return;
+
+	if (connection < 0)
+		return;
+
+	if (connection >= VB->config.max_connections)
+		return;
+
+	if (VB->connections[connection].socket == VB_INVALID_SOCKET)
+		return;
+
+	char* mask = (char*)VB->connections[connection].active_channels;
+
+	while (channel > 8)
+	{
+		channel -= 8;
+		mask += 1;
+	}
+
+	(*mask) |= (1 << channel);
+}
+
+void vb_data_channel_deactivate(vb_channel_handle_t channel, size_t connection)
+{
+	if (!VB)
+		return;
+
+	if (!VB->server_active)
+		return;
+
+	if (channel < 0)
+		return;
+
+	if (channel >= VB->next_channel)
+		return;
+
+	if (connection < 0)
+		return;
+
+	if (connection >= VB->config.max_connections)
+		return;
+
+	if (VB->connections[connection].socket == VB_INVALID_SOCKET)
+		return;
+
+	char* mask = (char*)VB->connections[connection].active_channels;
+
+	while (channel > 8)
+	{
+		channel -= 8;
+		mask += 1;
+	}
+
+	(*mask) &= ~(1 << channel);
 }
 
 int vb_data_add_channel(const char* name, vb_data_type_t type, /*out*/ vb_channel_handle_t* handle)
@@ -387,6 +522,12 @@ bool vb_socket_send(vb_socket_t& socket, const char* message, size_t message_len
 	return true;
 }
 
+void vb_connection_setup(vb_connection_t* connection)
+{
+	// Clear the channel masks so all channels are inactive by default.
+	memset(connection->active_channels, 0, vb_config_get_channel_mask_length(&VB->config));
+}
+
 #ifdef VIEWBACK_TIME_DOUBLE
 void vb_server_update(double current_game_time)
 #else
@@ -497,6 +638,8 @@ void vb_server_update(vb_uint64 current_game_time)
 					int off = 0;
 					setsockopt(incoming_socket, SOL_SOCKET, SO_LINGER, (const char*) &off, sizeof(int));
 
+					vb_connection_setup(&VB->connections[open_socket]);
+
 					c.Success();
 				}
 			}
@@ -573,15 +716,43 @@ void vb_server_update(vb_uint64 current_game_time)
 				if (VB->config.command_callback)
 					(*VB->config.command_callback)(&mesg[9]);
 			}
+			else if (strncmp(mesg, "activate: ", 10) == 0)
+			{
+				int channel = atoi(mesg + 10);
+				vb_data_channel_activate((vb_channel_handle_t)channel, i);
+			}
+			else if (strncmp(mesg, "deactivate: ", 12) == 0)
+			{
+				int channel = atoi(mesg + 12);
+				vb_data_channel_deactivate((vb_channel_handle_t)channel, i);
+			}
+			else if (strncmp(mesg, "group: ", 7) == 0)
+			{
+				int group = atoi(mesg + 7);
+
+				for (size_t j = 0; j < VB->next_channel; j++)
+					vb_data_channel_deactivate((vb_channel_handle_t)j, i);
+
+				for (size_t j = 0; j < VB->next_group_member; j++)
+				{
+					if (VB->group_members[j].group != group)
+						continue;
+
+					vb_data_channel_activate(VB->group_members[j].channel, i);
+				}
+			}
 		}
 	}
 }
 
-void vb_send_to_all(void* message, size_t message_length)
+void vb_send_to_all(vb_channel_handle_t channel, void* message, size_t message_length)
 {
 	for (size_t i = 0; i < VB->config.max_connections; i++)
 	{
 		if (VB->connections[i].socket == VB_INVALID_SOCKET)
+			continue;
+
+		if (!vb_data_is_channel_active(channel, i))
 			continue;
 
 		vb_socket_send(VB->connections[i].socket, (const char*)message, message_length);
@@ -657,7 +828,7 @@ int vb_data_send_int(vb_channel_handle_t handle, int value)
 	if (!message_actual_length)
 		return 0;
 
-	vb_send_to_all(message, message_actual_length);
+	vb_send_to_all(handle, message, message_actual_length);
 
 	channel.maintain_time = 0;
 
@@ -718,7 +889,7 @@ int vb_data_send_float(vb_channel_handle_t handle, float value)
 	if (!message_actual_length)
 		return 0;
 
-	vb_send_to_all(message, message_actual_length);
+	vb_send_to_all(handle, message, message_actual_length);
 
 	channel.maintain_time = 0;
 
@@ -783,7 +954,7 @@ int vb_data_send_vector(vb_channel_handle_t handle, float x, float y, float z)
 	if (!message_actual_length)
 		return 0;
 
-	vb_send_to_all(message, message_actual_length);
+	vb_send_to_all(handle, message, message_actual_length);
 
 	channel.maintain_time = 0;
 
@@ -812,7 +983,7 @@ int vb_console_append(const char* text)
 	if (!message_actual_length)
 		return 0;
 
-	vb_send_to_all(message, message_actual_length);
+	vb_send_to_all(VB_CHANNEL_NONE, message, message_actual_length);
 
 	return 1;
 }
@@ -839,7 +1010,7 @@ int vb_status_set(const char* text)
 	if (!message_actual_length)
 		return 0;
 
-	vb_send_to_all(message, message_actual_length);
+	vb_send_to_all(VB_CHANNEL_NONE, message, message_actual_length);
 
 	return 1;
 }
