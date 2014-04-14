@@ -32,12 +32,22 @@
 	VBDebugBreak(); \
 } \
 
+#ifdef _MSC_VER
+#define PRAGMA_WARNING_PUSH __pragma(warning(push))
+#define PRAGMA_WARNING_DISABLE(n) __pragma(warning(disable:n))
+#define PRAGMA_WARNING_POP __pragma(warning(pop))
+#else
+#define PRAGMA_WARNING_PUSH
+#define PRAGMA_WARNING_DISABLE(n)
+#define PRAGMA_WARNING_POP
+#endif
+
 #define VBAssert(x) \
 { \
-	__pragma(warning(push)) \
-	__pragma(warning(disable:4127)) /* conditional expression is constant */ \
+	PRAGMA_WARNING_PUSH \
+	PRAGMA_WARNING_DISABLE(4127) /* conditional expression is constant */ \
 	if (!(x)) \
-	__pragma(warning(pop)) \
+	PRAGMA_WARNING_POP \
 	{ \
 		VBPrintf("Viewback assert failed: " #x " file " __FILE__ " line %d\n", __LINE__); \
 		VBDebugBreak(); \
