@@ -200,6 +200,11 @@ void vb_server_update(vb_uint64 current_time_milliseconds);
 void vb_server_shutdown();
 
 /*
+	Returns nonzero if the server is active.
+*/
+int vb_server_is_active();
+
+/*
 	These methods send data to the monitor. If you use a handle that was
 	registered as an int but you try to send it as a float, it will fail.
 	These functions use blocking send() and may block if the send buffer

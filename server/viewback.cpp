@@ -482,6 +482,17 @@ void vb_server_shutdown()
 	VB->server_active = false;
 }
 
+int vb_server_is_active()
+{
+	if (!VB)
+		return 0;
+
+	if (!VB->server_active)
+		return 0;
+
+	return 1;
+}
+
 size_t vb_write_length_prepended_message(struct Packet *_Packet, void *_buffer, size_t length, size_t(*serialize)(struct Packet *_Packet, void *_buffer, size_t length))
 {
 	size_t serialized_length = (*serialize)(_Packet, (void*)((size_t)_buffer + sizeof(size_t)), length);
