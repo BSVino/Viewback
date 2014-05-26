@@ -118,8 +118,11 @@ int vb_config_install(vb_config_t* config, void* memory, size_t memory_size)
 	VB->connections = (vb_connection_t*)((char*)VB->labels + sizeof(vb_data_label_t)*config->num_data_labels);
 	char* active_channels = (char*)VB->connections + sizeof(vb_connection_t)*config->max_connections;
 
+#ifdef _DEBUG
 	char* memory_end = active_channels + vb_config_get_channel_mask_length(config)*config->max_connections;
 	VBAssert(memory_end == (char*)memory + memory_size);
+	memory_end = memory_end; // Quiet unused warning.
+#endif
 
 	for (size_t i = 0; i < config->max_connections; i++)
 	{
