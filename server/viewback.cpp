@@ -141,6 +141,13 @@ int vb_config_install(vb_config_t* config, void* memory, size_t memory_size)
 	return 1;
 }
 
+void vb_config_release()
+{
+	VBAssert(!vb_server_is_active());
+
+	VB = NULL;
+}
+
 bool vb_data_is_channel_active(vb_channel_handle_t channel, size_t connection)
 {
 	if (!VB)

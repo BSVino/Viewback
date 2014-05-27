@@ -86,6 +86,8 @@ vb_group_handle_t vb_util_find_group(const char* name)
 
 void vb_util_initialize()
 {
+	vb_config_release();
+
 	g_channels.clear();
 	g_groups.clear();
 
@@ -200,6 +202,8 @@ private:
 
 int vb_util_server_create(unsigned char max_connections, vb_debug_output_callback output, vb_command_callback command, const char* multicast_group, unsigned short port)
 {
+	vb_config_release();
+
 	free(g_memory);
 	g_memory = NULL;
 

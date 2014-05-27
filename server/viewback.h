@@ -137,6 +137,14 @@ size_t vb_config_get_memory_required(vb_config_t* config);
 int vb_config_install(vb_config_t* config, void* memory, size_t memory_size);
 
 /*
+	Viewback will no longer try to reference the memory passed in by
+	vb_config_install once this function is called. Only call it after
+	vb_server_shutdown is called and vb_server_is_running returns false,
+	never while a server is running.
+*/
+void vb_config_release();
+
+/*
 	Register a channel of data. You should provide an address to a handle and
 	store that handle somewhere. 'handle' can be NULL.
 */

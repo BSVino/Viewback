@@ -305,6 +305,7 @@ int main(int argc, const char** args)
 	}
 
 	vb_server_shutdown();
+	vb_config_release();
 
 #ifdef _WIN32
 	WSACleanup();
