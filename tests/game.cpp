@@ -17,6 +17,7 @@
 #include <time.h>
 
 #include <string>
+#include <vector>
 #include <sstream>
 #include <cstring>
 
@@ -90,6 +91,26 @@ int main(int argc, const char** args)
 	vb_util_add_channel("Test5", VB_DATATYPE_VECTOR, &vb5);
 	vb_util_add_channel("Test6", VB_DATATYPE_VECTOR, &vb6);
 
+	int iArraySize = 10;
+
+	vector<vb_channel_handle_t> avbArray;
+	avbArray.resize(iArraySize);
+
+	vector<string> asNames;
+	asNames.resize(iArraySize);
+
+	vb_group_handle_t vb_group_array;
+	vb_util_add_group("Array", &vb_group_array);
+
+	for (int i = 0; i < iArraySize; i++)
+	{
+		char szNumber[2] = "0";
+		szNumber[0] += (char)i;
+		asNames[i] = string("array") + szNumber;
+		vb_util_add_channel(asNames[i].c_str(), VB_DATATYPE_INT, &avbArray[i]);
+		vb_util_add_channel_to_group_s("Array", asNames[i].c_str());
+	}
+
 	vb_group_handle_t vb_group1, vb_group2, vb_group3;
 	
 	vb_util_add_group("Group1", &vb_group1);
@@ -129,6 +150,10 @@ int main(int argc, const char** args)
 		printf("Couldn't install config\n");
 		return 1;
 	}
+
+	// Initialize
+	for (int i = 0; i < iArraySize; i++)
+		vb_data_send_int(avbArray[i], 0);
 
 	time_t initial_time;
 	time(&initial_time);
@@ -259,6 +284,12 @@ int main(int argc, const char** args)
 		// Send console output once per second.
 		if (current_time == initial_time)
 			continue;
+
+		int array_index = current_time % iArraySize;
+		int array_value = rand() % 10;
+		printf("Array[%d] = %d\n", array_index, array_value);
+		if (!vb_data_send_int(avbArray[array_index], array_value))
+			success = false;
 
 		initial_time = current_time;
 
