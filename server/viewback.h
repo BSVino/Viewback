@@ -146,13 +146,15 @@ void vb_config_release();
 
 /*
 	Register a channel of data. You should provide an address to a handle and
-	store that handle somewhere. 'handle' can be NULL.
+	store that handle somewhere. 'handle' can be NULL. 'name' will not be
+	copied elsewhere, so make sure it is persistent memory.
 */
 int vb_data_add_channel(const char* name, vb_data_type_t type, /*out*/ vb_channel_handle_t* handle);
 
 /*
 	Register a group of data. You should provide an address to a handle and store
-	that handle somewhere. 'handle' can be NULL.
+	that handle somewhere. 'handle' can be NULL. 'name' will not be
+	copied elsewhere, so make sure it is persistent memory.
 */
 int vb_data_add_group(const char* name, /*out*/ vb_group_handle_t* handle);
 
