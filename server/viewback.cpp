@@ -767,7 +767,6 @@ void vb_server_update(vb_uint64 current_game_time)
 
 					if (channel->flags & CHANNEL_FLAG_INITIALIZED)
 					{
-						VBPrintf("Sending initialized value for channel %d\n", VB->group_members[j].channel);
 						if (channel->type == VB_DATATYPE_INT)
 							vb_data_send_int(VB->group_members[j].channel, channel->last_int);
 						else if (channel->type == VB_DATATYPE_FLOAT)
