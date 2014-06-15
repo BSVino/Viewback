@@ -762,6 +762,21 @@ void vb_server_update(vb_uint64 current_game_time)
 						continue;
 
 					vb_data_channel_activate(VB->group_members[j].channel, i);
+
+					vb_data_channel_t* channel = &VB->channels[VB->group_members[j].channel];
+
+					if (channel->flags & CHANNEL_FLAG_INITIALIZED)
+					{
+						VBPrintf("Sending initialized value for channel %d\n", VB->group_members[j].channel);
+						if (channel->type == VB_DATATYPE_INT)
+							vb_data_send_int(VB->group_members[j].channel, channel->last_int);
+						else if (channel->type == VB_DATATYPE_FLOAT)
+							vb_data_send_float(VB->group_members[j].channel, channel->last_float);
+						else if (channel->type == VB_DATATYPE_VECTOR)
+							vb_data_send_vector(VB->group_members[j].channel, channel->last_float_x, channel->last_float_y, channel->last_float_z);
+						else
+							VBAssert(!"Unknown channel type");
+					}
 				}
 			}
 		}
