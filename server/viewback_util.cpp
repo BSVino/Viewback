@@ -18,6 +18,8 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 #include "viewback_util.h"
 
 #include <vector>
+#include <string.h>
+#include <stdlib.h>
 
 #include "viewback_shared.h"
 #include "viewback_internal.h"
