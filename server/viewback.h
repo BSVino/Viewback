@@ -34,8 +34,8 @@ typedef unsigned char vb_bool;
 	Some code unscrupulously stolen from Webby https://github.com/deplinenoise/webby
 	Other code unscrupulously stolen from http://code.google.com/p/protobuf-embedded-c/
 
-	All functions return either void or int. In the case of void, no errors are
-	possible. In the case of int, 0 means an error occurred and 1 means no error
+	Most functions return either void or vb_bool. In the case of void, no errors are
+	possible. In the case of vb_bool, 0 means an error occurred and 1 means no error
 	occurred. You should check the return value of each call.
 
 	Many const char* strings you pass in will be stored by Viewback, so try not
