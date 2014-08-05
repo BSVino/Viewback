@@ -108,10 +108,10 @@ typedef struct
 
 // Haha don't do this in a function or it will be quickly freed, it's alloca. :)
 #ifdef _DEBUG
-#define Packet_alloca(length) alloca(length + 1024)
+#define Packet_alloca(name, length) vb__stack_allocate(char, name, length + 1024)
 #else
 // Add sizeof(size_t) bytes because we're going to prepend the length of the message.
-#define Packet_alloca(length) alloca(length + sizeof(size_t))
+#define Packet_alloca(name, length) vb__stack_allocate(char, name, length + sizeof(size_t))
 #endif
 
 struct vb__Data {
