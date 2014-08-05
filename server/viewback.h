@@ -41,6 +41,11 @@ typedef unsigned char vb_bool;
 	Many const char* strings you pass in will be stored by Viewback, so try not
 	to do nasty stuff like vb_something(std::string("example").c_str());
 
+	The memory required by Viewback can be reduced by specifying certain preprocessor
+	flags. Don't forget to specify them for both viewback.c and all places where
+	viewback.h is included, it's best to put them in your project files.
+	VR_NO_RANGE - Remove the ability to specify a channel's range, saves 8 bytes per channel.
+
 	Refer to the readme for more information.
 */
 
@@ -187,6 +192,7 @@ vb_bool vb_data_add_label(vb_channel_handle_t handle, int value, const char* lab
 */
 vb_bool vb_data_get_label(vb_channel_handle_t handle, int value, /*out*/ const char** label);
 
+#ifndef VB_NO_RANGE
 /*
 	If you set this, the monitor will fix the range to the specified values.
 	Otherwise the chart will automatically fit the window. For vector data,
@@ -194,6 +200,7 @@ vb_bool vb_data_get_label(vb_channel_handle_t handle, int value, /*out*/ const c
 	Returns 1 on success, 0 on failure.
 */
 vb_bool vb_data_set_range(vb_channel_handle_t handle, float range_min, float range_max);
+#endif
 
 /*
 	After registering all of your data, call this to start up the server.

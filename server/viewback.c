@@ -28,7 +28,6 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 #include "viewback_shared.h"
 #include "viewback_internal.h"
 
-// 
 #ifdef _MSC_VER
 // No VLA's. Use alloca()
 #include <malloc.h>
@@ -389,6 +388,7 @@ vb_bool vb_data_get_label(vb_channel_handle_t handle, int value, const char** la
 	return 0;
 }
 
+#ifndef VB_NO_RANGE
 vb_bool vb_data_set_range(vb_channel_handle_t handle, float range_min, float range_max)
 {
 	if (!VB)
@@ -405,6 +405,7 @@ vb_bool vb_data_set_range(vb_channel_handle_t handle, float range_min, float ran
 
 	return 1;
 }
+#endif
 
 vb_bool vb_server_create()
 {
@@ -1356,6 +1357,7 @@ int vb__DataChannel_write(struct vb__DataChannel *_DataChannel, void *_buffer, i
 	offset = vb__write_wire_format(3, PB_WIRE_TYPE_VARINT, _buffer, offset);
 	offset = vb__write_raw_varint32(_DataChannel->_handle, _buffer, offset);
 
+#ifndef VB_NO_RANGE
 	if (_DataChannel->_min != 0 || _DataChannel->_max != 0)
 	{
 		unsigned long *min_ptr = (unsigned long *)&_DataChannel->_min;
@@ -1367,6 +1369,7 @@ int vb__DataChannel_write(struct vb__DataChannel *_DataChannel, void *_buffer, i
 		offset = vb__write_wire_format(5, PB_WIRE_TYPE_32BIT, _buffer, offset);
 		offset = vb__write_raw_little_endian32(*max_ptr, _buffer, offset);
 	}
+#endif
 
 	return offset;
 }
@@ -1571,8 +1574,10 @@ void vb__Packet_initialize_registrations(struct vb__Packet* packet, struct vb__D
 		data_channels[i]._field_name_len = strlen(VB->channels[i].name);
 		data_channels[i]._handle = i;
 		data_channels[i]._type = VB->channels[i].type;
+#ifndef VB_NO_RANGE
 		data_channels[i]._min = VB->channels[i].range_min;
 		data_channels[i]._max = VB->channels[i].range_max;
+#endif
 	}
 
 	VBAssert(groups == VB->next_group);

@@ -69,6 +69,7 @@ int vb_util_add_channel_to_group_s(const char* group, const char* channel);
 void vb_util_add_label(vb_channel_handle_t handle, int value, const char* label);
 int vb_util_add_label_s(const char* channel, int value, const char* label);
 
+#ifndef VB_NO_RANGE
 /*
 	If you set this, the monitor will fix the range to the specified values.
 	Otherwise the chart will automatically fit the window. For vector data,
@@ -77,6 +78,7 @@ int vb_util_add_label_s(const char* channel, int value, const char* label);
 */
 void vb_util_set_range(vb_channel_handle_t handle, float range_min, float range_max);
 int vb_util_set_range_s(const char* channel, float range_min, float range_max);
+#endif
 
 /*
 	Install the config. This function frees any memory allocated by the above functions.

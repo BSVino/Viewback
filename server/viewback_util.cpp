@@ -36,16 +36,20 @@ class CChannel
 public:
 	CChannel()
 	{
+#ifndef VB_NO_RANGE
 		range_min = 0;
 		range_max = 0;
+#endif
 	}
 
 public:
 	const char*    name;
 	vb_data_type_t type;
 
+#ifndef VB_NO_RANGE
 	float range_min;
 	float range_max;
+#endif
 
 	vector<CLabel> labels;
 };
@@ -159,6 +163,7 @@ int vb_util_add_label_s(const char* channel, int value, const char* label)
 	return 1;
 }
 
+#ifndef VB_NO_RANGE
 void vb_util_set_range(vb_channel_handle_t handle, float range_min, float range_max)
 {
 	g_channels[handle].range_min = range_min;
@@ -176,6 +181,7 @@ int vb_util_set_range_s(const char* channel, float range_min, float range_max)
 
 	return 1;
 }
+#endif
 
 
 // RAII class to free a vector's memory
@@ -242,11 +248,13 @@ int vb_util_server_create(unsigned char max_connections, vb_debug_output_callbac
 		if (!vb_data_add_channel(channel.name, channel.type, nullptr))
 			return 0;
 
+#ifndef VB_NO_RANGE
 		if (channel.range_min || channel.range_max)
 		{
 			if (!vb_data_set_range((vb_channel_handle_t)i, channel.range_min, channel.range_max))
 				return 0;
 		}
+#endif
 
 		for (size_t j = 0; j < channel.labels.size(); j++)
 		{

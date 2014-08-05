@@ -26,8 +26,11 @@ typedef struct
 {
 	const char*    name;
 	vb_data_type_t type;
+
+#ifndef VB_NO_RANGE
 	float          range_min;
 	float          range_max;
+#endif
 
 	unsigned char  flags; // CHANNEL_FLAG_*
 
@@ -137,8 +140,11 @@ struct vb__DataChannel {
 	const char*    _field_name;
 	vb_data_type_t _type;
 	unsigned long  _handle;
+
+#ifndef VB_NO_RANGE
 	float          _min;
 	float          _max;
+#endif
 };
 
 struct vb__DataGroup {

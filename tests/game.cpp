@@ -139,11 +139,13 @@ int main(int argc, const char** args)
 		return 1;
 	}
 
+#ifndef VB_NO_RANGE
 	if (!vb_util_set_range_s("Health", 0, 150))
 	{
 		printf("Couldn't set range\n");
 		return 1;
 	}
+#endif
 
 	if (!vb_util_server_create(4, &debug_printf, &command_callback, multicast_group, port))
 	{
