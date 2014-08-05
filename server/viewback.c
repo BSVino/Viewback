@@ -42,7 +42,7 @@ void vb_config_initialize(vb_config_t* config)
 	config->max_connections = 4;
 }
 
-size_t vb_config_get_channel_mask_length(vb_config_t* config)
+size_t vb__config_get_channel_mask_length(vb_config_t* config)
 {
 	if (!config)
 		return 0;
@@ -76,16 +76,16 @@ size_t vb_config_get_memory_required(vb_config_t* config)
 		return 0;
 
 	return
-		sizeof(vb_t) +
-		config->num_data_channels * sizeof(vb_data_channel_t)+
-		config->num_data_groups * sizeof(vb_data_group_t)+
-		config->num_data_group_members * sizeof(vb_data_group_member_t)+
-		config->num_data_labels * sizeof(vb_data_label_t)+
-		config->max_connections * sizeof(vb_connection_t)+
-		config->max_connections * vb_config_get_channel_mask_length(config);
+		sizeof(vb__t) +
+		config->num_data_channels * sizeof(vb__data_channel_t)+
+		config->num_data_groups * sizeof(vb__data_group_t)+
+		config->num_data_group_members * sizeof(vb__data_group_member_t)+
+		config->num_data_labels * sizeof(vb__data_label_t)+
+		config->max_connections * sizeof(vb__connection_t)+
+		config->max_connections * vb__config_get_channel_mask_length(config);
 }
 
-static vb_t* VB;
+static vb__t* VB;
 
 int vb_config_install(vb_config_t* config, void* memory, size_t memory_size)
 {
@@ -107,19 +107,19 @@ int vb_config_install(vb_config_t* config, void* memory, size_t memory_size)
 
 	memset(memory, 0, memory_size);
 
-	VB = (vb_t*)memory;
+	VB = (vb__t*)memory;
 
 	VB->config = *config;
 
-	VB->channels = (vb_data_channel_t*)((char*)memory + sizeof(vb_t));
-	VB->groups = (vb_data_group_t*)((char*)VB->channels + sizeof(vb_data_channel_t)*config->num_data_channels);
-	VB->group_members = (vb_data_group_member_t*)((char*)VB->groups + sizeof(vb_data_group_t)*config->num_data_groups);
-	VB->labels = (vb_data_label_t*)((char*)VB->group_members + sizeof(vb_data_group_member_t)*config->num_data_group_members);
-	VB->connections = (vb_connection_t*)((char*)VB->labels + sizeof(vb_data_label_t)*config->num_data_labels);
-	char* active_channels = (char*)VB->connections + sizeof(vb_connection_t)*config->max_connections;
+	VB->channels = (vb__data_channel_t*)((char*)memory + sizeof(vb__t));
+	VB->groups = (vb__data_group_t*)((char*)VB->channels + sizeof(vb__data_channel_t)*config->num_data_channels);
+	VB->group_members = (vb__data_group_member_t*)((char*)VB->groups + sizeof(vb__data_group_t)*config->num_data_groups);
+	VB->labels = (vb__data_label_t*)((char*)VB->group_members + sizeof(vb__data_group_member_t)*config->num_data_group_members);
+	VB->connections = (vb__connection_t*)((char*)VB->labels + sizeof(vb__data_label_t)*config->num_data_labels);
+	char* active_channels = (char*)VB->connections + sizeof(vb__connection_t)*config->max_connections;
 
 #ifdef _DEBUG
-	char* memory_end = active_channels + vb_config_get_channel_mask_length(config)*config->max_connections;
+	char* memory_end = active_channels + vb__config_get_channel_mask_length(config)*config->max_connections;
 	VBAssert(memory_end == (char*)memory + memory_size);
 	memory_end = memory_end; // Quiet unused warning.
 #endif
@@ -127,7 +127,7 @@ int vb_config_install(vb_config_t* config, void* memory, size_t memory_size)
 	for (size_t i = 0; i < config->max_connections; i++)
 	{
 		VB->connections[i].socket = VB_INVALID_SOCKET;
-		VB->connections[i].active_channels = (vb_data_channel_mask_t*)(active_channels + i * vb_config_get_channel_mask_length(config));
+		VB->connections[i].active_channels = (vb__data_channel_mask_t*)(active_channels + i * vb__config_get_channel_mask_length(config));
 	}
 
 	VB->server_active = 0;
@@ -148,7 +148,7 @@ void vb_config_release()
 	VB = NULL;
 }
 
-vb_bool vb_data_is_channel_active(vb_channel_handle_t channel, size_t connection)
+vb_bool vb__data_is_channel_active(vb_channel_handle_t channel, size_t connection)
 {
 	if (!VB)
 		return 0;
@@ -185,7 +185,7 @@ vb_bool vb_data_is_channel_active(vb_channel_handle_t channel, size_t connection
 	return !!((*mask) & (1<<channel));
 }
 
-void vb_data_channel_activate(vb_channel_handle_t channel, size_t connection)
+void vb__data_channel_activate(vb_channel_handle_t channel, size_t connection)
 {
 	if (!VB)
 		return;
@@ -219,7 +219,7 @@ void vb_data_channel_activate(vb_channel_handle_t channel, size_t connection)
 	(*mask) |= (1 << channel);
 }
 
-void vb_data_channel_deactivate(vb_channel_handle_t channel, size_t connection)
+void vb__data_channel_deactivate(vb_channel_handle_t channel, size_t connection)
 {
 	if (!VB)
 		return;
@@ -412,13 +412,13 @@ vb_bool vb_server_create()
 
 	VB->multicast_socket = socket(AF_INET, SOCK_DGRAM, 0);
 
-	if (!vb_socket_valid(VB->multicast_socket))
+	if (!vb__socket_valid(VB->multicast_socket))
 		return 0;
 
 	int ttl = 10;
 	if (setsockopt(VB->multicast_socket, IPPROTO_IP, IP_TTL, (const char*)&ttl, sizeof(ttl)) != 0)
 	{
-		VBPrintf("Couldn't set multicast socket TTL. Error: %d\n", vb_socket_error());
+		VBPrintf("Couldn't set multicast socket TTL. Error: %d\n", vb__socket_error());
 		goto error;
 	}
 
@@ -430,7 +430,7 @@ vb_bool vb_server_create()
 
 	VB->tcp_socket = socket(AF_INET, SOCK_STREAM, 0);
 
-	if (!vb_socket_valid(VB->tcp_socket))
+	if (!vb__socket_valid(VB->tcp_socket))
 		goto error;
 
 	{
@@ -445,7 +445,7 @@ vb_bool vb_server_create()
 	signal(SIGPIPE, SIG_IGN);
 #endif
 
-	if (vb_socket_set_blocking(VB->tcp_socket, 0) != 0)
+	if (vb__socket_set_blocking(VB->tcp_socket, 0) != 0)
 		goto error;
 
 	struct sockaddr_in tcp_addr;
@@ -468,8 +468,8 @@ vb_bool vb_server_create()
 	return 1;
 
 error:
-	vb_socket_close(VB->tcp_socket);
-	vb_socket_close(VB->multicast_socket);
+	vb__socket_close(VB->tcp_socket);
+	vb__socket_close(VB->multicast_socket);
 	return 0;
 }
 
@@ -481,11 +481,11 @@ void vb_server_shutdown()
 	if (!VB->server_active)
 		return;
 
-	vb_socket_close(VB->tcp_socket);
-	vb_socket_close(VB->multicast_socket);
+	vb__socket_close(VB->tcp_socket);
+	vb__socket_close(VB->multicast_socket);
 
 	for (size_t i = 0; i < VB->config.max_connections; i++)
-		vb_socket_close(VB->connections[i].socket);
+		vb__socket_close(VB->connections[i].socket);
 
 	VB->server_active = 0;
 }
@@ -501,7 +501,7 @@ vb_bool vb_server_is_active()
 	return 1;
 }
 
-size_t vb_write_length_prepended_message(struct Packet *_Packet, void *_buffer, size_t length, size_t(*serialize)(struct Packet *_Packet, void *_buffer, size_t length))
+size_t vb__write_length_prepended_message(struct vb__Packet *_Packet, void *_buffer, size_t length, size_t(*serialize)(struct vb__Packet *_Packet, void *_buffer, size_t length))
 {
 	size_t serialized_length = (*serialize)(_Packet, (void*)((size_t)_buffer + sizeof(size_t)), length);
 
@@ -512,19 +512,19 @@ size_t vb_write_length_prepended_message(struct Packet *_Packet, void *_buffer, 
 	return serialized_length + sizeof(network_length);
 }
 
-vb_bool vb_socket_send(vb_socket_t* socket, const char* message, size_t message_length)
+vb_bool vb__socket_send(vb__socket_t* socket, const char* message, size_t message_length)
 {
-	vb_socket_set_blocking(*socket, 1);
+	vb__socket_set_blocking(*socket, 1);
 
 	int bytes_sent = send(*socket, message, message_length, 0);
-	int socket_error = vb_socket_error();
+	int socket_error = vb__socket_error();
 
-	vb_socket_set_blocking(*socket, 0);
+	vb__socket_set_blocking(*socket, 0);
 
 	if (bytes_sent == 0)
 	{
 		VBPrintf("Error sending to %d, disconnected.\n", *socket);
-		vb_socket_close(*socket);
+		vb__socket_close(*socket);
 		*socket = VB_INVALID_SOCKET;
 		return 0;
 	}
@@ -532,10 +532,10 @@ vb_bool vb_socket_send(vb_socket_t* socket, const char* message, size_t message_
 	if (bytes_sent < 0)
 	{
 		// Should be a blocking socket.
-		VBAssert(!vb_socket_is_blocking_error(socket_error));
+		VBAssert(!vb__socket_is_blocking_error(socket_error));
 
 		VBPrintf("Error (code: %d) sending to %d, disconnected.\n", socket_error, *socket);
-		vb_socket_close(*socket);
+		vb__socket_close(*socket);
 		*socket = VB_INVALID_SOCKET;
 		return 0;
 	}
@@ -543,10 +543,10 @@ vb_bool vb_socket_send(vb_socket_t* socket, const char* message, size_t message_
 	return 1;
 }
 
-void vb_connection_setup(vb_connection_t* connection)
+void vb__connection_setup(vb__connection_t* connection)
 {
 	// Clear the channel masks so all channels are inactive by default.
-	memset(connection->active_channels, 0, vb_config_get_channel_mask_length(&VB->config));
+	memset(connection->active_channels, 0, vb__config_get_channel_mask_length(&VB->config));
 }
 
 #ifdef VIEWBACK_TIME_DOUBLE
@@ -582,7 +582,7 @@ void vb_server_update(vb_uint64 current_game_time)
 	{
 		const char message[] = "VB: HELLO WORLD"; /* TODO: put game info here. */
 		if (sendto(VB->multicast_socket, (const char*)message, sizeof(message), 0, (struct sockaddr *)&VB->multicast_addr, sizeof(VB->multicast_addr)) < 0)
-			VBPrintf("Multicast sendto failed, error %d\n", vb_socket_error());
+			VBPrintf("Multicast sendto failed, error %d\n", vb__socket_error());
 
 		VB->last_multicast = current_time;
 	}
@@ -598,7 +598,7 @@ void vb_server_update(vb_uint64 current_game_time)
 			current_connections++;
 	}
 
-	vb_socket_t max_socket = 0;
+	vb__socket_t max_socket = 0;
 
 	if (current_connections < VB->config.max_connections)
 	{
@@ -608,7 +608,7 @@ void vb_server_update(vb_uint64 current_game_time)
 
 	for (size_t i = 0; i < VB->config.max_connections; ++i)
 	{
-		vb_socket_t socket = VB->connections[i].socket;
+		vb__socket_t socket = VB->connections[i].socket;
 		if (VB->connections[i].socket == VB_INVALID_SOCKET)
 			continue;
 
@@ -631,10 +631,10 @@ void vb_server_update(vb_uint64 current_game_time)
 		VBPrintf("Incoming connection... ");
 
 		char VB_ALIGN(8) client_addr[64];
-		vb_socklen_t client_addr_len = sizeof(client_addr);
-		vb_socket_t incoming_socket = accept(VB->tcp_socket, (struct sockaddr*) &client_addr[0], &client_addr_len);
+		vb__socklen_t client_addr_len = sizeof(client_addr);
+		vb__socket_t incoming_socket = accept(VB->tcp_socket, (struct sockaddr*) &client_addr[0], &client_addr_len);
 
-		if (vb_socket_valid(incoming_socket))
+		if (vb__socket_valid(incoming_socket))
 		{
 			vb_bool socket_success = 0;
 
@@ -654,22 +654,22 @@ void vb_server_update(vb_uint64 current_game_time)
 			{
 				VB->connections[open_socket].socket = incoming_socket;
 
-				if (vb_socket_set_blocking(incoming_socket, 0) == 0)
+				if (vb__socket_set_blocking(incoming_socket, 0) == 0)
 				{
 					int off = 0;
 					setsockopt(incoming_socket, SOL_SOCKET, SO_LINGER, (const char*) &off, sizeof(int));
 
-					vb_connection_setup(&VB->connections[open_socket]);
+					vb__connection_setup(&VB->connections[open_socket]);
 
 					socket_success = 1;
 				}
 			}
 
 			if (!socket_success)
-				vb_socket_close(incoming_socket);
+				vb__socket_close(incoming_socket);
 		}
 
-		if (vb_socket_valid(incoming_socket))
+		if (vb__socket_valid(incoming_socket))
 			VBPrintf("Successful. Socket: %d\n", incoming_socket);
 		else
 			VBPrintf("Dropped.\n");
@@ -677,7 +677,7 @@ void vb_server_update(vb_uint64 current_game_time)
 
 	for (size_t i = 0; i < VB->config.max_connections; i++)
 	{
-		if (!vb_socket_valid(VB->connections[i].socket))
+		if (!vb__socket_valid(VB->connections[i].socket))
 			continue;
 
 		if (FD_ISSET(VB->connections[i].socket, &read_fds))
@@ -688,7 +688,7 @@ void vb_server_update(vb_uint64 current_game_time)
 
 			if (n == 0)
 			{
-				vb_socket_close(VB->connections[i].socket);
+				vb__socket_close(VB->connections[i].socket);
 				VB->connections[i].socket = VB_INVALID_SOCKET;
 				continue;
 			}
@@ -703,10 +703,10 @@ void vb_server_update(vb_uint64 current_game_time)
 			{
 				VBPrintf("Sending registrations to %d.\n", VB->connections[i].socket);
 
-				struct Packet packet;
-				struct DataChannel* channels = (struct DataChannel*)alloca(VB->next_channel * sizeof(struct DataChannel));
-				struct DataGroup* groups = (struct DataGroup*)alloca(VB->next_group * sizeof(struct DataGroup));
-				struct DataLabel* labels = (struct DataLabel*)alloca(VB->next_label * sizeof(struct DataLabel));
+				struct vb__Packet packet;
+				struct vb__DataChannel* channels = (struct vb__DataChannel*)alloca(VB->next_channel * sizeof(struct vb__DataChannel));
+				struct vb__DataGroup* groups = (struct vb__DataGroup*)alloca(VB->next_group * sizeof(struct vb__DataGroup));
+				struct vb__DataLabel* labels = (struct vb__DataLabel*)alloca(VB->next_label * sizeof(struct vb__DataLabel));
 
 				/* Initialize group channel membership numbers. */
 				for (size_t j = 0; j < VB->next_group; j++)
@@ -720,16 +720,16 @@ void vb_server_update(vb_uint64 current_game_time)
 				for (size_t j = 0; j < VB->next_group; j++)
 					groups[j]._channels = (unsigned long*)alloca(groups[j]._channels_repeated_len * sizeof(*groups[j]._channels));
 
-				Packet_initialize_registrations(&packet, channels, VB->next_channel, groups, VB->next_group, labels, VB->next_label);
+				vb__Packet_initialize_registrations(&packet, channels, VB->next_channel, groups, VB->next_group, labels, VB->next_label);
 
-				size_t message_predicted_length = Packet_get_message_size(&packet);
+				size_t message_predicted_length = vb__Packet_get_message_size(&packet);
 				void* message = Packet_alloca(message_predicted_length);
 
-				size_t message_actual_length = vb_write_length_prepended_message(&packet, message, message_predicted_length, &Packet_serialize);
+				size_t message_actual_length = vb__write_length_prepended_message(&packet, message, message_predicted_length, &vb__Packet_serialize);
 
 				if (message_actual_length)
 				{
-					vb_bool success = vb_socket_send(&VB->connections[i].socket, (const char*)message, message_actual_length);
+					vb_bool success = vb__socket_send(&VB->connections[i].socket, (const char*)message, message_actual_length);
 
 					if (!success)
 						continue;
@@ -743,28 +743,28 @@ void vb_server_update(vb_uint64 current_game_time)
 			else if (strncmp(mesg, "activate: ", 10) == 0)
 			{
 				int channel = atoi(mesg + 10);
-				vb_data_channel_activate((vb_channel_handle_t)channel, i);
+				vb__data_channel_activate((vb_channel_handle_t)channel, i);
 			}
 			else if (strncmp(mesg, "deactivate: ", 12) == 0)
 			{
 				int channel = atoi(mesg + 12);
-				vb_data_channel_deactivate((vb_channel_handle_t)channel, i);
+				vb__data_channel_deactivate((vb_channel_handle_t)channel, i);
 			}
 			else if (strncmp(mesg, "group: ", 7) == 0)
 			{
 				int group = atoi(mesg + 7);
 
 				for (size_t j = 0; j < VB->next_channel; j++)
-					vb_data_channel_deactivate((vb_channel_handle_t)j, i);
+					vb__data_channel_deactivate((vb_channel_handle_t)j, i);
 
 				for (size_t j = 0; j < VB->next_group_member; j++)
 				{
 					if (VB->group_members[j].group != group)
 						continue;
 
-					vb_data_channel_activate(VB->group_members[j].channel, i);
+					vb__data_channel_activate(VB->group_members[j].channel, i);
 
-					vb_data_channel_t* channel = &VB->channels[VB->group_members[j].channel];
+					vb__data_channel_t* channel = &VB->channels[VB->group_members[j].channel];
 
 					if (channel->flags & CHANNEL_FLAG_INITIALIZED)
 					{
@@ -783,17 +783,17 @@ void vb_server_update(vb_uint64 current_game_time)
 	}
 }
 
-void vb_send_to_all(vb_channel_handle_t channel, void* message, size_t message_length)
+void vb__send_to_all(vb_channel_handle_t channel, void* message, size_t message_length)
 {
 	for (size_t i = 0; i < VB->config.max_connections; i++)
 	{
 		if (VB->connections[i].socket == VB_INVALID_SOCKET)
 			continue;
 
-		if (!vb_data_is_channel_active(channel, i))
+		if (!vb__data_is_channel_active(channel, i))
 			continue;
 
-		vb_socket_send(&VB->connections[i].socket, (const char*)message, message_length);
+		vb__socket_send(&VB->connections[i].socket, (const char*)message, message_length);
 	}
 }
 
@@ -824,7 +824,7 @@ int vb_data_send_int(vb_channel_handle_t handle, int value)
 	if (handle >= VB->next_channel)
 		return 0;
 
-	vb_data_channel_t* channel = &VB->channels[handle];
+	vb__data_channel_t* channel = &VB->channels[handle];
 
 	if (channel->type != VB_DATATYPE_INT)
 		return 0;
@@ -845,9 +845,9 @@ int vb_data_send_int(vb_channel_handle_t handle, int value)
 
 	channel->last_int = value;
 
-	struct Packet packet;
-	struct Data data;
-	Packet_initialize_data(&packet, &data, VB_DATATYPE_INT);
+	struct vb__Packet packet;
+	struct vb__Data data;
+	vb__Packet_initialize_data(&packet, &data, VB_DATATYPE_INT);
 
 	data._handle = handle;
 	data._data_int = value;
@@ -858,15 +858,15 @@ int vb_data_send_int(vb_channel_handle_t handle, int value)
 	data._maintain_time_uint64 = channel->maintain_time;
 #endif
 
-	size_t message_predicted_length = Packet_get_message_size(&packet);
+	size_t message_predicted_length = vb__Packet_get_message_size(&packet);
 	void* message = Packet_alloca(message_predicted_length);
 
-	size_t message_actual_length = vb_write_length_prepended_message(&packet, message, message_predicted_length, &Packet_serialize);
+	size_t message_actual_length = vb__write_length_prepended_message(&packet, message, message_predicted_length, &vb__Packet_serialize);
 
 	if (!message_actual_length)
 		return 0;
 
-	vb_send_to_all(handle, message, message_actual_length);
+	vb__send_to_all(handle, message, message_actual_length);
 
 	channel->maintain_time = 0;
 
@@ -884,7 +884,7 @@ int vb_data_send_float(vb_channel_handle_t handle, float value)
 	if (handle >= VB->next_channel)
 		return 0;
 
-	vb_data_channel_t* channel = &VB->channels[handle];
+	vb__data_channel_t* channel = &VB->channels[handle];
 
 	if (channel->type != VB_DATATYPE_FLOAT)
 		return 0;
@@ -906,9 +906,9 @@ int vb_data_send_float(vb_channel_handle_t handle, float value)
 
 	channel->last_float = value;
 
-	struct Packet packet;
-	struct Data data;
-	Packet_initialize_data(&packet, &data, VB_DATATYPE_FLOAT);
+	struct vb__Packet packet;
+	struct vb__Data data;
+	vb__Packet_initialize_data(&packet, &data, VB_DATATYPE_FLOAT);
 
 	data._handle = handle;
 	data._data_float = value;
@@ -919,15 +919,15 @@ int vb_data_send_float(vb_channel_handle_t handle, float value)
 	data._maintain_time_uint64 = channel->maintain_time;
 #endif
 
-	size_t message_predicted_length = Packet_get_message_size(&packet);
+	size_t message_predicted_length = vb__Packet_get_message_size(&packet);
 	void* message = Packet_alloca(message_predicted_length);
 
-	size_t message_actual_length = vb_write_length_prepended_message(&packet, message, message_predicted_length, &Packet_serialize);
+	size_t message_actual_length = vb__write_length_prepended_message(&packet, message, message_predicted_length, &vb__Packet_serialize);
 
 	if (!message_actual_length)
 		return 0;
 
-	vb_send_to_all(handle, message, message_actual_length);
+	vb__send_to_all(handle, message, message_actual_length);
 
 	channel->maintain_time = 0;
 
@@ -945,7 +945,7 @@ int vb_data_send_vector(vb_channel_handle_t handle, float x, float y, float z)
 	if (handle >= VB->next_channel)
 		return 0;
 
-	vb_data_channel_t* channel = &VB->channels[handle];
+	vb__data_channel_t* channel = &VB->channels[handle];
 
 	if (channel->type != VB_DATATYPE_VECTOR)
 		return 0;
@@ -969,9 +969,9 @@ int vb_data_send_vector(vb_channel_handle_t handle, float x, float y, float z)
 	channel->last_float_y = y;
 	channel->last_float_z = z;
 
-	struct Packet packet;
-	struct Data data;
-	Packet_initialize_data(&packet, &data, VB_DATATYPE_VECTOR);
+	struct vb__Packet packet;
+	struct vb__Data data;
+	vb__Packet_initialize_data(&packet, &data, VB_DATATYPE_VECTOR);
 
 	data._handle = handle;
 	data._data_float_x = x;
@@ -984,15 +984,15 @@ int vb_data_send_vector(vb_channel_handle_t handle, float x, float y, float z)
 	data._maintain_time_uint64 = channel->maintain_time;
 #endif
 
-	size_t message_predicted_length = Packet_get_message_size(&packet);
+	size_t message_predicted_length = vb__Packet_get_message_size(&packet);
 	void* message = Packet_alloca(message_predicted_length);
 
-	size_t message_actual_length = vb_write_length_prepended_message(&packet, message, message_predicted_length, &Packet_serialize);
+	size_t message_actual_length = vb__write_length_prepended_message(&packet, message, message_predicted_length, &vb__Packet_serialize);
 
 	if (!message_actual_length)
 		return 0;
 
-	vb_send_to_all(handle, message, message_actual_length);
+	vb__send_to_all(handle, message, message_actual_length);
 
 	channel->maintain_time = 0;
 
@@ -1058,21 +1058,21 @@ int vb_console_append(const char* text)
 	if (!VB->server_active)
 		return 0;
 
-	struct Packet packet;
-	Packet_initialize(&packet);
+	struct vb__Packet packet;
+	vb__Packet_initialize(&packet);
 
 	packet._console_output = text;
 	packet._console_output_len = strlen(text);
 
-	size_t message_predicted_length = Packet_get_message_size(&packet);
+	size_t message_predicted_length = vb__Packet_get_message_size(&packet);
 	void* message = Packet_alloca(message_predicted_length);
 
-	size_t message_actual_length = vb_write_length_prepended_message(&packet, message, message_predicted_length, &Packet_serialize);
+	size_t message_actual_length = vb__write_length_prepended_message(&packet, message, message_predicted_length, &vb__Packet_serialize);
 
 	if (!message_actual_length)
 		return 0;
 
-	vb_send_to_all(VB_CHANNEL_NONE, message, message_actual_length);
+	vb__send_to_all(VB_CHANNEL_NONE, message, message_actual_length);
 
 	return 1;
 }
@@ -1085,26 +1085,26 @@ int vb_status_set(const char* text)
 	if (!VB->server_active)
 		return 0;
 
-	struct Packet packet;
-	Packet_initialize(&packet);
+	struct vb__Packet packet;
+	vb__Packet_initialize(&packet);
 
 	packet._status = text;
 	packet._status_len = strlen(text);
 
-	size_t message_predicted_length = Packet_get_message_size(&packet);
+	size_t message_predicted_length = vb__Packet_get_message_size(&packet);
 	void* message = Packet_alloca(message_predicted_length);
 
-	size_t message_actual_length = vb_write_length_prepended_message(&packet, message, message_predicted_length, &Packet_serialize);
+	size_t message_actual_length = vb__write_length_prepended_message(&packet, message, message_predicted_length, &vb__Packet_serialize);
 
 	if (!message_actual_length)
 		return 0;
 
-	vb_send_to_all(VB_CHANNEL_NONE, message, message_actual_length);
+	vb__send_to_all(VB_CHANNEL_NONE, message, message_actual_length);
 
 	return 1;
 }
 
-void vb_debug_printf(const char* format, ...)
+void vb__debug_printf(const char* format, ...)
 {
 	if (!VB->config.debug_output_callback)
 		return;
@@ -1137,53 +1137,53 @@ void vb_debug_printf(const char* format, ...)
 which is under the http://www.apache.org/licenses/LICENSE-2.0 Apache license.
 In accordance with this license I must inford you that I have modified it for my purposes. */
 
-int write_raw_byte(char value, void *_buffer, int offset)
+int vb__write_raw_byte(char value, void *_buffer, int offset)
 {
 	*((char *)_buffer + offset) = value;
 	return ++offset;
 }
 
-int write_raw_bytes(const char *bytes, int bytes_size, void *_buffer, int offset)
+int vb__write_raw_bytes(const char *bytes, int bytes_size, void *_buffer, int offset)
 {
 	int i; 
 	for (i = 0; i < bytes_size; ++ i)
 	{
-		offset = write_raw_byte((char)*(bytes + i), _buffer, offset);
+		offset = vb__write_raw_byte((char)*(bytes + i), _buffer, offset);
 	}
 
 	return offset;
 }
 
-int write_raw_varint32(unsigned long value, void *_buffer, int offset)
+int vb__write_raw_varint32(unsigned long value, void *_buffer, int offset)
 {
 	while (1)
 	{
 		if ((value & ~0x7F) == 0)
 		{
-			offset = write_raw_byte((char)value, _buffer, offset);
+			offset = vb__write_raw_byte((char)value, _buffer, offset);
 			return offset;
 		}
 		else
 		{
-			offset = write_raw_byte((char)((value & 0x7F) | 0x80), _buffer, offset);
+			offset = vb__write_raw_byte((char)((value & 0x7F) | 0x80), _buffer, offset);
 			value = value >> 7;
 		}
 	}
 	return offset;
 }
 
-int write_raw_varint64(unsigned long long value, void *_buffer, int offset)
+int vb__write_raw_varint64(unsigned long long value, void *_buffer, int offset)
 {
 	while (1)
 	{
 		if ((value & ~0x7F) == 0)
 		{
-			offset = write_raw_byte((char)value, _buffer, offset);
+			offset = vb__write_raw_byte((char)value, _buffer, offset);
 			return offset;
 		}
 		else
 		{
-			offset = write_raw_byte((char)((value & 0x7F) | 0x80), _buffer, offset);
+			offset = vb__write_raw_byte((char)((value & 0x7F) | 0x80), _buffer, offset);
 			value = value >> 7;
 		}
 	}
@@ -1195,63 +1195,63 @@ int write_raw_varint64(unsigned long long value, void *_buffer, int offset)
 #define PB_WIRE_TYPE_LENGTH_DELIMITED 2
 #define PB_WIRE_TYPE_32BIT            5
 
-int write_wire_format(unsigned long field_number, unsigned char wire_type, void *_buffer, int offset)
+int vb__write_wire_format(unsigned long field_number, unsigned char wire_type, void *_buffer, int offset)
 {
-	return write_raw_varint32((field_number << 3) + wire_type, _buffer, offset);
+	return vb__write_raw_varint32((field_number << 3) + wire_type, _buffer, offset);
 }
 
-int write_raw_little_endian32(unsigned long value, void *_buffer, int offset)
+int vb__write_raw_little_endian32(unsigned long value, void *_buffer, int offset)
 {
-	offset = write_raw_byte((char)((value      ) & 0xFF), _buffer, offset);
-	offset = write_raw_byte((char)((value >>  8) & 0xFF), _buffer, offset);
-	offset = write_raw_byte((char)((value >> 16) & 0xFF), _buffer, offset);
-	offset = write_raw_byte((char)((value >> 24) & 0xFF), _buffer, offset);
+	offset = vb__write_raw_byte((char)((value)& 0xFF), _buffer, offset);
+	offset = vb__write_raw_byte((char)((value >> 8) & 0xFF), _buffer, offset);
+	offset = vb__write_raw_byte((char)((value >> 16) & 0xFF), _buffer, offset);
+	offset = vb__write_raw_byte((char)((value >> 24) & 0xFF), _buffer, offset);
 
 	return offset;
 }
 
-int write_raw_little_endian64(unsigned long long value, void *_buffer, int offset)
+int vb__write_raw_little_endian64(unsigned long long value, void *_buffer, int offset)
 {
-	offset = write_raw_byte((char)((value)& 0xFF), _buffer, offset);
-	offset = write_raw_byte((char)((value >> 8) & 0xFF), _buffer, offset);
-	offset = write_raw_byte((char)((value >> 16) & 0xFF), _buffer, offset);
-	offset = write_raw_byte((char)((value >> 24) & 0xFF), _buffer, offset);
-	offset = write_raw_byte((char)((value >> 32) & 0xFF), _buffer, offset);
-	offset = write_raw_byte((char)((value >> 40) & 0xFF), _buffer, offset);
-	offset = write_raw_byte((char)((value >> 48) & 0xFF), _buffer, offset);
-	offset = write_raw_byte((char)((value >> 56) & 0xFF), _buffer, offset);
+	offset = vb__write_raw_byte((char)((value)& 0xFF), _buffer, offset);
+	offset = vb__write_raw_byte((char)((value >> 8) & 0xFF), _buffer, offset);
+	offset = vb__write_raw_byte((char)((value >> 16) & 0xFF), _buffer, offset);
+	offset = vb__write_raw_byte((char)((value >> 24) & 0xFF), _buffer, offset);
+	offset = vb__write_raw_byte((char)((value >> 32) & 0xFF), _buffer, offset);
+	offset = vb__write_raw_byte((char)((value >> 40) & 0xFF), _buffer, offset);
+	offset = vb__write_raw_byte((char)((value >> 48) & 0xFF), _buffer, offset);
+	offset = vb__write_raw_byte((char)((value >> 56) & 0xFF), _buffer, offset);
 
 	return offset;
 }
 
-int vb_data_type_t_write_with_tag(vb_data_type_t *_vb_data_type_t, void *_buffer, int offset, int tag)
+int vb__data_type_t_write_with_tag(vb_data_type_t *_vb_data_type_t, void *_buffer, int offset, int tag)
 {
 	/* Write tag.*/
-	offset = write_wire_format(tag, PB_WIRE_TYPE_VARINT, _buffer, offset);
+	offset = vb__write_wire_format(tag, PB_WIRE_TYPE_VARINT, _buffer, offset);
 	/* Write content.*/
-	offset = write_raw_varint32(*_vb_data_type_t, _buffer, offset);
+	offset = vb__write_raw_varint32(*_vb_data_type_t, _buffer, offset);
 
 	return offset;
 }
 
-int Data_write(struct Data *_Data, void *_buffer, int offset)
+int vb__Data_write(struct vb__Data *_Data, void *_buffer, int offset)
 {
 	/* Always write the handle */
-	offset = write_wire_format(1, PB_WIRE_TYPE_VARINT, _buffer, offset);
-	offset = write_raw_varint32(_Data->_handle, _buffer, offset);
+	offset = vb__write_wire_format(1, PB_WIRE_TYPE_VARINT, _buffer, offset);
+	offset = vb__write_raw_varint32(_Data->_handle, _buffer, offset);
 
 	if (_Data->_type == VB_DATATYPE_INT)
 	{
-		offset = write_wire_format(3, PB_WIRE_TYPE_VARINT, _buffer, offset);
-		offset = write_raw_varint32(_Data->_data_int, _buffer, offset);
+		offset = vb__write_wire_format(3, PB_WIRE_TYPE_VARINT, _buffer, offset);
+		offset = vb__write_raw_varint32(_Data->_data_int, _buffer, offset);
 	}
 
 	if (_Data->_type == VB_DATATYPE_FLOAT)
 	{
 		unsigned long *data_float_ptr = (unsigned long *)&_Data->_data_float;
 
-		offset = write_wire_format(4, PB_WIRE_TYPE_32BIT, _buffer, offset);
-		offset = write_raw_little_endian32(*data_float_ptr, _buffer, offset);
+		offset = vb__write_wire_format(4, PB_WIRE_TYPE_32BIT, _buffer, offset);
+		offset = vb__write_raw_little_endian32(*data_float_ptr, _buffer, offset);
 	}
 
 	if (_Data->_type == VB_DATATYPE_VECTOR)
@@ -1260,69 +1260,69 @@ int Data_write(struct Data *_Data, void *_buffer, int offset)
 		unsigned long *data_float_y_ptr = (unsigned long *)&_Data->_data_float_y;
 		unsigned long *data_float_z_ptr = (unsigned long *)&_Data->_data_float_z;
 
-		offset = write_wire_format(5, PB_WIRE_TYPE_32BIT, _buffer, offset);
-		offset = write_raw_little_endian32(*data_float_x_ptr, _buffer, offset);
+		offset = vb__write_wire_format(5, PB_WIRE_TYPE_32BIT, _buffer, offset);
+		offset = vb__write_raw_little_endian32(*data_float_x_ptr, _buffer, offset);
 
-		offset = write_wire_format(6, PB_WIRE_TYPE_32BIT, _buffer, offset);
-		offset = write_raw_little_endian32(*data_float_y_ptr, _buffer, offset);
+		offset = vb__write_wire_format(6, PB_WIRE_TYPE_32BIT, _buffer, offset);
+		offset = vb__write_raw_little_endian32(*data_float_y_ptr, _buffer, offset);
 
-		offset = write_wire_format(7, PB_WIRE_TYPE_32BIT, _buffer, offset);
-		offset = write_raw_little_endian32(*data_float_z_ptr, _buffer, offset);
+		offset = vb__write_wire_format(7, PB_WIRE_TYPE_32BIT, _buffer, offset);
+		offset = vb__write_raw_little_endian32(*data_float_z_ptr, _buffer, offset);
 	}
 
 #ifdef VIEWBACK_TIME_DOUBLE
 	unsigned long long *data_time = (unsigned long long *)&_Data->_time_double;
-	offset = write_wire_format(8, PB_WIRE_TYPE_64BIT, _buffer, offset);
-	offset = write_raw_little_endian64(*data_time, _buffer, offset);
+	offset = vb__write_wire_format(8, PB_WIRE_TYPE_64BIT, _buffer, offset);
+	offset = vb__write_raw_little_endian64(*data_time, _buffer, offset);
 #else
-	offset = write_wire_format(9, PB_WIRE_TYPE_VARINT, _buffer, offset);
-	offset = write_raw_varint64(_Data->_time_uint64, _buffer, offset);
+	offset = vb__write_wire_format(9, PB_WIRE_TYPE_VARINT, _buffer, offset);
+	offset = vb__write_raw_varint64(_Data->_time_uint64, _buffer, offset);
 #endif
 
 #ifdef VIEWBACK_TIME_DOUBLE
 	if (_Data->_maintain_time_double)
 	{
 		unsigned long long *data_maintain_time = (unsigned long long *)&_Data->_maintain_time_double;
-		offset = write_wire_format(10, PB_WIRE_TYPE_64BIT, _buffer, offset);
-		offset = write_raw_little_endian64(*data_maintain_time, _buffer, offset);
+		offset = vb__write_wire_format(10, PB_WIRE_TYPE_64BIT, _buffer, offset);
+		offset = vb__write_raw_little_endian64(*data_maintain_time, _buffer, offset);
 	}
 #else
 	if (_Data->_maintain_time_uint64)
 	{
-		offset = write_wire_format(11, PB_WIRE_TYPE_VARINT, _buffer, offset);
-		offset = write_raw_varint64(_Data->_maintain_time_uint64, _buffer, offset);
+		offset = vb__write_wire_format(11, PB_WIRE_TYPE_VARINT, _buffer, offset);
+		offset = vb__write_raw_varint64(_Data->_maintain_time_uint64, _buffer, offset);
 	}
 #endif
 
 	return offset;
 }
 
-int Data_write_delimited_to(struct Data *_Data, void *_buffer, int offset)
+int vb__Data_write_delimited_to(struct vb__Data *_Data, void *_buffer, int offset)
 {
 	int i, shift, new_offset, size;
 
-	new_offset = Data_write(_Data, _buffer, offset);
+	new_offset = vb__Data_write(_Data, _buffer, offset);
 	size = new_offset - offset;
 	shift = (size > 127) ? 2 : 1;
 	for (i = new_offset - 1; i >= offset; -- i)
 		*((char *)_buffer + i + shift) = *((char *)_buffer + i);
 
-	write_raw_varint32((unsigned long) size, _buffer, offset);
+	vb__write_raw_varint32((unsigned long)size, _buffer, offset);
 
 	return new_offset + shift;
 }
 
-int Data_write_with_tag(struct Data *_Data, void *_buffer, int offset, int tag)
+int vb__Data_write_with_tag(struct vb__Data *_Data, void *_buffer, int offset, int tag)
 {
 	/* Write tag.*/
-	offset = write_wire_format(tag, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
+	offset = vb__write_wire_format(tag, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
 	/* Write content.*/
-	offset = Data_write_delimited_to(_Data, _buffer, offset);
+	offset = vb__Data_write_delimited_to(_Data, _buffer, offset);
 
 	return offset;
 }
 
-int DataChannel_write(struct DataChannel *_DataChannel, void *_buffer, int offset)
+int vb__DataChannel_write(struct vb__DataChannel *_DataChannel, void *_buffer, int offset)
 {
 	VBAssert(_DataChannel->_field_name_len);
 	VBAssert(_DataChannel->_field_name);
@@ -1331,32 +1331,32 @@ int DataChannel_write(struct DataChannel *_DataChannel, void *_buffer, int offse
 
 	if (_DataChannel->_field_name_len != 1 || _DataChannel->_field_name[0] != '0')
 	{
-		offset = write_wire_format(1, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
-		offset = write_raw_varint32(_DataChannel->_field_name_len, _buffer, offset);
-		offset = write_raw_bytes(_DataChannel->_field_name, _DataChannel->_field_name_len, _buffer, offset);
+		offset = vb__write_wire_format(1, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
+		offset = vb__write_raw_varint32(_DataChannel->_field_name_len, _buffer, offset);
+		offset = vb__write_raw_bytes(_DataChannel->_field_name, _DataChannel->_field_name_len, _buffer, offset);
 	}
 
-	offset = vb_data_type_t_write_with_tag(&_DataChannel->_type, _buffer, offset, 2);
+	offset = vb__data_type_t_write_with_tag(&_DataChannel->_type, _buffer, offset, 2);
 
-	offset = write_wire_format(3, PB_WIRE_TYPE_VARINT, _buffer, offset);
-	offset = write_raw_varint32(_DataChannel->_handle, _buffer, offset);
+	offset = vb__write_wire_format(3, PB_WIRE_TYPE_VARINT, _buffer, offset);
+	offset = vb__write_raw_varint32(_DataChannel->_handle, _buffer, offset);
 
 	if (_DataChannel->_min != 0 || _DataChannel->_max != 0)
 	{
 		unsigned long *min_ptr = (unsigned long *)&_DataChannel->_min;
 		unsigned long *max_ptr = (unsigned long *)&_DataChannel->_max;
 
-		offset = write_wire_format(4, PB_WIRE_TYPE_32BIT, _buffer, offset);
-		offset = write_raw_little_endian32(*min_ptr, _buffer, offset);
+		offset = vb__write_wire_format(4, PB_WIRE_TYPE_32BIT, _buffer, offset);
+		offset = vb__write_raw_little_endian32(*min_ptr, _buffer, offset);
 
-		offset = write_wire_format(5, PB_WIRE_TYPE_32BIT, _buffer, offset);
-		offset = write_raw_little_endian32(*max_ptr, _buffer, offset);
+		offset = vb__write_wire_format(5, PB_WIRE_TYPE_32BIT, _buffer, offset);
+		offset = vb__write_raw_little_endian32(*max_ptr, _buffer, offset);
 	}
 
 	return offset;
 }
 
-int DataGroup_write(struct DataGroup *_DataGroup, void *_buffer, int offset)
+int vb__DataGroup_write(struct vb__DataGroup *_DataGroup, void *_buffer, int offset)
 {
 	VBAssert(_DataGroup->_name_len);
 	VBAssert(_DataGroup->_name);
@@ -1364,164 +1364,164 @@ int DataGroup_write(struct DataGroup *_DataGroup, void *_buffer, int offset)
 
 	if (_DataGroup->_name_len != 1 || _DataGroup->_name[0] != '0')
 	{
-		offset = write_wire_format(1, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
-		offset = write_raw_varint32(_DataGroup->_name_len, _buffer, offset);
-		offset = write_raw_bytes(_DataGroup->_name, _DataGroup->_name_len, _buffer, offset);
+		offset = vb__write_wire_format(1, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
+		offset = vb__write_raw_varint32(_DataGroup->_name_len, _buffer, offset);
+		offset = vb__write_raw_bytes(_DataGroup->_name, _DataGroup->_name_len, _buffer, offset);
 	}
 
 	for (int channels_cnt = 0; channels_cnt < _DataGroup->_channels_repeated_len; ++channels_cnt)
 	{
-		offset = write_wire_format(2, PB_WIRE_TYPE_VARINT, _buffer, offset);
-		offset = write_raw_varint32(_DataGroup->_channels[channels_cnt], _buffer, offset);
+		offset = vb__write_wire_format(2, PB_WIRE_TYPE_VARINT, _buffer, offset);
+		offset = vb__write_raw_varint32(_DataGroup->_channels[channels_cnt], _buffer, offset);
 	}
 
 	return offset;
 }
 
-int DataLabel_write(struct DataLabel *_DataLabel, void *_buffer, int offset)
+int vb__DataLabel_write(struct vb__DataLabel *_DataLabel, void *_buffer, int offset)
 {
 	VBAssert(_DataLabel->_field_name_len);
 	VBAssert(_DataLabel->_field_name);
 	VBAssert(_DataLabel->_field_name[0]);
 
-	offset = write_wire_format(1, PB_WIRE_TYPE_VARINT, _buffer, offset);
-	offset = write_raw_varint32(_DataLabel->_handle, _buffer, offset);
+	offset = vb__write_wire_format(1, PB_WIRE_TYPE_VARINT, _buffer, offset);
+	offset = vb__write_raw_varint32(_DataLabel->_handle, _buffer, offset);
 
-	offset = write_wire_format(2, PB_WIRE_TYPE_VARINT, _buffer, offset);
-	offset = write_raw_varint32(_DataLabel->_value, _buffer, offset);
+	offset = vb__write_wire_format(2, PB_WIRE_TYPE_VARINT, _buffer, offset);
+	offset = vb__write_raw_varint32(_DataLabel->_value, _buffer, offset);
 
 	if (_DataLabel->_field_name_len != 1 || _DataLabel->_field_name[0] != '0')
 	{
-		offset = write_wire_format(3, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
-		offset = write_raw_varint32(_DataLabel->_field_name_len, _buffer, offset);
-		offset = write_raw_bytes(_DataLabel->_field_name, _DataLabel->_field_name_len, _buffer, offset);
+		offset = vb__write_wire_format(3, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
+		offset = vb__write_raw_varint32(_DataLabel->_field_name_len, _buffer, offset);
+		offset = vb__write_raw_bytes(_DataLabel->_field_name, _DataLabel->_field_name_len, _buffer, offset);
 	}
 
 	return offset;
 }
 
-int DataChannel_write_delimited_to(struct DataChannel *_DataChannel, void *_buffer, int offset)
+int vb__DataChannel_write_delimited_to(struct vb__DataChannel *_DataChannel, void *_buffer, int offset)
 {
 	int i, shift, new_offset, size;
 
-	new_offset = DataChannel_write(_DataChannel, _buffer, offset);
+	new_offset = vb__DataChannel_write(_DataChannel, _buffer, offset);
 	size = new_offset - offset;
 	shift = (size > 127) ? 2 : 1;
 	for (i = new_offset - 1; i >= offset; -- i)
 		*((char *)_buffer + i + shift) = *((char *)_buffer + i);
 
-	write_raw_varint32((unsigned long) size, _buffer, offset);         
+	vb__write_raw_varint32((unsigned long)size, _buffer, offset);
 
 	return new_offset + shift;
 }
 
-int DataGroup_write_delimited_to(struct DataGroup *_DataGroup, void *_buffer, int offset)
+int vb__DataGroup_write_delimited_to(struct vb__DataGroup *_DataGroup, void *_buffer, int offset)
 {
 	int i, shift, new_offset, size;
 
-	new_offset = DataGroup_write(_DataGroup, _buffer, offset);
+	new_offset = vb__DataGroup_write(_DataGroup, _buffer, offset);
 	size = new_offset - offset;
 	shift = (size > 127) ? 2 : 1;
 	for (i = new_offset - 1; i >= offset; --i)
 		*((char *)_buffer + i + shift) = *((char *)_buffer + i);
 
-	write_raw_varint32((unsigned long)size, _buffer, offset);
+	vb__write_raw_varint32((unsigned long)size, _buffer, offset);
 
 	return new_offset + shift;
 }
 
-int DataLabel_write_delimited_to(struct DataLabel *_DataLabel, void *_buffer, int offset)
+int vb__DataLabel_write_delimited_to(struct vb__DataLabel *_DataLabel, void *_buffer, int offset)
 {
 	int i, shift, new_offset, size;
 
-	new_offset = DataLabel_write(_DataLabel, _buffer, offset);
+	new_offset = vb__DataLabel_write(_DataLabel, _buffer, offset);
 	size = new_offset - offset;
 	shift = (size > 127) ? 2 : 1;
 	for (i = new_offset - 1; i >= offset; --i)
 		*((char *)_buffer + i + shift) = *((char *)_buffer + i);
 
-	write_raw_varint32((unsigned long)size, _buffer, offset);
+	vb__write_raw_varint32((unsigned long)size, _buffer, offset);
 
 	return new_offset + shift;
 }
 
-int DataChannel_write_with_tag(struct DataChannel *_DataChannel, void *_buffer, int offset, int tag)
+int vb__DataChannel_write_with_tag(struct vb__DataChannel *_DataChannel, void *_buffer, int offset, int tag)
 {
 	/* Write tag.*/
-	offset = write_wire_format(tag, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
+	offset = vb__write_wire_format(tag, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
 	/* Write content.*/
-	offset = DataChannel_write_delimited_to(_DataChannel, _buffer, offset);
+	offset = vb__DataChannel_write_delimited_to(_DataChannel, _buffer, offset);
 
 	return offset;
 }
 
-int DataGroup_write_with_tag(struct DataGroup *_DataGroup, void *_buffer, int offset, int tag)
+int vb__DataGroup_write_with_tag(struct vb__DataGroup *_DataGroup, void *_buffer, int offset, int tag)
 {
 	/* Write tag.*/
-	offset = write_wire_format(tag, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
+	offset = vb__write_wire_format(tag, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
 	/* Write content.*/
-	offset = DataGroup_write_delimited_to(_DataGroup, _buffer, offset);
+	offset = vb__DataGroup_write_delimited_to(_DataGroup, _buffer, offset);
 
 	return offset;
 }
 
-int DataLabel_write_with_tag(struct DataLabel *_DataLabel, void *_buffer, int offset, int tag)
+int vb__DataLabel_write_with_tag(struct vb__DataLabel *_DataLabel, void *_buffer, int offset, int tag)
 {
 	/* Write tag.*/
-	offset = write_wire_format(tag, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
+	offset = vb__write_wire_format(tag, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
 	/* Write content.*/
-	offset = DataLabel_write_delimited_to(_DataLabel, _buffer, offset);
+	offset = vb__DataLabel_write_delimited_to(_DataLabel, _buffer, offset);
 
 	return offset;
 }
 
-int Packet_write(struct Packet *_Packet, void *_buffer, int offset)
+int vb__Packet_write(struct vb__Packet *_Packet, void *_buffer, int offset)
 {
 	/* Write content of each message element.*/
 	/* Write the optional attribute only if it is different than the default value. */
 	if (_Packet->_data)
 	{
-		offset = Data_write_with_tag(_Packet->_data, _buffer, offset, 1);
+		offset = vb__Data_write_with_tag(_Packet->_data, _buffer, offset, 1);
 	}
 
 	for (int data_channels_cnt = 0; data_channels_cnt < _Packet->_data_channels_repeated_len; ++data_channels_cnt)
-		offset = DataChannel_write_with_tag(&_Packet->_data_channels[data_channels_cnt], _buffer, offset, 2);
+		offset = vb__DataChannel_write_with_tag(&_Packet->_data_channels[data_channels_cnt], _buffer, offset, 2);
 
 	for (int data_groups_cnt = 0; data_groups_cnt < _Packet->_data_groups_repeated_len; ++data_groups_cnt)
-		offset = DataGroup_write_with_tag(&_Packet->_data_groups[data_groups_cnt], _buffer, offset, 3);
+		offset = vb__DataGroup_write_with_tag(&_Packet->_data_groups[data_groups_cnt], _buffer, offset, 3);
 
 	for (int data_labels_cnt = 0; data_labels_cnt < _Packet->_data_labels_repeated_len; ++data_labels_cnt)
-		offset = DataLabel_write_with_tag(&_Packet->_data_labels[data_labels_cnt], _buffer, offset, 4);
+		offset = vb__DataLabel_write_with_tag(&_Packet->_data_labels[data_labels_cnt], _buffer, offset, 4);
 
 	if (_Packet->_console_output_len && _Packet->_console_output && _Packet->_console_output[0])
 	{
-		offset = write_wire_format(5, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
-		offset = write_raw_varint32(_Packet->_console_output_len, _buffer, offset);
-		offset = write_raw_bytes(_Packet->_console_output, _Packet->_console_output_len, _buffer, offset);
+		offset = vb__write_wire_format(5, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
+		offset = vb__write_raw_varint32(_Packet->_console_output_len, _buffer, offset);
+		offset = vb__write_raw_bytes(_Packet->_console_output, _Packet->_console_output_len, _buffer, offset);
 	}
 
 	if (_Packet->_status_len && _Packet->_status && _Packet->_status[0])
 	{
-		offset = write_wire_format(6, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
-		offset = write_raw_varint32(_Packet->_status_len, _buffer, offset);
-		offset = write_raw_bytes(_Packet->_status, _Packet->_status_len, _buffer, offset);
+		offset = vb__write_wire_format(6, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
+		offset = vb__write_raw_varint32(_Packet->_status_len, _buffer, offset);
+		offset = vb__write_raw_bytes(_Packet->_status, _Packet->_status_len, _buffer, offset);
 	}
 
 	return offset;
 }
 
-void Packet_initialize(struct Packet* packet)
+void vb__Packet_initialize(struct vb__Packet* packet)
 {
-	memset(packet, 0, sizeof(struct Packet));
+	memset(packet, 0, sizeof(struct vb__Packet));
 }
 
-void Packet_initialize_data(struct Packet* packet, struct Data* data, vb_data_type_t type)
+void vb__Packet_initialize_data(struct vb__Packet* packet, struct vb__Data* data, vb_data_type_t type)
 {
-	memset(packet, 0, sizeof(struct Packet));
+	memset(packet, 0, sizeof(struct vb__Packet));
 
 	packet->_data = data;
 
-	memset(data, 0, sizeof(struct Data));
+	memset(data, 0, sizeof(struct vb__Data));
 
 	data->_type = type;
 
@@ -1532,9 +1532,9 @@ void Packet_initialize_data(struct Packet* packet, struct Data* data, vb_data_ty
 #endif
 }
 
-void Packet_initialize_registrations(struct Packet* packet, struct DataChannel* data_channels, size_t channels, struct DataGroup* data_groups, size_t groups, struct DataLabel* data_labels, size_t labels)
+void vb__Packet_initialize_registrations(struct vb__Packet* packet, struct vb__DataChannel* data_channels, size_t channels, struct vb__DataGroup* data_groups, size_t groups, struct vb__DataLabel* data_labels, size_t labels)
 {
-	memset(packet, 0, sizeof(struct Packet));
+	memset(packet, 0, sizeof(struct vb__Packet));
 
 	packet->_data_channels = data_channels;
 	packet->_data_channels_repeated_len = channels;
@@ -1545,9 +1545,9 @@ void Packet_initialize_registrations(struct Packet* packet, struct DataChannel* 
 	packet->_data_labels = data_labels;
 	packet->_data_labels_repeated_len = labels;
 
-	memset(data_channels, 0, sizeof(struct DataChannel) * channels);
-	/* memset(data_groups, 0, sizeof(struct DataGroup) * groups); /* Don't zero the groups or we'll lose the channels allocation that was done. */
-	memset(data_labels, 0, sizeof(struct DataLabel) * labels);
+	memset(data_channels, 0, sizeof(struct vb__DataChannel) * channels);
+	/* memset(data_groups, 0, sizeof(struct vb__DataGroup) * groups); /* Don't zero the groups or we'll lose the channels allocation that was done. */
+	memset(data_labels, 0, sizeof(struct vb__DataLabel) * labels);
 
 	VBAssert(channels == VB->next_channel);
 	for (size_t i = 0; i < channels; i++)
@@ -1574,8 +1574,8 @@ void Packet_initialize_registrations(struct Packet* packet, struct DataChannel* 
 	/* Fill in the data. */
 	for (size_t i = 0; i < VB->next_group_member; i++)
 	{
-		vb_data_group_member_t* group_member = &VB->group_members[i];
-		struct DataGroup* group = &data_groups[group_member->group];
+		vb__data_group_member_t* group_member = &VB->group_members[i];
+		struct vb__DataGroup* group = &data_groups[group_member->group];
 		group->_channels[group->_channels_repeated_len] = group_member->channel;
 		group->_channels_repeated_len++;
 	}
@@ -1590,7 +1590,7 @@ void Packet_initialize_registrations(struct Packet* packet, struct DataChannel* 
 	}
 }
 
-size_t Packet_get_message_size(struct Packet *_Packet)
+size_t vb__Packet_get_message_size(struct vb__Packet *_Packet)
 {
 	size_t size = 0;
 
@@ -1730,9 +1730,9 @@ size_t Packet_get_message_size(struct Packet *_Packet)
 	return size;
 }
 
-size_t Packet_serialize(struct Packet *_Packet, void *_buffer, size_t length)
+size_t vb__Packet_serialize(struct vb__Packet *_Packet, void *_buffer, size_t length)
 {
-	size_t end_offset = Packet_write(_Packet, _buffer, 0);
+	size_t end_offset = vb__Packet_write(_Packet, _buffer, 0);
 
 	VBAssert(end_offset < length);
 

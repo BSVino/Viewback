@@ -58,6 +58,6 @@
 #define VBAssert(x) {}
 #endif
 
-extern void vb_debug_printf(const char* format, ...);
-#define VBPrintf vb_debug_printf
+extern void vb__debug_printf(const char* format, ...);
+#define VBPrintf vb__debug_printf
 

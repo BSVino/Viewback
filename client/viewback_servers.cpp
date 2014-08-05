@@ -29,7 +29,7 @@ void CViewbackServersThread::Shutdown()
 	pthread_join(ServersThread().m_iThread, NULL);
 
 	ServersThread().m_aServers.clear();
-	vb_socket_close(ServersThread().m_socket);
+	vb__socket_close(ServersThread().m_socket);
 	s_best_server = 0;
 }
 
@@ -103,22 +103,22 @@ void CViewbackServersThread::Pump()
 	char msgbuf[MSGBUFSIZE];
 
 	struct sockaddr_in addr;
-	vb_socklen_t addrlen = sizeof(addr);
+	vb__socklen_t addrlen = sizeof(addr);
 
-	vb_socket_set_blocking(m_socket, 0);
+	vb__socket_set_blocking(m_socket, 0);
 
 	int iBytesRead;
 	if ((iBytesRead = recvfrom(m_socket, msgbuf, MSGBUFSIZE, 0, (struct sockaddr *)&addr, &addrlen)) < 0)
 	{
-		int error = vb_socket_error();
-		if (!vb_socket_is_blocking_error(error))
+		int error = vb__socket_error();
+		if (!vb__socket_is_blocking_error(error))
 		{
 			VBPrintf("Error reading multicast socket: %d.\n", error);
 			return;
 		}
 	}
 
-	vb_socket_set_blocking(m_socket, 1);
+	vb__socket_set_blocking(m_socket, 1);
 
 	VBAssert(iBytesRead < MSGBUFSIZE);
 

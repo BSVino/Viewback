@@ -5,9 +5,9 @@
 static_assert(sizeof(unsigned long long int) == 8, "unsigned long long int must be 64 bits.");
 
 #ifdef VIEWBACK_TIME_DOUBLE
-typedef double vb_time_t;
+typedef double vb__time_t;
 #else
-typedef vb_uint64 vb_time_t;
+typedef vb_uint64 vb__time_t;
 #endif
 
 
@@ -18,7 +18,7 @@ typedef vb_uint64 vb_time_t;
 
 // This isn't really always 1 byte long. It's a bit mask large enough to hold
 // all channels, so it may be longer.
-typedef unsigned char vb_data_channel_mask_t;
+typedef unsigned char vb__data_channel_mask_t;
 #define VB_CHANNEL_NONE ((vb_channel_handle_t)~0)
 #define VB_GROUP_NONE ((vb_group_handle_t)~0)
 
@@ -33,7 +33,7 @@ typedef struct
 
 	// If this is nonzero it means that we threw out some redundant data. Next
 	// time we send data to the client we should let it know we threw some out.
-	vb_time_t      maintain_time;
+	vb__time_t     maintain_time;
 
 	union
 	{
@@ -46,59 +46,59 @@ typedef struct
 			float last_float_z;
 		};
 	};
-} vb_data_channel_t;
+} vb__data_channel_t;
 
 typedef struct
 {
 	const char* name;
-} vb_data_group_t;
+} vb__data_group_t;
 
 typedef struct
 {
 	vb_group_handle_t   group;
 	vb_channel_handle_t channel;
-} vb_data_group_member_t;
+} vb__data_group_member_t;
 
 typedef struct
 {
 	vb_channel_handle_t handle;
 	int                 value;
 	const char*         name;
-} vb_data_label_t;
+} vb__data_label_t;
 
 typedef struct
 {
-	vb_socket_t socket;
+	vb__socket_t socket;
 
-	vb_data_channel_mask_t* active_channels;
-} vb_connection_t;
+	vb__data_channel_mask_t* active_channels;
+} vb__connection_t;
 
 typedef struct
 {
 	vb_config_t config;
 
-	vb_socket_t        multicast_socket;
-	struct sockaddr_in multicast_addr;
-	time_t             last_multicast;
-	vb_socket_t        tcp_socket;
+	vb__socket_t        multicast_socket;
+	struct sockaddr_in  multicast_addr;
+	time_t              last_multicast;
+	vb__socket_t        tcp_socket;
 
-	vb_data_channel_t* channels;
-	size_t             next_channel;
+	vb__data_channel_t* channels;
+	size_t              next_channel;
 
-	vb_data_group_t* groups;
-	size_t           next_group;
+	vb__data_group_t* groups;
+	size_t            next_group;
 
-	vb_data_group_member_t* group_members;
-	size_t                  next_group_member;
+	vb__data_group_member_t* group_members;
+	size_t                   next_group_member;
 
-	vb_data_label_t* labels;
-	size_t           next_label;
+	vb__data_label_t* labels;
+	size_t            next_label;
 
-	vb_connection_t* connections;
-	char             server_active;
+	vb__connection_t* connections;
+	char              server_active;
 
-	vb_time_t        current_time;
-} vb_t;
+	vb__time_t        current_time;
+} vb__t;
 
 
 
@@ -114,7 +114,7 @@ typedef struct
 #define Packet_alloca(length) alloca(length + sizeof(size_t))
 #endif
 
-struct Data {
+struct vb__Data {
 	unsigned long  _handle;
 	vb_data_type_t _type; // Won't get sent over the wire, it's needed to tell which data to send.
 	unsigned long  _data_int;
@@ -132,7 +132,7 @@ struct Data {
 #endif
 };
 
-struct DataChannel {
+struct vb__DataChannel {
 	int            _field_name_len;
 	const char*    _field_name;
 	vb_data_type_t _type;
@@ -141,28 +141,28 @@ struct DataChannel {
 	float          _max;
 };
 
-struct DataGroup {
+struct vb__DataGroup {
 	const char*    _name;
 	int            _name_len;
 	unsigned long* _channels;
 	int            _channels_repeated_len;
 };
 
-struct DataLabel {
+struct vb__DataLabel {
 	unsigned long  _handle;
 	int            _value;
 	int            _field_name_len;
 	const char*    _field_name;
 };
 
-struct Packet {
-	struct Data*        _data;
-	int                 _data_channels_repeated_len;
-	struct DataChannel* _data_channels;
-	int                 _data_groups_repeated_len;
-	struct DataGroup*   _data_groups;
-	int                 _data_labels_repeated_len;
-	struct DataLabel*   _data_labels;
+struct vb__Packet {
+	struct vb__Data*        _data;
+	int                     _data_channels_repeated_len;
+	struct vb__DataChannel* _data_channels;
+	int                     _data_groups_repeated_len;
+	struct vb__DataGroup*   _data_groups;
+	int                     _data_labels_repeated_len;
+	struct vb__DataLabel*   _data_labels;
 
 	int            _console_output_len;
 	const char*    _console_output;
@@ -171,11 +171,11 @@ struct Packet {
 	const char*    _status;
 };
 
-void Packet_initialize(struct Packet* packet);
-void Packet_initialize_data(struct Packet* packet, struct Data* data, vb_data_type_t type);
-void Packet_initialize_registrations(struct Packet* packet, struct DataChannel* data_channels, size_t channels, struct DataGroup* data_groups, size_t groups, struct DataLabel* data_labels, size_t labels);
-size_t Packet_get_message_size(struct Packet *_Packet);
-size_t Packet_serialize(struct Packet *_Packet, void *_buffer, size_t length);
+void vb__Packet_initialize(struct vb__Packet* packet);
+void vb__Packet_initialize_data(struct vb__Packet* packet, struct vb__Data* data, vb_data_type_t type);
+void vb__Packet_initialize_registrations(struct vb__Packet* packet, struct vb__DataChannel* data_channels, size_t channels, struct vb__DataGroup* data_groups, size_t groups, struct vb__DataLabel* data_labels, size_t labels);
+size_t vb__Packet_get_message_size(struct vb__Packet *_Packet);
+size_t vb__Packet_serialize(struct vb__Packet *_Packet, void *_buffer, size_t length);
 
 
 

@@ -13,7 +13,7 @@ using namespace std;
 
 static CViewbackClient* VB = NULL;
 
-void vb_debug_printf(const char* format, ...)
+void vb__debug_printf(const char* format, ...)
 {
 	if (!VB->GetDebugOutputCallback())
 		return;

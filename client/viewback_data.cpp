@@ -111,7 +111,7 @@ void CViewbackDataThread::ThreadMain(CViewbackDataThread* pThis)
 		pThis->Pump();
 
 	s_bConnected = false;
-	vb_socket_close(pThis->m_socket);
+	vb__socket_close(pThis->m_socket);
 
 	google::protobuf::ShutdownProtobufLibrary();
 
@@ -128,18 +128,18 @@ void CViewbackDataThread::Pump()
 
 	int iBytesRead;
 
-	vb_socket_set_blocking(m_socket, 0);
+	vb__socket_set_blocking(m_socket, 0);
 
 	iBytesRead = recv(m_socket, msgbuf, MSGBUFSIZE, 0);
 
-	int iError = vb_socket_error();
+	int iError = vb__socket_error();
 
-	vb_socket_set_blocking(m_socket, 1);
+	vb__socket_set_blocking(m_socket, 1);
 
 	// 0 always means the connection was lost.
 	if (iBytesRead == 0)
 	{
-		vb_socket_close(m_socket);
+		vb__socket_close(m_socket);
 		s_bConnected = false;
 		return;
 	}
@@ -147,11 +147,11 @@ void CViewbackDataThread::Pump()
 	if (iBytesRead < 0)
 	{
 		// It would have blocked, meaning there's no data available.
-		if (vb_socket_is_blocking_error(iError))
+		if (vb__socket_is_blocking_error(iError))
 			return;
 
 		// There was a real error, we're not connected anymore.
-		vb_socket_close(m_socket);
+		vb__socket_close(m_socket);
 		s_bConnected = false;
 		return;
 	}

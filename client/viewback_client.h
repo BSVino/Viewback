@@ -12,7 +12,7 @@
 class CCleanupSocket
 {
 public:
-	CCleanupSocket(vb_socket_t socket)
+	CCleanupSocket(vb__socket_t socket)
 	{
 		_socket = socket;
 		_success = false;
@@ -20,8 +20,8 @@ public:
 
 	~CCleanupSocket()
 	{
-		if (!_success && vb_socket_valid(_socket))
-			vb_socket_close(_socket);
+		if (!_success && vb__socket_valid(_socket))
+			vb__socket_close(_socket);
 	}
 
 public:
@@ -31,8 +31,8 @@ public:
 	}
 
 private:
-	vb_socket_t _socket;
-	bool        _success;
+	vb__socket_t _socket;
+	bool         _success;
 };
 
 class CViewbackDataChannel

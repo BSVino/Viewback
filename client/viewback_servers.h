@@ -44,7 +44,7 @@ private:
 private:
 	pthread_t m_iThread;
 
-	vb_socket_t          m_socket;
+	vb__socket_t          m_socket;
 
 	std::map<unsigned long, CServer> m_aServers;
 

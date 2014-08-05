@@ -6,8 +6,8 @@
 #pragma comment(lib, "wsock32")
 #pragma comment(lib, "ws2_32")
 
-typedef SOCKET vb_socket_t;
-typedef int vb_socklen_t;
+typedef SOCKET vb__socket_t;
+typedef int vb__socklen_t;
 
 #if defined(__GNUC__)
 #define VB_ALIGN(x) __attribute__((aligned(x)))
@@ -20,28 +20,28 @@ typedef int vb_socklen_t;
 
 #pragma warning(disable:4505) // unreferenced local function has been removed
 
-static int vb_socket_error(void)
+static int vb__socket_error(void)
 {
 	return WSAGetLastError();
 }
 
-static int vb_socket_set_blocking(vb_socket_t socket, int blocking)
+static int vb__socket_set_blocking(vb__socket_t socket, int blocking)
 {
 	u_long val = !blocking;
 	return ioctlsocket(socket, FIONBIO, &val);
 }
 
-static int vb_socket_valid(vb_socket_t socket)
+static int vb__socket_valid(vb__socket_t socket)
 {
 	return INVALID_SOCKET != socket;
 }
 
-static void vb_socket_close(vb_socket_t socket)
+static void vb__socket_close(vb__socket_t socket)
 {
 	closesocket(socket);
 }
 
-static int vb_socket_is_blocking_error(int error)
+static int vb__socket_is_blocking_error(int error)
 {
 	return WSAEWOULDBLOCK == error;
 }
