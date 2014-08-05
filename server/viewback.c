@@ -31,6 +31,7 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 // 
 #ifdef _MSC_VER
 // No VLA's. Use alloca()
+#include <malloc.h>
 #define vb__stack_allocate(type, name, bytes) type* name = (type*)alloca(bytes)
 #else
 #define vb__stack_allocate(type, name, bytes) type name[bytes]
