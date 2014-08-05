@@ -27,6 +27,8 @@ extern "C" {
 typedef unsigned long long vb_uint64;
 #endif
 
+typedef unsigned char vb_bool;
+
 /*
 	Viewback - A tool for designing video games written by Jorge Rodriguez
 	Some code unscrupulously stolen from Webby https://github.com/deplinenoise/webby
@@ -189,7 +191,7 @@ int vb_data_set_range(vb_channel_handle_t handle, float range_min, float range_m
 /*
 	After registering all of your data, call this to start up the server.
 */
-int vb_server_create();
+vb_bool vb_server_create();
 
 /*
 	Call every frame. It should take only minimal processing and never does
@@ -212,7 +214,7 @@ void vb_server_shutdown();
 /*
 	Returns nonzero if the server is active.
 */
-int vb_server_is_active();
+vb_bool vb_server_is_active();
 
 /*
 	These methods send data to the monitor. If you use a handle that was

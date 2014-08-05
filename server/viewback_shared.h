@@ -61,29 +61,3 @@
 extern void vb_debug_printf(const char* format, ...);
 #define VBPrintf vb_debug_printf
 
-// This quick class automates the cleanup of sockets in case the server creation fails for some reason.
-class CCleanupSocket
-{
-public:
-	CCleanupSocket(vb_socket_t socket)
-	{
-		_socket = socket;
-		_success = false;
-	}
-
-	~CCleanupSocket()
-	{
-		if (!_success && vb_socket_valid(_socket))
-			vb_socket_close(_socket);
-	}
-
-public:
-	void Success()
-	{
-		_success = true;
-	}
-
-private:
-	vb_socket_t _socket;
-	bool        _success;
-};

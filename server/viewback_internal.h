@@ -95,7 +95,7 @@ typedef struct
 	size_t           next_label;
 
 	vb_connection_t* connections;
-	bool             server_active;
+	char             server_active;
 
 	vb_time_t        current_time;
 } vb_t;

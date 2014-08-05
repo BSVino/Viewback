@@ -1,6 +1,5 @@
 #include "viewback_data.h"
-
-#include "../server/viewback_shared.h"
+#include "viewback_client.h"
 
 using namespace std;
 

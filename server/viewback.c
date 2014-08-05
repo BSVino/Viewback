@@ -130,7 +130,7 @@ int vb_config_install(vb_config_t* config, void* memory, size_t memory_size)
 		VB->connections[i].active_channels = (vb_data_channel_mask_t*)(active_channels + i * vb_config_get_channel_mask_length(config));
 	}
 
-	VB->server_active = false;
+	VB->server_active = 0;
 
 	if (!VB->config.multicast_group || !*VB->config.multicast_group)
 		VB->config.multicast_group = VB_DEFAULT_MULTICAST_ADDRESS;
@@ -148,31 +148,31 @@ void vb_config_release()
 	VB = NULL;
 }
 
-bool vb_data_is_channel_active(vb_channel_handle_t channel, size_t connection)
+vb_bool vb_data_is_channel_active(vb_channel_handle_t channel, size_t connection)
 {
 	if (!VB)
-		return false;
+		return 0;
 
 	if (!VB->server_active)
-		return false;
+		return 0;
 
 	if (channel == VB_CHANNEL_NONE)
-		return true;
+		return 1;
 
 	if (channel < 0)
-		return false;
+		return 0;
 
 	if (channel >= VB->next_channel)
-		return false;
+		return 0;
 
 	if (connection < 0)
-		return false;
+		return 0;
 
 	if (connection >= VB->config.max_connections)
-		return false;
+		return 0;
 
 	if (VB->connections[connection].socket == VB_INVALID_SOCKET)
-		return false;
+		return 0;
 
 	char* mask = (char*)VB->connections[connection].active_channels;
 
@@ -365,24 +365,24 @@ int vb_data_add_label(vb_channel_handle_t handle, int value, const char* label)
 int vb_data_get_label(vb_channel_handle_t handle, int value, const char** label)
 {
 	if (!VB)
-		return false;
+		return 0;
 
 	if (handle < 0 || handle >= VB->next_channel)
-		return false;
+		return 0;
 
 	if (!VB->server_active)
-		return false;
+		return 0;
 
 	for (size_t i = 0; i < VB->next_label; i++)
 	{
 		if (VB->labels[i].handle == handle && VB->labels[i].value == value)
 		{
 			*label = VB->labels[i].name;
-			return true;
+			return 1;
 		}
 	}
 
-	return false;
+	return 0;
 }
 
 int vb_data_set_range(vb_channel_handle_t handle, float range_min, float range_max)
@@ -402,7 +402,7 @@ int vb_data_set_range(vb_channel_handle_t handle, float range_min, float range_m
 	return 1;
 }
 
-int vb_server_create()
+vb_bool vb_server_create()
 {
 	if (!VB)
 		return 0;
@@ -412,8 +412,6 @@ int vb_server_create()
 
 	VB->multicast_socket = socket(AF_INET, SOCK_DGRAM, 0);
 
-	CCleanupSocket mc(VB->multicast_socket);
-
 	if (!vb_socket_valid(VB->multicast_socket))
 		return 0;
 
@@ -421,7 +419,7 @@ int vb_server_create()
 	if (setsockopt(VB->multicast_socket, IPPROTO_IP, IP_TTL, (const char*)&ttl, sizeof(ttl)) != 0)
 	{
 		VBPrintf("Couldn't set multicast socket TTL. Error: %d\n", vb_socket_error());
-		return 0;
+		goto error;
 	}
 
 	memset(&VB->multicast_addr, 0, sizeof(VB->multicast_addr));
@@ -432,10 +430,8 @@ int vb_server_create()
 
 	VB->tcp_socket = socket(AF_INET, SOCK_STREAM, 0);
 
-	CCleanupSocket tc(VB->tcp_socket);
-
 	if (!vb_socket_valid(VB->tcp_socket))
-		return 0;
+		goto error;
 
 	{
 		int on = 1;
@@ -450,7 +446,7 @@ int vb_server_create()
 #endif
 
 	if (vb_socket_set_blocking(VB->tcp_socket, 0) != 0)
-		return 0;
+		goto error;
 
 	struct sockaddr_in tcp_addr;
 	memset(&tcp_addr, 0, sizeof(tcp_addr));
@@ -459,20 +455,22 @@ int vb_server_create()
 	tcp_addr.sin_port = htons(VB->config.port);
 
 	if (bind(VB->tcp_socket, (struct sockaddr*) &tcp_addr, sizeof tcp_addr) != 0)
-		return 0;
+		goto error;
 
 	if (listen(VB->tcp_socket, SOMAXCONN) != 0)
-		return 0;
+		goto error;
 
 	VBPrintf("Viewback server created on %s:%d (%u).\n", inet_ntoa(tcp_addr.sin_addr), ntohs(tcp_addr.sin_port), tcp_addr.sin_addr.s_addr);
 	VBPrintf("Multicasting to %s:%d.\n", inet_ntoa(VB->multicast_addr.sin_addr), ntohs(VB->multicast_addr.sin_port));
 
-	mc.Success();
-	tc.Success();
-
-	VB->server_active = true;
+	VB->server_active = 1;
 
 	return 1;
+
+error:
+	vb_socket_close(VB->tcp_socket);
+	vb_socket_close(VB->multicast_socket);
+	return 0;
 }
 
 void vb_server_shutdown()
@@ -489,10 +487,10 @@ void vb_server_shutdown()
 	for (size_t i = 0; i < VB->config.max_connections; i++)
 		vb_socket_close(VB->connections[i].socket);
 
-	VB->server_active = false;
+	VB->server_active = 0;
 }
 
-int vb_server_is_active()
+vb_bool vb_server_is_active()
 {
 	if (!VB)
 		return 0;
@@ -514,21 +512,21 @@ size_t vb_write_length_prepended_message(struct Packet *_Packet, void *_buffer, 
 	return serialized_length + sizeof(network_length);
 }
 
-bool vb_socket_send(vb_socket_t& socket, const char* message, size_t message_length)
+vb_bool vb_socket_send(vb_socket_t* socket, const char* message, size_t message_length)
 {
-	vb_socket_set_blocking(socket, 1);
+	vb_socket_set_blocking(*socket, 1);
 
-	int bytes_sent = send(socket, message, message_length, 0);
+	int bytes_sent = send(*socket, message, message_length, 0);
 	int socket_error = vb_socket_error();
 
-	vb_socket_set_blocking(socket, 0);
+	vb_socket_set_blocking(*socket, 0);
 
 	if (bytes_sent == 0)
 	{
-		VBPrintf("Error sending to %d, disconnected.\n", socket);
-		vb_socket_close(socket);
-		socket = VB_INVALID_SOCKET;
-		return false;
+		VBPrintf("Error sending to %d, disconnected.\n", *socket);
+		vb_socket_close(*socket);
+		*socket = VB_INVALID_SOCKET;
+		return 0;
 	}
 
 	if (bytes_sent < 0)
@@ -536,13 +534,13 @@ bool vb_socket_send(vb_socket_t& socket, const char* message, size_t message_len
 		// Should be a blocking socket.
 		VBAssert(!vb_socket_is_blocking_error(socket_error));
 
-		VBPrintf("Error (code: %d) sending to %d, disconnected.\n", socket_error, socket);
-		vb_socket_close(socket);
-		socket = VB_INVALID_SOCKET;
-		return false;
+		VBPrintf("Error (code: %d) sending to %d, disconnected.\n", socket_error, *socket);
+		vb_socket_close(*socket);
+		*socket = VB_INVALID_SOCKET;
+		return 0;
 	}
 
-	return true;
+	return 1;
 }
 
 void vb_connection_setup(vb_connection_t* connection)
@@ -638,7 +636,7 @@ void vb_server_update(vb_uint64 current_game_time)
 
 		if (vb_socket_valid(incoming_socket))
 		{
-			CCleanupSocket c(incoming_socket);
+			vb_bool socket_success = 0;
 
 			int open_socket = -1;
 			for (size_t i = 0; i < VB->config.max_connections; i++)
@@ -663,9 +661,12 @@ void vb_server_update(vb_uint64 current_game_time)
 
 					vb_connection_setup(&VB->connections[open_socket]);
 
-					c.Success();
+					socket_success = 1;
 				}
 			}
+
+			if (!socket_success)
+				vb_socket_close(incoming_socket);
 		}
 
 		if (vb_socket_valid(incoming_socket))
@@ -694,7 +695,7 @@ void vb_server_update(vb_uint64 current_game_time)
 			else if (n == sizeof(mesg))
 			{
 				/* We read the whole damn thing? Shouldn't ever happen, but ignore. */
-				VBAssert(false);
+				VBAssert(0);
 				continue;
 			}
 
@@ -728,7 +729,7 @@ void vb_server_update(vb_uint64 current_game_time)
 
 				if (message_actual_length)
 				{
-					bool success = vb_socket_send(VB->connections[i].socket, (const char*)message, message_actual_length);
+					vb_bool success = vb_socket_send(&VB->connections[i].socket, (const char*)message, message_actual_length);
 
 					if (!success)
 						continue;
@@ -792,7 +793,7 @@ void vb_send_to_all(vb_channel_handle_t channel, void* message, size_t message_l
 		if (!vb_data_is_channel_active(channel, i))
 			continue;
 
-		vb_socket_send(VB->connections[i].socket, (const char*)message, message_length);
+		vb_socket_send(&VB->connections[i].socket, (const char*)message, message_length);
 	}
 }
 
@@ -823,26 +824,26 @@ int vb_data_send_int(vb_channel_handle_t handle, int value)
 	if (handle >= VB->next_channel)
 		return 0;
 
-	vb_data_channel_t& channel = VB->channels[handle];
+	vb_data_channel_t* channel = &VB->channels[handle];
 
-	if (channel.type != VB_DATATYPE_INT)
+	if (channel->type != VB_DATATYPE_INT)
 		return 0;
 
 	if (!VB->server_active)
 		return 0;
 
-	if (channel.flags & CHANNEL_FLAG_INITIALIZED)
+	if (channel->flags & CHANNEL_FLAG_INITIALIZED)
 	{
-		if (value == channel.last_int)
+		if (value == channel->last_int)
 		{
-			channel.maintain_time = VB->current_time;
+			channel->maintain_time = VB->current_time;
 			return 1;
 		}
 	}
 	else
-		channel.flags |= CHANNEL_FLAG_INITIALIZED;
+		channel->flags |= CHANNEL_FLAG_INITIALIZED;
 
-	channel.last_int = value;
+	channel->last_int = value;
 
 	struct Packet packet;
 	struct Data data;
@@ -852,9 +853,9 @@ int vb_data_send_int(vb_channel_handle_t handle, int value)
 	data._data_int = value;
 
 #ifdef VIEWBACK_TIME_DOUBLE
-	data._maintain_time_double = channel.maintain_time;
+	data._maintain_time_double = channel->maintain_time;
 #else
-	data._maintain_time_uint64 = channel.maintain_time;
+	data._maintain_time_uint64 = channel->maintain_time;
 #endif
 
 	size_t message_predicted_length = Packet_get_message_size(&packet);
@@ -867,7 +868,7 @@ int vb_data_send_int(vb_channel_handle_t handle, int value)
 
 	vb_send_to_all(handle, message, message_actual_length);
 
-	channel.maintain_time = 0;
+	channel->maintain_time = 0;
 
 	return 1;
 }
@@ -883,27 +884,27 @@ int vb_data_send_float(vb_channel_handle_t handle, float value)
 	if (handle >= VB->next_channel)
 		return 0;
 
-	vb_data_channel_t& channel = VB->channels[handle];
+	vb_data_channel_t* channel = &VB->channels[handle];
 
-	if (channel.type != VB_DATATYPE_FLOAT)
+	if (channel->type != VB_DATATYPE_FLOAT)
 		return 0;
 
 	if (!VB->server_active)
 		return 0;
 
-	if (channel.flags & CHANNEL_FLAG_INITIALIZED)
+	if (channel->flags & CHANNEL_FLAG_INITIALIZED)
 	{
 		// I'm okay with using float == here
-		if (value == channel.last_float)
+		if (value == channel->last_float)
 		{
-			channel.maintain_time = VB->current_time;
+			channel->maintain_time = VB->current_time;
 			return 1;
 		}
 	}
 	else
-		channel.flags |= CHANNEL_FLAG_INITIALIZED;
+		channel->flags |= CHANNEL_FLAG_INITIALIZED;
 
-	channel.last_float = value;
+	channel->last_float = value;
 
 	struct Packet packet;
 	struct Data data;
@@ -913,9 +914,9 @@ int vb_data_send_float(vb_channel_handle_t handle, float value)
 	data._data_float = value;
 
 #ifdef VIEWBACK_TIME_DOUBLE
-	data._maintain_time_double = channel.maintain_time;
+	data._maintain_time_double = channel->maintain_time;
 #else
-	data._maintain_time_uint64 = channel.maintain_time;
+	data._maintain_time_uint64 = channel->maintain_time;
 #endif
 
 	size_t message_predicted_length = Packet_get_message_size(&packet);
@@ -928,7 +929,7 @@ int vb_data_send_float(vb_channel_handle_t handle, float value)
 
 	vb_send_to_all(handle, message, message_actual_length);
 
-	channel.maintain_time = 0;
+	channel->maintain_time = 0;
 
 	return 1;
 }
@@ -944,29 +945,29 @@ int vb_data_send_vector(vb_channel_handle_t handle, float x, float y, float z)
 	if (handle >= VB->next_channel)
 		return 0;
 
-	vb_data_channel_t& channel = VB->channels[handle];
+	vb_data_channel_t* channel = &VB->channels[handle];
 
-	if (channel.type != VB_DATATYPE_VECTOR)
+	if (channel->type != VB_DATATYPE_VECTOR)
 		return 0;
 
 	if (!VB->server_active)
 		return 0;
 
-	if (channel.flags & CHANNEL_FLAG_INITIALIZED)
+	if (channel->flags & CHANNEL_FLAG_INITIALIZED)
 	{
 		// I'm okay with using float == here
-		if (x == channel.last_float_x && y == channel.last_float_y && z == channel.last_float_z)
+		if (x == channel->last_float_x && y == channel->last_float_y && z == channel->last_float_z)
 		{
-			channel.maintain_time = VB->current_time;
+			channel->maintain_time = VB->current_time;
 			return 1;
 		}
 	}
 	else
-		channel.flags |= CHANNEL_FLAG_INITIALIZED;
+		channel->flags |= CHANNEL_FLAG_INITIALIZED;
 
-	channel.last_float_x = x;
-	channel.last_float_y = y;
-	channel.last_float_z = z;
+	channel->last_float_x = x;
+	channel->last_float_y = y;
+	channel->last_float_z = z;
 
 	struct Packet packet;
 	struct Data data;
@@ -978,9 +979,9 @@ int vb_data_send_vector(vb_channel_handle_t handle, float x, float y, float z)
 	data._data_float_z = z;
 
 #ifdef VIEWBACK_TIME_DOUBLE
-	data._maintain_time_double = channel.maintain_time;
+	data._maintain_time_double = channel->maintain_time;
 #else
-	data._maintain_time_uint64 = channel.maintain_time;
+	data._maintain_time_uint64 = channel->maintain_time;
 #endif
 
 	size_t message_predicted_length = Packet_get_message_size(&packet);
@@ -993,7 +994,7 @@ int vb_data_send_vector(vb_channel_handle_t handle, float x, float y, float z)
 
 	vb_send_to_all(handle, message, message_actual_length);
 
-	channel.maintain_time = 0;
+	channel->maintain_time = 0;
 
 	return 1;
 }
@@ -1112,7 +1113,7 @@ void vb_debug_printf(const char* format, ...)
 	va_list ap;
 	va_start(ap, format);
 #ifdef _MSC_VER
-	vsnprintf_s(buf, sizeof(buf), format, ap);
+	vsnprintf_s(buf, sizeof(buf), _TRUNCATE, format, ap);
 #else
 	vsnprintf(buf, sizeof(buf), format, ap);
 #endif
@@ -1573,10 +1574,10 @@ void Packet_initialize_registrations(struct Packet* packet, struct DataChannel* 
 	/* Fill in the data. */
 	for (size_t i = 0; i < VB->next_group_member; i++)
 	{
-		auto& group_member = VB->group_members[i];
-		auto& group = data_groups[group_member.group];
-		group._channels[group._channels_repeated_len] = group_member.channel;
-		group._channels_repeated_len++;
+		vb_data_group_member_t* group_member = &VB->group_members[i];
+		struct DataGroup* group = &data_groups[group_member->group];
+		group->_channels[group->_channels_repeated_len] = group_member->channel;
+		group->_channels_repeated_len++;
 	}
 
 	VBAssert(labels == VB->next_label);
