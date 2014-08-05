@@ -6,6 +6,8 @@
 
 #include "vector3.h"
 
+#define NOMINMAX
+
 #include "../server/viewback_shared.h"
 
 // This quick class automates the cleanup of sockets in case the server creation fails for some reason.
