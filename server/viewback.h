@@ -32,6 +32,7 @@ typedef unsigned char vb_bool;
 /*
 	Viewback - A tool for designing video games written by Jorge Rodriguez
 	Some code unscrupulously stolen from Webby https://github.com/deplinenoise/webby
+	Other code unscrupulously stolen from http://code.google.com/p/protobuf-embedded-c/
 
 	All functions return either void or int. In the case of void, no errors are
 	possible. In the case of int, 0 means an error occurred and 1 means no error

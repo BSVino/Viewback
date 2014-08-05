@@ -1149,7 +1149,7 @@ void vb__debug_printf(const char* format, ...)
 /* ====================================== PROTOBUF GENERATOR ====================================== */
 /* This code unscrupulously stolen from http://code.google.com/p/protobuf-embedded-c/ 
 which is under the http://www.apache.org/licenses/LICENSE-2.0 Apache license.
-In accordance with this license I must inford you that I have modified it for my purposes. */
+In accordance with this license I must inform you that I have modified it for my purposes. */
 
 int vb__write_raw_byte(char value, void *_buffer, int offset)
 {
