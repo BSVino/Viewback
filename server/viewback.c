@@ -90,7 +90,7 @@ size_t vb_config_get_memory_required(vb_config_t* config)
 
 static vb__t* VB;
 
-int vb_config_install(vb_config_t* config, void* memory, size_t memory_size)
+vb_bool vb_config_install(vb_config_t* config, void* memory, size_t memory_size)
 {
 	if (!config)
 		return 0;
@@ -256,7 +256,7 @@ void vb__data_channel_deactivate(vb_channel_handle_t channel, size_t connection)
 	(*mask) &= ~(1 << channel);
 }
 
-int vb_data_add_channel(const char* name, vb_data_type_t type, /*out*/ vb_channel_handle_t* handle)
+vb_bool vb_data_add_channel(const char* name, vb_data_type_t type, /*out*/ vb_channel_handle_t* handle)
 {
 	if (!VB)
 		return 0;
@@ -284,7 +284,7 @@ int vb_data_add_channel(const char* name, vb_data_type_t type, /*out*/ vb_channe
 	return 1;
 }
 
-int vb_data_add_group(const char* name, /*out*/ vb_group_handle_t* handle)
+vb_bool vb_data_add_group(const char* name, /*out*/ vb_group_handle_t* handle)
 {
 	if (!VB)
 		return 0;
@@ -311,7 +311,7 @@ int vb_data_add_group(const char* name, /*out*/ vb_group_handle_t* handle)
 	return 1;
 }
 
-int vb_data_add_channel_to_group(vb_group_handle_t group, vb_channel_handle_t channel)
+vb_bool vb_data_add_channel_to_group(vb_group_handle_t group, vb_channel_handle_t channel)
 {
 	if (!VB)
 		return 0;
@@ -336,7 +336,7 @@ int vb_data_add_channel_to_group(vb_group_handle_t group, vb_channel_handle_t ch
 	return 1;
 }
 
-int vb_data_add_label(vb_channel_handle_t handle, int value, const char* label)
+vb_bool vb_data_add_label(vb_channel_handle_t handle, int value, const char* label)
 {
 	if (!VB)
 		return 0;
@@ -365,7 +365,7 @@ int vb_data_add_label(vb_channel_handle_t handle, int value, const char* label)
 	return 1;
 }
 
-int vb_data_get_label(vb_channel_handle_t handle, int value, const char** label)
+vb_bool vb_data_get_label(vb_channel_handle_t handle, int value, const char** label)
 {
 	if (!VB)
 		return 0;
@@ -388,7 +388,7 @@ int vb_data_get_label(vb_channel_handle_t handle, int value, const char** label)
 	return 0;
 }
 
-int vb_data_set_range(vb_channel_handle_t handle, float range_min, float range_max)
+vb_bool vb_data_set_range(vb_channel_handle_t handle, float range_min, float range_max)
 {
 	if (!VB)
 		return 0;
@@ -827,7 +827,7 @@ to the client along with the maintain time, indicated by >.
 
 */
 
-int vb_data_send_int(vb_channel_handle_t handle, int value)
+vb_bool vb_data_send_int(vb_channel_handle_t handle, int value)
 {
 	if (!VB)
 		return 0;
@@ -887,7 +887,7 @@ int vb_data_send_int(vb_channel_handle_t handle, int value)
 	return 1;
 }
 
-int vb_data_send_float(vb_channel_handle_t handle, float value)
+vb_bool vb_data_send_float(vb_channel_handle_t handle, float value)
 {
 	if (!VB)
 		return 0;
@@ -948,7 +948,7 @@ int vb_data_send_float(vb_channel_handle_t handle, float value)
 	return 1;
 }
 
-int vb_data_send_vector(vb_channel_handle_t handle, float x, float y, float z)
+vb_bool vb_data_send_vector(vb_channel_handle_t handle, float x, float y, float z)
 {
 	if (!VB)
 		return 0;
@@ -1013,7 +1013,7 @@ int vb_data_send_vector(vb_channel_handle_t handle, float x, float y, float z)
 	return 1;
 }
 
-int vb_data_send_int_s(const char* channel, int value)
+vb_bool vb_data_send_int_s(const char* channel, int value)
 {
 	if (!channel)
 		return 0;
@@ -1030,7 +1030,7 @@ int vb_data_send_int_s(const char* channel, int value)
 	return 0;
 }
 
-int vb_data_send_float_s(const char* channel, float value)
+vb_bool vb_data_send_float_s(const char* channel, float value)
 {
 	if (!channel)
 		return 0;
@@ -1047,7 +1047,7 @@ int vb_data_send_float_s(const char* channel, float value)
 	return 0;
 }
 
-int vb_data_send_vector_s(const char* channel, float x, float y, float z)
+vb_bool vb_data_send_vector_s(const char* channel, float x, float y, float z)
 {
 	if (!channel)
 		return 0;
@@ -1064,7 +1064,7 @@ int vb_data_send_vector_s(const char* channel, float x, float y, float z)
 	return 0;
 }
 
-int vb_console_append(const char* text)
+vb_bool vb_console_append(const char* text)
 {
 	if (!VB)
 		return 0;
@@ -1091,7 +1091,7 @@ int vb_console_append(const char* text)
 	return 1;
 }
 
-int vb_status_set(const char* text)
+vb_bool vb_status_set(const char* text)
 {
 	if (!VB)
 		return 0;

@@ -135,8 +135,9 @@ size_t vb_config_get_memory_required(vb_config_t* config);
 /*
 	Pass in a config and a memory buffer of the size returned by
 	vb_config_get_memory_required() or larger.
+	Returns 1 if the memory provided was sufficient and 0 otherwise.
 */
-int vb_config_install(vb_config_t* config, void* memory, size_t memory_size);
+vb_bool vb_config_install(vb_config_t* config, void* memory, size_t memory_size);
 
 /*
 	Viewback will no longer try to reference the memory passed in by
@@ -150,20 +151,23 @@ void vb_config_release();
 	Register a channel of data. You should provide an address to a handle and
 	store that handle somewhere. 'handle' can be NULL. 'name' will not be
 	copied elsewhere, so make sure it is persistent memory.
+	Returns 1 on success, 0 on failure.
 */
-int vb_data_add_channel(const char* name, vb_data_type_t type, /*out*/ vb_channel_handle_t* handle);
+vb_bool vb_data_add_channel(const char* name, vb_data_type_t type, /*out*/ vb_channel_handle_t* handle);
 
 /*
 	Register a group of data. You should provide an address to a handle and store
 	that handle somewhere. 'handle' can be NULL. 'name' will not be
 	copied elsewhere, so make sure it is persistent memory.
+	Returns 1 on success, 0 on failure.
 */
-int vb_data_add_group(const char* name, /*out*/ vb_group_handle_t* handle);
+vb_bool vb_data_add_group(const char* name, /*out*/ vb_group_handle_t* handle);
 
 /*
 	Add the specified channel of data to the specified group.
+	Returns 1 on success, 0 on failure.
 */
-int vb_data_add_channel_to_group(vb_group_handle_t group, vb_channel_handle_t channel);
+vb_bool vb_data_add_channel_to_group(vb_group_handle_t group, vb_channel_handle_t channel);
 
 /*
 	Register a label for integers. When the specified data has the specified value
@@ -172,21 +176,23 @@ int vb_data_add_channel_to_group(vb_group_handle_t group, vb_channel_handle_t ch
 	vb_data_label(vb_player_state, 1, "Alive");
 	vb_data_label(vb_player_state, 2, "Hungry");
 	vb_data_label(vb_player_state, 3, "Ephemeral");
+	Returns 1 on success, 0 on failure.
 */
-int vb_data_add_label(vb_channel_handle_t handle, int value, const char* label);
+vb_bool vb_data_add_label(vb_channel_handle_t handle, int value, const char* label);
 
 /*
 	Just retrieves the data registered in vb_data_label(). "label" output is only
-	valid if the function return true.
+	valid if the function returns true.
 */
-int vb_data_get_label(vb_channel_handle_t handle, int value, /*out*/ const char** label);
+vb_bool vb_data_get_label(vb_channel_handle_t handle, int value, /*out*/ const char** label);
 
 /*
 	If you set this, the monitor will fix the range to the specified values.
 	Otherwise the chart will automatically fit the window. For vector data,
 	only the max is used.
+	Returns 1 on success, 0 on failure.
 */
-int vb_data_set_range(vb_channel_handle_t handle, float range_min, float range_max);
+vb_bool vb_data_set_range(vb_channel_handle_t handle, float range_min, float range_max);
 
 /*
 	After registering all of your data, call this to start up the server.
@@ -221,31 +227,35 @@ vb_bool vb_server_is_active();
 	registered as an int but you try to send it as a float, it will fail.
 	These functions use blocking send() and may block if the send buffer
 	is full.
+	Returns 1 on success, 0 on failure.
 */
-int vb_data_send_int(vb_channel_handle_t handle, int value);
-int vb_data_send_float(vb_channel_handle_t handle, float value);
-int vb_data_send_vector(vb_channel_handle_t handle, float x, float y, float z);
+vb_bool vb_data_send_int(vb_channel_handle_t handle, int value);
+vb_bool vb_data_send_float(vb_channel_handle_t handle, float value);
+vb_bool vb_data_send_vector(vb_channel_handle_t handle, float x, float y, float z);
 
 /*
 	These methods also send data to the monitor, but will look up the handle
 	for you using a linear search.
+	Returns 1 on success, 0 on failure.
 */
-int vb_data_send_int_s(const char* channel, int value);
-int vb_data_send_float_s(const char* channel, float value);
-int vb_data_send_vector_s(const char* channel, float x, float y, float z);
+vb_bool vb_data_send_int_s(const char* channel, int value);
+vb_bool vb_data_send_float_s(const char* channel, float value);
+vb_bool vb_data_send_vector_s(const char* channel, float x, float y, float z);
 
 /*
 	Any text that goes to your console can also be piped into Viewback for
 	display in the monitor.
+	Returns 1 on success, 0 on failure.
 */
-int vb_console_append(const char* text);
+vb_bool vb_console_append(const char* text);
 
 /*
 	Set the status text. Unlike the console, the status text doesn't append,
 	it just shows whatever is in the status. Good for fps and current assets
 	loaded and that sort of thing.
+	Returns 1 on success, 0 on failure.
 */
-int vb_status_set(const char* text);
+vb_bool vb_status_set(const char* text);
 
 #ifdef __cplusplus
 }
