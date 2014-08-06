@@ -45,6 +45,7 @@ typedef unsigned char vb_bool;
 	flags. Don't forget to specify them for both viewback.c and all places where
 	viewback.h is included, it's best to put them in your project files.
 	VR_NO_RANGE - Remove the ability to specify a channel's range, saves 8 bytes per channel.
+	VR_NO_COMPRESSION - Remove delta compression, saves 20 bytes per channel.
 
 	On Windows you must call WSAStartup before using Viewback.
 

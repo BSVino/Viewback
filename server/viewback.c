@@ -781,6 +781,7 @@ void vb_server_update(vb_uint64 current_game_time)
 
 					vb__data_channel_activate(VB->group_members[j].channel, i);
 
+#ifndef VB_NO_COMPRESSION
 					vb__data_channel_t* channel = &VB->channels[VB->group_members[j].channel];
 
 					if (channel->flags & CHANNEL_FLAG_INITIALIZED)
@@ -794,6 +795,7 @@ void vb_server_update(vb_uint64 current_game_time)
 						else
 							VBAssert(!"Unknown channel type");
 					}
+#endif
 				}
 			}
 		}
@@ -849,6 +851,7 @@ vb_bool vb_data_send_int(vb_channel_handle_t handle, int value)
 	if (!VB->server_active)
 		return 0;
 
+#ifndef VB_NO_COMPRESSION
 	if (channel->flags & CHANNEL_FLAG_INITIALIZED)
 	{
 		if (value == channel->last_int)
@@ -861,6 +864,7 @@ vb_bool vb_data_send_int(vb_channel_handle_t handle, int value)
 		channel->flags |= CHANNEL_FLAG_INITIALIZED;
 
 	channel->last_int = value;
+#endif
 
 	struct vb__Packet packet;
 	struct vb__Data data;
@@ -869,10 +873,12 @@ vb_bool vb_data_send_int(vb_channel_handle_t handle, int value)
 	data._handle = handle;
 	data._data_int = value;
 
+#ifndef VB_NO_COMPRESSION
 #ifdef VIEWBACK_TIME_DOUBLE
 	data._maintain_time_double = channel->maintain_time;
 #else
 	data._maintain_time_uint64 = channel->maintain_time;
+#endif
 #endif
 
 	size_t message_predicted_length = vb__Packet_get_message_size(&packet);
@@ -885,7 +891,9 @@ vb_bool vb_data_send_int(vb_channel_handle_t handle, int value)
 
 	vb__send_to_all(handle, message, message_actual_length);
 
+#ifndef VB_NO_COMPRESSION
 	channel->maintain_time = 0;
+#endif
 
 	return 1;
 }
@@ -909,6 +917,7 @@ vb_bool vb_data_send_float(vb_channel_handle_t handle, float value)
 	if (!VB->server_active)
 		return 0;
 
+#ifndef VB_NO_COMPRESSION
 	if (channel->flags & CHANNEL_FLAG_INITIALIZED)
 	{
 		// I'm okay with using float == here
@@ -922,6 +931,7 @@ vb_bool vb_data_send_float(vb_channel_handle_t handle, float value)
 		channel->flags |= CHANNEL_FLAG_INITIALIZED;
 
 	channel->last_float = value;
+#endif
 
 	struct vb__Packet packet;
 	struct vb__Data data;
@@ -930,10 +940,12 @@ vb_bool vb_data_send_float(vb_channel_handle_t handle, float value)
 	data._handle = handle;
 	data._data_float = value;
 
+#ifndef VB_NO_COMPRESSION
 #ifdef VIEWBACK_TIME_DOUBLE
 	data._maintain_time_double = channel->maintain_time;
 #else
 	data._maintain_time_uint64 = channel->maintain_time;
+#endif
 #endif
 
 	size_t message_predicted_length = vb__Packet_get_message_size(&packet);
@@ -946,7 +958,9 @@ vb_bool vb_data_send_float(vb_channel_handle_t handle, float value)
 
 	vb__send_to_all(handle, message, message_actual_length);
 
+#ifndef VB_NO_COMPRESSION
 	channel->maintain_time = 0;
+#endif
 
 	return 1;
 }
@@ -970,6 +984,7 @@ vb_bool vb_data_send_vector(vb_channel_handle_t handle, float x, float y, float 
 	if (!VB->server_active)
 		return 0;
 
+#ifndef VB_NO_COMPRESSION
 	if (channel->flags & CHANNEL_FLAG_INITIALIZED)
 	{
 		// I'm okay with using float == here
@@ -985,6 +1000,7 @@ vb_bool vb_data_send_vector(vb_channel_handle_t handle, float x, float y, float 
 	channel->last_float_x = x;
 	channel->last_float_y = y;
 	channel->last_float_z = z;
+#endif
 
 	struct vb__Packet packet;
 	struct vb__Data data;
@@ -995,10 +1011,12 @@ vb_bool vb_data_send_vector(vb_channel_handle_t handle, float x, float y, float 
 	data._data_float_y = y;
 	data._data_float_z = z;
 
+#ifndef VB_NO_COMPRESSION
 #ifdef VIEWBACK_TIME_DOUBLE
 	data._maintain_time_double = channel->maintain_time;
 #else
 	data._maintain_time_uint64 = channel->maintain_time;
+#endif
 #endif
 
 	size_t message_predicted_length = vb__Packet_get_message_size(&packet);
@@ -1011,7 +1029,9 @@ vb_bool vb_data_send_vector(vb_channel_handle_t handle, float x, float y, float 
 
 	vb__send_to_all(handle, message, message_actual_length);
 
+#ifndef VB_NO_COMPRESSION
 	channel->maintain_time = 0;
+#endif
 
 	return 1;
 }

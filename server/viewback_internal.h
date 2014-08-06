@@ -34,6 +34,7 @@ typedef struct
 
 	unsigned char  flags; // CHANNEL_FLAG_*
 
+#ifndef VB_NO_COMPRESSION
 	// If this is nonzero it means that we threw out some redundant data. Next
 	// time we send data to the client we should let it know we threw some out.
 	vb__time_t     maintain_time;
@@ -49,6 +50,7 @@ typedef struct
 			float last_float_z;
 		};
 	};
+#endif
 } vb__data_channel_t;
 
 typedef struct
