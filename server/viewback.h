@@ -46,6 +46,8 @@ typedef unsigned char vb_bool;
 	viewback.h is included, it's best to put them in your project files.
 	VR_NO_RANGE - Remove the ability to specify a channel's range, saves 8 bytes per channel.
 
+	On Windows you must call WSAStartup before using Viewback.
+
 	Refer to the readme for more information.
 */
 
