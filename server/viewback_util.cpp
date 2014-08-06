@@ -127,7 +127,7 @@ void vb_util_add_channel_to_group(vb_group_handle_t group, vb_channel_handle_t c
 	g_groups[group].channels.push_back(channel);
 }
 
-int vb_util_add_channel_to_group_s(const char* group, const char* channel)
+vb_bool vb_util_add_channel_to_group_s(const char* group, const char* channel)
 {
 	vb_group_handle_t group_handle = vb_util_find_group(group);
 
@@ -153,7 +153,7 @@ void vb_util_add_label(vb_channel_handle_t handle, int value, const char* label)
 	g_channels[handle].labels.push_back(l);
 }
 
-int vb_util_add_label_s(const char* channel, int value, const char* label)
+vb_bool vb_util_add_label_s(const char* channel, int value, const char* label)
 {
 	vb_channel_handle_t handle = vb_util_find_channel(channel);
 
@@ -172,7 +172,7 @@ void vb_util_set_range(vb_channel_handle_t handle, float range_min, float range_
 	g_channels[handle].range_max = range_max;
 }
 
-int vb_util_set_range_s(const char* channel, float range_min, float range_max)
+vb_bool vb_util_set_range_s(const char* channel, float range_min, float range_max)
 {
 	vb_channel_handle_t handle = vb_util_find_channel(channel);
 
@@ -208,7 +208,7 @@ private:
 	vector<T>& vec;
 };
 
-int vb_util_server_create(unsigned char max_connections, vb_debug_output_callback output, vb_command_callback command, const char* multicast_group, unsigned short port)
+vb_bool vb_util_server_create(unsigned char max_connections, vb_debug_output_callback output, vb_command_callback command, const char* multicast_group, unsigned short port)
 {
 	vb_config_release();
 

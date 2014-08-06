@@ -52,6 +52,39 @@ typedef unsigned char vb_bool;
 	Refer to the readme for more information.
 */
 
+/*
+	Sample code follows. If you don't care about memory allocations then
+	an easier API is available from viewback_util.h
+
+
+	vb_config_t config;
+	vb_config_initialize(&config);
+
+	config.num_data_channels = 2;
+
+	size_t memory_size = vb_config_get_memory_required(&config);
+	m_memory = malloc(memory_size);
+
+	if (!vb_config_install(&config, m_memory, memory_size))
+		return 0;
+
+	vb_channel_handle_t channel;
+	if (!vb_data_add_channel("Test", VB_DATATYPE_INT, &channel))
+		return 0;
+
+	vb_server_create();
+
+	while (game_running())
+	{
+		vb_server_update(game_time);
+
+		if (!vb_data_send_int(channel, rand()))
+			printf("Error sending to Viewback channel\n");
+	}
+
+	vb_server_shutdown();
+*/
+
 typedef void(*vb_debug_output_callback)(const char* text);
 typedef void(*vb_command_callback)(const char* text);
 

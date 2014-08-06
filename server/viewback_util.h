@@ -33,7 +33,29 @@ extern "C" {
 */
 
 /*
-	Call this first.
+	Sample code follows.
+
+
+	vb_util_initialize();
+
+	vb_channel_handle_t channel;
+	vb_util_add_channel("Test", VB_DATATYPE_INT, &channel);
+
+	vb_util_server_create();
+
+	while (game_running())
+	{
+		vb_server_update(game_time);
+
+		if (!vb_data_send_int(channel, rand()))
+			printf("Error sending to Viewback channel\n");
+	}
+
+	vb_server_shutdown();
+*/
+
+/*
+	Call this first. If can call this again to clear out a previous config.
 */
 void vb_util_initialize();
 
@@ -51,10 +73,12 @@ void vb_util_add_group(const char* name, /*out*/ vb_group_handle_t* handle);
 
 /*
 	Add the specified channel of data to the specified group.
-	Don't forget to check the return value of the string version.
+
+	The string version performs a linear search for the specified group and
+	channel and returns 0 if they couldn't be found, 1 otherwise.
 */
 void vb_util_add_channel_to_group(vb_group_handle_t group, vb_channel_handle_t channel);
-int vb_util_add_channel_to_group_s(const char* group, const char* channel);
+vb_bool vb_util_add_channel_to_group_s(const char* group, const char* channel);
 
 /*
 	Register a label for integers. When the specified data has the specified value
@@ -64,26 +88,30 @@ int vb_util_add_channel_to_group_s(const char* group, const char* channel);
 	vb_data_label(vb_player_state, 2, "Hungry");
 	vb_data_label(vb_player_state, 3, "Ephemeral");
 
-	Don't forget to check the return value of the string version.
+	The string version performs a linear search for the specified channel and
+	returns 0 if it couldn't be found, 1 otherwise.
 */
 void vb_util_add_label(vb_channel_handle_t handle, int value, const char* label);
-int vb_util_add_label_s(const char* channel, int value, const char* label);
+vb_bool vb_util_add_label_s(const char* channel, int value, const char* label);
 
 #ifndef VB_NO_RANGE
 /*
 	If you set this, the monitor will fix the range to the specified values.
 	Otherwise the chart will automatically fit the window. For vector data,
-	only the max is used. Don't forget to check the return value of the string
-	version.
+	only the max is used.
+
+	The string version performs a linear search for the specified channel and
+	returns 0 if it couldn't be found, 1 otherwise.
 */
 void vb_util_set_range(vb_channel_handle_t handle, float range_min, float range_max);
-int vb_util_set_range_s(const char* channel, float range_min, float range_max);
+vb_bool vb_util_set_range_s(const char* channel, float range_min, float range_max);
 #endif
 
 /*
 	Install the config. This function frees any memory allocated by the above functions.
+	Returns 0 on failure, 1 on success.
 */
-int vb_util_server_create(unsigned char max_connections, vb_debug_output_callback output, vb_command_callback command, const char* multicast_group, unsigned short port);
+vb_bool vb_util_server_create(unsigned char max_connections, vb_debug_output_callback output, vb_command_callback command, const char* multicast_group, unsigned short port);
 
 #ifdef __cplusplus
 }
