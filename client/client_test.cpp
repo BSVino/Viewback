@@ -1,3 +1,5 @@
+// This code is in the public domain. No warranty implied, use at your own risk.
+
 #include "viewback_client.h"
 
 #ifdef _WIN32
