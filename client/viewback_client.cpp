@@ -152,7 +152,21 @@ void CViewbackClient::Update()
 					oChannel.m_asLabels[oLabelProtobuf.value()] = oLabelProtobuf.label();
 				}
 
-				VBPrintf("Installed %d labels.\n", aPackets[i].data_labels_size());
+				VBPrintf("Installed %d labels.\n", aPackets[i].data_controls_size());
+
+				for (int j = 0; j < aPackets[i].data_controls_size(); j++)
+				{
+					auto& oControlProtobuf = aPackets[i].data_controls(j);
+
+					VBAssert(oControlProtobuf.has_name());
+					VBAssert(oControlProtobuf.has_type());
+
+					m_aDataControls.emplace_back();
+					m_aDataControls.back().m_name = oControlProtobuf.name();
+					m_aDataControls.back().m_type = oControlProtobuf.type();
+				}
+
+				VBPrintf("Installed %d controls.\n", aPackets[i].data_controls_size());
 
 				if (m_pfnRegistrationUpdate)
 					m_pfnRegistrationUpdate();
@@ -332,6 +346,15 @@ void CViewbackClient::ActivateGroup(size_t iGroup)
 
 	for (auto& i : m_aDataGroups[iGroup].m_iChannels)
 		m_aDataChannels[i].m_bActive = true;
+}
+
+void CViewbackClient::ControlCallback(int iControl)
+{
+	char aoeu[10];
+	sprintf(aoeu, "%d", iControl);
+
+	// This list is pumped into the data thread during the Update().
+	m_sOutgoingCommands.push_back(std::string("control: ") + aoeu);
 }
 
 void CViewbackClient::SendConsoleCommand(const string& sCommand)

@@ -62,8 +62,17 @@ public:
 	vector<vb_channel_handle_t> channels;
 };
 
+class CControl
+{
+public:
+	const char*                name;
+	vb_control_t               type;
+	vb_control_button_callback callback;
+};
+
 static vector<CChannel> g_channels;
 static vector<CGroup> g_groups;
+static vector<CControl> g_controls;
 static void* g_memory = NULL;
 
 class CVBUtilConfig
@@ -105,6 +114,7 @@ void vb_util_initialize()
 
 	g_channels.clear();
 	g_groups.clear();
+	g_controls.clear();
 
 	free(g_memory);
 	g_memory = NULL;
@@ -196,6 +206,16 @@ vb_bool vb_util_set_range_s(const char* channel, float range_min, float range_ma
 }
 #endif
 
+void vb_util_add_control_button(const char* name, vb_control_button_callback callback)
+{
+	CControl c;
+	c.name = name;
+	c.type = VB_CONTROL_BUTTON;
+	c.callback = callback;
+
+	g_controls.push_back(c);
+}
+
 void vb_util_set_max_connections(unsigned char max_connections)
 {
 	g_util_config.max_connections = max_connections;
@@ -276,6 +296,7 @@ vb_bool vb_util_server_create(const char* server_name)
 
 	config.num_data_channels = g_channels.size();
 	config.num_data_groups = g_groups.size();
+	config.num_data_controls = g_controls.size();
 
 	for (size_t i = 0; i < g_channels.size(); i++)
 		config.num_data_labels += g_channels[i].labels.size();
@@ -321,6 +342,21 @@ vb_bool vb_util_server_create(const char* server_name)
 		{
 			if (!vb_data_add_channel_to_group((vb_group_handle_t)i, (vb_channel_handle_t)group.channels[j]))
 				return 0;
+		}
+	}
+
+	for (size_t i = 0; i < g_controls.size(); i++)
+	{
+		auto& control = g_controls[i];
+
+		switch (control.type)
+		{
+		case VB_CONTROL_BUTTON:
+			if (!vb_data_add_control_button(control.name, control.callback))
+				return 0;
+			break;
+		default:
+			return 0;
 		}
 	}
 

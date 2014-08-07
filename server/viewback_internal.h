@@ -73,6 +73,13 @@ typedef struct
 
 typedef struct
 {
+	const char*                name;
+	vb_control_t               type;
+	vb_control_button_callback callback;
+} vb__data_control_t;
+
+typedef struct
+{
 	vb__socket_t socket;
 
 	vb__data_channel_mask_t* active_channels;
@@ -98,6 +105,9 @@ typedef struct
 
 	vb__data_label_t* labels;
 	size_t            next_label;
+
+	vb__data_control_t* controls;
+	size_t              next_control;
 
 	vb__connection_t* connections;
 	char              server_active;
@@ -163,6 +173,12 @@ struct vb__DataLabel {
 	const char*    _field_name;
 };
 
+struct vb__DataControl {
+	int            _name_len;
+	const char*    _name;
+	vb_control_t   _type;
+};
+
 struct vb__Packet {
 	struct vb__Data*        _data;
 	int                     _data_channels_repeated_len;
@@ -171,6 +187,8 @@ struct vb__Packet {
 	struct vb__DataGroup*   _data_groups;
 	int                     _data_labels_repeated_len;
 	struct vb__DataLabel*   _data_labels;
+	int                     _data_controls_repeated_len;
+	struct vb__DataControl* _data_controls;
 
 	int            _console_output_len;
 	const char*    _console_output;
@@ -181,7 +199,7 @@ struct vb__Packet {
 
 void vb__Packet_initialize(struct vb__Packet* packet);
 void vb__Packet_initialize_data(struct vb__Packet* packet, struct vb__Data* data, vb_data_type_t type);
-void vb__Packet_initialize_registrations(struct vb__Packet* packet, struct vb__DataChannel* data_channels, size_t channels, struct vb__DataGroup* data_groups, size_t groups, struct vb__DataLabel* data_labels, size_t labels);
+void vb__Packet_initialize_registrations(struct vb__Packet* packet, struct vb__DataChannel* data_channels, size_t channels, struct vb__DataGroup* data_groups, size_t groups, struct vb__DataLabel* data_labels, size_t labels, struct vb__DataControl* data_controls, size_t controls);
 size_t vb__Packet_get_message_size(struct vb__Packet *_Packet);
 size_t vb__Packet_serialize(struct vb__Packet *_Packet, void *_buffer, size_t length);
 

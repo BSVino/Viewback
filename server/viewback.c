@@ -84,6 +84,7 @@ size_t vb_config_get_memory_required(vb_config_t* config)
 		config->num_data_groups * sizeof(vb__data_group_t)+
 		config->num_data_group_members * sizeof(vb__data_group_member_t)+
 		config->num_data_labels * sizeof(vb__data_label_t)+
+		config->num_data_controls * sizeof(vb__data_control_t)+
 		config->max_connections * sizeof(vb__connection_t)+
 		config->max_connections * vb__config_get_channel_mask_length(config);
 }
@@ -118,7 +119,8 @@ vb_bool vb_config_install(vb_config_t* config, void* memory, size_t memory_size)
 	VB->groups = (vb__data_group_t*)((char*)VB->channels + sizeof(vb__data_channel_t)*config->num_data_channels);
 	VB->group_members = (vb__data_group_member_t*)((char*)VB->groups + sizeof(vb__data_group_t)*config->num_data_groups);
 	VB->labels = (vb__data_label_t*)((char*)VB->group_members + sizeof(vb__data_group_member_t)*config->num_data_group_members);
-	VB->connections = (vb__connection_t*)((char*)VB->labels + sizeof(vb__data_label_t)*config->num_data_labels);
+	VB->controls = (vb__data_control_t*)((char*)VB->labels + sizeof(vb__data_label_t)*config->num_data_labels);
+	VB->connections = (vb__connection_t*)((char*)VB->controls + sizeof(vb__data_control_t)*config->num_data_controls);
 	char* active_channels = (char*)VB->connections + sizeof(vb__connection_t)*config->max_connections;
 
 #ifdef _DEBUG
@@ -409,6 +411,32 @@ vb_bool vb_data_set_range(vb_channel_handle_t handle, float range_min, float ran
 	return 1;
 }
 #endif
+
+vb_bool vb_data_add_control_button(const char* label, vb_control_button_callback callback)
+{
+	if (!VB)
+		return 0;
+
+	if (!label)
+		return 0;
+
+	if (!label[0])
+		return 0;
+
+	if (VB->next_control >= VB->config.num_data_controls)
+		return 0;
+
+	if (VB->server_active)
+		return 0;
+
+	VB->controls[VB->next_control].name = label;
+	VB->controls[VB->next_control].type = VB_CONTROL_BUTTON;
+	VB->controls[VB->next_control].callback = callback;
+
+	VB->next_control++;
+
+	return 1;
+}
 
 vb_bool vb_server_create()
 {
@@ -744,6 +772,7 @@ void vb_server_update(vb_uint64 current_game_time)
 				vb__stack_allocate(struct vb__DataChannel, channels, VB->next_channel * sizeof(struct vb__DataChannel));
 				vb__stack_allocate(struct vb__DataGroup, groups, VB->next_group * sizeof(struct vb__DataGroup));
 				vb__stack_allocate(struct vb__DataLabel, labels, VB->next_label * sizeof(struct vb__DataLabel));
+				vb__stack_allocate(struct vb__DataControl, controls, VB->next_control * sizeof(struct vb__DataControl));
 
 				/* Initialize group channel membership numbers. */
 				for (size_t j = 0; j < VB->next_group; j++)
@@ -768,7 +797,7 @@ void vb_server_update(vb_uint64 current_game_time)
 					current_group_channel += groups[j]._channels_repeated_len;
 				}
 
-				vb__Packet_initialize_registrations(&packet, channels, VB->next_channel, groups, VB->next_group, labels, VB->next_label);
+				vb__Packet_initialize_registrations(&packet, channels, VB->next_channel, groups, VB->next_group, labels, VB->next_label, controls, VB->next_control);
 
 				size_t message_predicted_length = vb__Packet_get_message_size(&packet);
 				Packet_alloca(message, message_predicted_length);
@@ -828,6 +857,16 @@ void vb_server_update(vb_uint64 current_game_time)
 					}
 #endif
 				}
+			}
+			else if (strncmp(mesg, "control: ", 9) == 0)
+			{
+				int control = atoi(mesg + 9);
+
+				if (control < 0 || control >= (int)VB->next_control)
+					continue;
+
+				if (VB->controls[control].callback)
+					VB->controls[control].callback("");
 			}
 		}
 	}
@@ -1470,6 +1509,25 @@ int vb__DataLabel_write(struct vb__DataLabel *_DataLabel, void *_buffer, int off
 	return offset;
 }
 
+int vb__DataControl_write(struct vb__DataControl *_DataControl, void *_buffer, int offset)
+{
+	VBAssert(_DataControl->_name_len);
+	VBAssert(_DataControl->_name);
+	VBAssert(_DataControl->_name[0]);
+
+	if (_DataControl->_name_len != 1 || _DataControl->_name[0] != '0')
+	{
+		offset = vb__write_wire_format(1, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
+		offset = vb__write_raw_varint32(_DataControl->_name_len, _buffer, offset);
+		offset = vb__write_raw_bytes(_DataControl->_name, _DataControl->_name_len, _buffer, offset);
+	}
+
+	offset = vb__write_wire_format(2, PB_WIRE_TYPE_VARINT, _buffer, offset);
+	offset = vb__write_raw_varint32(_DataControl->_type, _buffer, offset);
+
+	return offset;
+}
+
 int vb__DataChannel_write_delimited_to(struct vb__DataChannel *_DataChannel, void *_buffer, int offset)
 {
 	int i, shift, new_offset, size;
@@ -1515,6 +1573,21 @@ int vb__DataLabel_write_delimited_to(struct vb__DataLabel *_DataLabel, void *_bu
 	return new_offset + shift;
 }
 
+int vb__DataControl_write_delimited_to(struct vb__DataControl *_DataControl, void *_buffer, int offset)
+{
+	int i, shift, new_offset, size;
+
+	new_offset = vb__DataControl_write(_DataControl, _buffer, offset);
+	size = new_offset - offset;
+	shift = (size > 127) ? 2 : 1;
+	for (i = new_offset - 1; i >= offset; --i)
+		*((char *)_buffer + i + shift) = *((char *)_buffer + i);
+
+	vb__write_raw_varint32((unsigned long)size, _buffer, offset);
+
+	return new_offset + shift;
+}
+
 int vb__DataChannel_write_with_tag(struct vb__DataChannel *_DataChannel, void *_buffer, int offset, int tag)
 {
 	/* Write tag.*/
@@ -1545,6 +1618,16 @@ int vb__DataLabel_write_with_tag(struct vb__DataLabel *_DataLabel, void *_buffer
 	return offset;
 }
 
+int vb__DataControl_write_with_tag(struct vb__DataControl *_DataControl, void *_buffer, int offset, int tag)
+{
+	/* Write tag.*/
+	offset = vb__write_wire_format(tag, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
+	/* Write content.*/
+	offset = vb__DataControl_write_delimited_to(_DataControl, _buffer, offset);
+
+	return offset;
+}
+
 int vb__Packet_write(struct vb__Packet *_Packet, void *_buffer, int offset)
 {
 	/* Write content of each message element.*/
@@ -1563,16 +1646,19 @@ int vb__Packet_write(struct vb__Packet *_Packet, void *_buffer, int offset)
 	for (int data_labels_cnt = 0; data_labels_cnt < _Packet->_data_labels_repeated_len; ++data_labels_cnt)
 		offset = vb__DataLabel_write_with_tag(&_Packet->_data_labels[data_labels_cnt], _buffer, offset, 4);
 
+	for (int data_controls_cnt = 0; data_controls_cnt < _Packet->_data_controls_repeated_len; ++data_controls_cnt)
+		offset = vb__DataControl_write_with_tag(&_Packet->_data_controls[data_controls_cnt], _buffer, offset, 5);
+
 	if (_Packet->_console_output_len && _Packet->_console_output && _Packet->_console_output[0])
 	{
-		offset = vb__write_wire_format(5, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
+		offset = vb__write_wire_format(6, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
 		offset = vb__write_raw_varint32(_Packet->_console_output_len, _buffer, offset);
 		offset = vb__write_raw_bytes(_Packet->_console_output, _Packet->_console_output_len, _buffer, offset);
 	}
 
 	if (_Packet->_status_len && _Packet->_status && _Packet->_status[0])
 	{
-		offset = vb__write_wire_format(6, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
+		offset = vb__write_wire_format(7, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
 		offset = vb__write_raw_varint32(_Packet->_status_len, _buffer, offset);
 		offset = vb__write_raw_bytes(_Packet->_status, _Packet->_status_len, _buffer, offset);
 	}
@@ -1602,7 +1688,7 @@ void vb__Packet_initialize_data(struct vb__Packet* packet, struct vb__Data* data
 #endif
 }
 
-void vb__Packet_initialize_registrations(struct vb__Packet* packet, struct vb__DataChannel* data_channels, size_t channels, struct vb__DataGroup* data_groups, size_t groups, struct vb__DataLabel* data_labels, size_t labels)
+void vb__Packet_initialize_registrations(struct vb__Packet* packet, struct vb__DataChannel* data_channels, size_t channels, struct vb__DataGroup* data_groups, size_t groups, struct vb__DataLabel* data_labels, size_t labels, struct vb__DataControl* data_controls, size_t controls)
 {
 	memset(packet, 0, sizeof(struct vb__Packet));
 
@@ -1615,9 +1701,13 @@ void vb__Packet_initialize_registrations(struct vb__Packet* packet, struct vb__D
 	packet->_data_labels = data_labels;
 	packet->_data_labels_repeated_len = labels;
 
+	packet->_data_controls = data_controls;
+	packet->_data_controls_repeated_len = controls;
+
 	memset(data_channels, 0, sizeof(struct vb__DataChannel) * channels);
 	/* memset(data_groups, 0, sizeof(struct vb__DataGroup) * groups); /* Don't zero the groups or we'll lose the channels allocation that was done. */
 	memset(data_labels, 0, sizeof(struct vb__DataLabel) * labels);
+	memset(data_controls, 0, sizeof(struct vb__DataControl) * controls);
 
 	VBAssert(channels == VB->next_channel);
 	for (size_t i = 0; i < channels; i++)
@@ -1659,6 +1749,14 @@ void vb__Packet_initialize_registrations(struct vb__Packet* packet, struct vb__D
 		data_labels[i]._field_name_len = strlen(VB->labels[i].name);
 		data_labels[i]._handle = VB->labels[i].handle;
 		data_labels[i]._value = VB->labels[i].value;
+	}
+
+	VBAssert(controls == VB->next_control);
+	for (size_t i = 0; i < controls; i++)
+	{
+		data_controls[i]._name = VB->controls[i].name;
+		data_controls[i]._name_len = strlen(VB->controls[i].name);
+		data_controls[i]._type = VB->controls[i].type;
 	}
 }
 
@@ -1782,6 +1880,27 @@ size_t vb__Packet_get_message_size(struct vb__Packet *_Packet)
 
 			/* Add on the size for each string. */
 			size += _Packet->_data_labels[i]._field_name_len;
+		}
+	}
+
+	if (_Packet->_data_controls_repeated_len)
+	{
+		size += 1; /* One byte for the field number and wire type. */
+		size += 2; /* Two bytes for the length of Controls. */
+
+		for (int i = 0; i < _Packet->_data_controls_repeated_len; i++)
+		{
+			size += 1; /* One byte for the field number and wire type. */
+			size += 1; /* One byte for the length of DataControl, which is going to be max 50 or so. */
+
+			size += 1; /* One byte for "type" field number and wire type. */
+			size += 2; /* Two bytes in case we ever get a lot of types. */
+
+			size += 1; /* One byte for "name" field number and wire type. */
+			size += 4; /* 4 bytes to support really long strings. */
+
+			/* Add on the size for each string. */
+			size += _Packet->_data_controls[i]._name_len;
 		}
 	}
 

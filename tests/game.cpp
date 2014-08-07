@@ -40,6 +40,18 @@ void command_callback(const char* text)
 	vb_console_append(s.c_str());
 }
 
+bool g_paused = false;
+
+void pause_callback()
+{
+	g_paused = !g_paused;
+
+	if (g_paused)
+		vb_console_append("Paused.\n");
+	else
+		vb_console_append("Unpaused.\n");
+}
+
 void debug_printf(const char* text)
 {
 	printf("%s", text);
@@ -149,6 +161,8 @@ int main(int argc, const char** args)
 	}
 #endif
 
+	vb_util_add_control_button("Pause", &pause_callback);
+
 	vb_util_set_multicast_group(multicast_group);
 	vb_util_set_tcp_port(port);
 	vb_util_set_output_callback(&debug_printf);
@@ -210,6 +224,9 @@ int main(int argc, const char** args)
 
 		double last_update_double = (current_time_millis.time - last_update.time) + (double)(current_time_millis.millitm - last_update.millitm) / 1000;
 		if (last_update_double < 0.2)
+			continue;
+
+		if (g_paused)
 			continue;
 
 		ftime(&last_update);

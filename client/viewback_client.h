@@ -88,6 +88,13 @@ public:
 	std::vector<size_t> m_iChannels;
 };
 
+class CViewbackDataControl
+{
+public:
+	std::string  m_name;
+	vb_control_t m_type;
+};
+
 // Holds all of the data associated with one handle.
 class CViewbackDataList
 {
@@ -172,11 +179,14 @@ public:
 	void DeactivateChannel(size_t iChannel);
 	void ActivateGroup(size_t iGroup);
 
+	void ControlCallback(int iControl);
+
 	void SendConsoleCommand(const std::string& sCommand);
 	DebugOutputCallback GetDebugOutputCallback() { return m_pfnDebugOutput; }
 
 	inline const std::vector<CViewbackDataChannel>& GetChannels() const { return m_aDataChannels; }
 	inline const std::vector<CViewbackDataGroup>& GetGroups() const { return m_aDataGroups; }
+	inline const std::vector<CViewbackDataControl>& GetControls() const { return m_aDataControls; }
 	inline const std::vector<CViewbackDataList>& GetData() const { return m_aData; } // DO NOT STORE without copying, this may be wiped at any time.
 	inline std::vector<CDataMetaInfo>& GetMeta() { return m_aMeta; }
 
@@ -202,6 +212,7 @@ private:
 
 	std::vector<CViewbackDataChannel> m_aDataChannels;
 	std::vector<CViewbackDataGroup> m_aDataGroups;
+	std::vector<CViewbackDataControl> m_aDataControls;
 	std::vector<CViewbackDataList> m_aData;
 	std::vector<CDataMetaInfo> m_aMeta;
 

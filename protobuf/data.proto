@@ -14,6 +14,11 @@ enum vb_data_type_t {
 	VB_DATATYPE_VECTOR = 3;
 }
 
+enum vb_control_t {
+	VB_CONTROL_NONE   = 0;
+	VB_CONTROL_BUTTON = 1;
+}
+
 message Data {
 	optional uint32 handle       = 1;
 	optional uint32 data_int     = 3;
@@ -46,11 +51,17 @@ message DataLabel {
 	optional string label      = 3;
 }
 
+message DataControl {
+	optional string name       = 1;
+	optional vb_control_t type = 2;
+}
+
 message Packet {
 	optional Data        data           = 1;
 	repeated DataChannel data_channels  = 2;
 	repeated DataGroup   data_groups    = 3;
 	repeated DataLabel   data_labels    = 4;
-	optional string      console_output = 5;
-	optional string      status         = 6;
+	repeated DataControl data_controls  = 5;
+	optional string      console_output = 6;
+	optional string      status         = 7;
 }

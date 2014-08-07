@@ -105,6 +105,11 @@ void vb_util_set_range(vb_channel_handle_t handle, float range_min, float range_
 vb_bool vb_util_set_range_s(const char* channel, float range_min, float range_max);
 #endif
 
+/*
+	Register a control that can be used to modify runtime parameters.
+*/
+void vb_util_add_control_button(const char* name, vb_control_button_callback callback);
+
 // For info on these advanced commands see the vb_config_t structure in viewback.h
 void vb_util_set_max_connections(unsigned char max_connections);
 void vb_util_set_output_callback(vb_debug_output_callback output);

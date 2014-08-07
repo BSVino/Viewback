@@ -91,6 +91,7 @@ typedef unsigned char vb_bool;
 
 typedef void(*vb_debug_output_callback)(const char* text);
 typedef void(*vb_command_callback)(const char* text);
+typedef void(*vb_control_button_callback)();
 
 typedef struct {
 	/*
@@ -130,6 +131,12 @@ typedef struct {
 		4 - shutting down. This is the max number of labels for all data.
 	*/
 	size_t num_data_labels;
+
+	/*
+		A list of controls that can be used to modify in-game values in real time.
+		This is the max number of controls that will be available.
+	*/
+	size_t num_data_controls;
 
 	/*
 		How many viewback monitors will be able to connect. Should be at
@@ -182,11 +189,18 @@ typedef unsigned short vb_group_handle_t;
 /* If you change this, update it in viewback.proto as well. */
 typedef enum
 {
-	VB_DATATYPE_NONE = 0,
-	VB_DATATYPE_INT = 1,
-	VB_DATATYPE_FLOAT = 2,
+	VB_DATATYPE_NONE   = 0,
+	VB_DATATYPE_INT    = 1,
+	VB_DATATYPE_FLOAT  = 2,
 	VB_DATATYPE_VECTOR = 3,
 } vb_data_type_t;
+
+/* If you change this, update it in viewback.proto as well. */
+typedef enum
+{
+	VB_CONTROL_NONE   = 0,
+	VB_CONTROL_BUTTON = 1,
+} vb_control_t;
 
 /*
 	A good idea (but not required) to pass your config in here first to make
@@ -262,6 +276,12 @@ vb_bool vb_data_get_label(vb_channel_handle_t handle, int value, /*out*/ const c
 */
 vb_bool vb_data_set_range(vb_channel_handle_t handle, float range_min, float range_max);
 #endif
+
+/*
+	Register a control.
+	Returns 1 on success, 0 on failure.
+*/
+vb_bool vb_data_add_control_button(const char* name, vb_control_button_callback callback);
 
 /*
 	After registering all of your data, call this to start up the server.
