@@ -32,6 +32,12 @@ typedef unsigned char vb_bool;
 	Some code unscrupulously stolen from Webby https://github.com/deplinenoise/webby
 	Other code unscrupulously stolen from http://code.google.com/p/protobuf-embedded-c/
 
+	This is the code for the viewback server, which will typically be integrated into
+	your game's client, if your game is multiplayer. It looks like this:
+
+	Viewback client <----------> | Viewback server |
+	(eg The monitor app)         | Game client     | <------> Game server
+
 	Most functions return either void or vb_bool. In the case of void, no errors are
 	possible. In the case of vb_bool, 0 means an error occurred and 1 means no error
 	occurred. You should check the return value of each call.
@@ -87,18 +93,14 @@ typedef void(*vb_debug_output_callback)(const char* text);
 typedef void(*vb_command_callback)(const char* text);
 
 typedef struct {
-
 	/*
-		Must be a valid IP group eg "239.127.251.37" If this is NULL the
-		default will be used. You should probably leave it NULL unless your
-		network is special. See: http://en.wikipedia.org/wiki/Multicast_address
+		This is advertised over UDP multicast and will be seen when clients
+		scan for servers. If there are multiple servers on the network,
+		it's a good idea to distinguish each server by player name,
+		eg "Double Action: cliffyb" and "Double Action: Gaben"
+		NOTE: Viewback doesn't make a copy so don't use memory that will be freed.
 	*/
-	const char* multicast_group;
-
-	/*
-		This port will be used for UDP multicast and for the TCP connections.
-	*/
-	unsigned short port;
+	const char* server_name;
 
 	/*
 		How many different channels of data you would like to send to the
@@ -147,6 +149,31 @@ typedef struct {
 		unless you're developing Viewback or having problems setting it up.
 	*/
 	vb_debug_output_callback debug_output_callback;
+
+	/*
+		Must be a valid IP group eg "239.127.251.37" If this is NULL the
+		default will be used. See: http://en.wikipedia.org/wiki/Multicast_address
+		If you change this then Viewback clients won't be able to connect
+		automatically and will have to connect manually. You should probably
+		leave it 0 unless your network is special.
+	*/
+	const char* multicast_group;
+
+	/*
+		This port will be used for UDP multicast connections. 0 means use the
+		default port. If you change this then Viewback clients won't be able
+		to connect automatically and will have to connect manually. You should
+		probably leave it 0 unless your network is special.
+	*/
+	unsigned short multicast_port;
+
+	/*
+		This port will be used for TCP connections. 0 means use an automatically
+		assigned default port. The multicast signal broadcasts the TCP port so
+		there's no reason to set this unless your network is special.
+	*/
+	unsigned short tcp_port;
+
 } vb_config_t;
 
 typedef unsigned short vb_channel_handle_t;

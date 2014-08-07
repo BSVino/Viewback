@@ -17,6 +17,7 @@ THE SOFTWARE.
 #include "viewback_client.h"
 
 using namespace std;
+using namespace vb;
 
 atomic<bool> CViewbackDataThread::s_bRunning;
 atomic<bool> CViewbackDataThread::s_bConnected;

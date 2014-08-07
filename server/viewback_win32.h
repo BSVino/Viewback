@@ -17,6 +17,7 @@ THE SOFTWARE.
 
 #include <winsock2.h>
 #include <Ws2tcpip.h>
+#include <string.h>
 
 #pragma comment(lib, "wsock32")
 #pragma comment(lib, "ws2_32")
@@ -59,4 +60,9 @@ static void vb__socket_close(vb__socket_t socket)
 static int vb__socket_is_blocking_error(int error)
 {
 	return WSAEWOULDBLOCK == error;
+}
+
+static void vb__strcat(char* dest, size_t size, const char* src)
+{
+	strcat_s(dest, size, src);
 }

@@ -25,6 +25,7 @@ THE SOFTWARE.
 #include "viewback_data.h"
 
 using namespace std;
+using namespace vb;
 
 static CViewbackClient* VB = NULL;
 
@@ -234,36 +235,12 @@ void CViewbackClient::Update()
 			oData.m_aIntData.clear();
 			oData.m_aVectorData.clear();
 		}
-
-		unsigned long best_server = CViewbackServersThread::GetServer();
-
-		if (!m_bDisconnected && best_server)
-		{
-			struct in_addr inaddr;
-			inaddr.s_addr = htonl(best_server);
-			VBPrintf("Connecting to server at %s ...\n", inet_ntoa(inaddr));
-
-			bool bResult = CViewbackDataThread::Connect(best_server);
-
-			if (bResult)
-				VBPrintf("Success.\n");
-			else
-				VBPrintf("Failed.\n");
-
-			if (bResult)
-			{
-				struct timeb now;
-				now.time = 0;
-				now.millitm = 0;
-
-				ftime(&now);
-
-				m_iServerConnectionTimeS = now.time;
-				m_iServerConnectionTimeMS = now.millitm;
-				m_flDataClearTime = 0;
-			}
-		}
 	}
+}
+
+vector<CServerListing> CViewbackClient::GetServers()
+{
+	return CViewbackServersThread::GetServers();
 }
 
 bool CViewbackClient::HasConnection()
@@ -275,12 +252,43 @@ void CViewbackClient::Connect(const char* pszIP, unsigned short iPort)
 {
 	CViewbackDataThread::Disconnect();
 	m_bDisconnected = false;
-	CViewbackDataThread::Connect(ntohl(inet_addr(pszIP)), iPort);
+
+	VBPrintf("Connecting to server at %s ...\n", pszIP);
+
+	bool bResult =  CViewbackDataThread::Connect(ntohl(inet_addr(pszIP)), iPort);
+
+	if (bResult)
+		VBPrintf("Success.\n");
+	else
+		VBPrintf("Failed.\n");
+
+	if (!bResult)
+		return;
+
+	struct timeb now;
+	now.time = 0;
+	now.millitm = 0;
+
+	ftime(&now);
+
+	m_iServerConnectionTimeS = now.time;
+	m_iServerConnectionTimeMS = now.millitm;
+	m_flDataClearTime = 0;
 }
 
 void CViewbackClient::FindServer()
 {
+	vector<CServerListing> server_list = GetServers();
+	if (!server_list.size())
+		return;
+
+	CViewbackDataThread::Disconnect();
 	m_bDisconnected = false;
+
+	in_addr in;
+	in.S_un.S_addr = htonl(server_list[0].address);
+
+	Connect(inet_ntoa(in), server_list[0].tcp_port);
 }
 
 void CViewbackClient::Disconnect()

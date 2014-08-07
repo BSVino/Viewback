@@ -30,6 +30,9 @@ THE SOFTWARE.
 
 #include "../server/viewback_shared.h"
 
+namespace vb
+{
+
 class CViewbackDataThread
 {
 public:
@@ -77,3 +80,4 @@ private:
 	static std::atomic<bool> s_bDisconnect; // Read/write for other threads, read only for the data thread. While this flag is on, data thread is to remain disconnected.
 };
 
+}

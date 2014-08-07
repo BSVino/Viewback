@@ -31,7 +31,7 @@ extern "C" {
 */
 
 /*
-	Sample code follows.
+	Sample code follows. For more complex examples, see tests/game.cpp
 
 
 	vb_util_initialize();
@@ -39,7 +39,7 @@ extern "C" {
 	vb_channel_handle_t channel;
 	vb_util_add_channel("Test", VB_DATATYPE_INT, &channel);
 
-	vb_util_server_create();
+	vb_util_server_create("Test Server");
 
 	while (game_running())
 	{
@@ -105,11 +105,21 @@ void vb_util_set_range(vb_channel_handle_t handle, float range_min, float range_
 vb_bool vb_util_set_range_s(const char* channel, float range_min, float range_max);
 #endif
 
+// For info on these advanced commands see the vb_config_t structure in viewback.h
+void vb_util_set_max_connections(unsigned char max_connections);
+void vb_util_set_output_callback(vb_debug_output_callback output);
+void vb_util_set_command_callback(vb_command_callback command);
+void vb_util_set_multicast_group(const char* multicast_group);
+void vb_util_set_multicast_port(unsigned short multicast_port);
+void vb_util_set_tcp_port(unsigned short tcp_port);
+
 /*
 	Install the config. This function frees any memory allocated by the above functions.
+	server_name will appear in the server list as clients scan for servers, for
+	more info see the vb_config_t structure in viewback.h
 	Returns 0 on failure, 1 on success.
 */
-vb_bool vb_util_server_create(unsigned char max_connections, vb_debug_output_callback output, vb_command_callback command, const char* multicast_group, unsigned short port);
+vb_bool vb_util_server_create(const char* server_name);
 
 #ifdef __cplusplus
 }

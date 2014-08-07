@@ -19,11 +19,16 @@ THE SOFTWARE.
 #include <string.h>
 #endif
 
+#include <algorithm>
+
 #include "../server/viewback_shared.h"
 
 using namespace std;
+using namespace vb;
 
 atomic<bool> CViewbackServersThread::s_bShutdown;
+std::vector<CServerListing> CViewbackServersThread::s_servers_drop;
+pthread_mutex_t CViewbackServersThread::s_servers_drop_mutex;
 
 CViewbackServersThread& CViewbackServersThread::ServersThread()
 {
@@ -45,13 +50,11 @@ void CViewbackServersThread::Shutdown()
 
 	ServersThread().m_aServers.clear();
 	vb__socket_close(ServersThread().m_socket);
-	s_best_server = 0;
 }
 
 bool CViewbackServersThread::Initialize()
 {
 	m_aServers.clear();
-	s_best_server = 0;
 
 	struct ip_mreq mreq;
 
@@ -107,8 +110,17 @@ bool CViewbackServersThread::Initialize()
 
 void CViewbackServersThread::ThreadMain(CViewbackServersThread* pThis)
 {
+	pthread_mutex_init(&pThis->s_servers_drop_mutex, nullptr);
+
 	while (!s_bShutdown)
 		pThis->Pump();
+
+	pthread_mutex_destroy(&pThis->s_servers_drop_mutex);
+}
+
+bool last_ping_sort(const CServerListing& l, const CServerListing& r)
+{
+	return l.last_ping > r.last_ping;
 }
 
 #define MSGBUFSIZE 1024
@@ -137,37 +149,72 @@ void CViewbackServersThread::Pump()
 
 	VBAssert(iBytesRead < MSGBUFSIZE);
 
-	if (strncmp(msgbuf, "VB: ", 4) != 0)
+	if (strncmp(msgbuf, "VB", 2) != 0)
 		// This must be some other packet.
+		return;
+
+	if (msgbuf[2] > 1)
+		// Version is too new.
 		return;
 
 	time_t now;
 	time(&now);
 
-	CServer& server = m_aServers[ntohl(addr.sin_addr.s_addr)];
-	server.address = ntohl(addr.sin_addr.s_addr);
-	server.last_ping = now;
+	unsigned long server_address = ntohl(addr.sin_addr.s_addr);
+	unsigned short server_port;
+	std::string server_name;
 
-	time_t most_recent = 0;
-	CServer most_recent_server;
-
-	for (map<unsigned long, CServer>::iterator it = m_aServers.begin(); it != m_aServers.end(); it++)
+	if (msgbuf[2] == 1)
 	{
-		if (it->second.last_ping > most_recent)
-		{
-			most_recent = it->second.last_ping;
-			most_recent_server = it->second;
-		}
+		server_port = ntohs(*((unsigned short*)(&msgbuf[3])));
+		server_name = std::string(msgbuf + 5);
+	}
+	else
+	{
+		VBUnimplemented();
+		return;
 	}
 
-	// Servers more than so many seconds old are dead.
-	// No sync worries, writing a single long is atomic.
-	if (now - most_recent < 10)
-		s_best_server = most_recent_server.address;
-	else
-		s_best_server = 0;
+	unsigned long index = server_port ^ server_address;
+
+	CServerListing& server = m_aServers[index];
+
+	server.address = server_address;
+	server.last_ping = now;
+	server.name = server_name;
+	server.tcp_port = server_port;
+
+	std::vector<CServerListing> server_list;
+	for (map<unsigned long, CServerListing>::iterator it = m_aServers.begin(); it != m_aServers.end(); it++)
+	{
+		if (now - it->second.last_ping > 10)
+			continue;
+
+		server_list.push_back(it->second);
+	}
+
+	std::sort(server_list.begin(), server_list.end(), &last_ping_sort);
+
+	pthread_mutex_lock(&s_servers_drop_mutex);
+
+	s_servers_drop = server_list;
+
+	pthread_mutex_unlock(&s_servers_drop_mutex);
 
 	return;
 }
 
-std::atomic<long> CViewbackServersThread::s_best_server(0);
+vector<CServerListing> CViewbackServersThread::GetServers()
+{
+	vector<CServerListing> server_list;
+
+	pthread_mutex_lock(&s_servers_drop_mutex);
+
+	server_list = s_servers_drop;
+
+	pthread_mutex_unlock(&s_servers_drop_mutex);
+
+	// A bit inefficient since we make a copy once during the mutex lock and a copy again when we return the value.
+	// Don't think it's ever going to be a perf problem though.
+	return server_list;
+}

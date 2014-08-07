@@ -38,4 +38,8 @@ static int vb__socket_set_blocking(vb_socket_t socket, int blocking)
 	return fcntl(socket, F_SETFL, O_NONBLOCK, !blocking);
 }
 
+static void vb__strcat(char* dest, size_t size, const char* src)
+{
+	strcat(dest, src);
+}
 

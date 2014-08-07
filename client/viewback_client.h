@@ -25,6 +25,9 @@ THE SOFTWARE.
 
 #include "../server/viewback_shared.h"
 
+namespace vb
+{
+
 // This quick class automates the cleanup of sockets in case the server creation fails for some reason.
 class CCleanupSocket
 {
@@ -131,6 +134,15 @@ public:
 	bool      m_bVisible;
 };
 
+class CServerListing
+{
+public:
+	std::string    name;
+	unsigned long  address;
+	unsigned short tcp_port;
+	time_t         last_ping;
+};
+
 typedef void(*ConsoleOutputCallback)(const char*);
 typedef void(*DebugOutputCallback)(const char*);
 typedef void(*RegistrationUpdateCallback)();
@@ -146,6 +158,8 @@ public:
 	void Shutdown();
 
 	void Update();
+
+	std::vector<CServerListing> GetServers();
 
 	bool HasConnection();
 	void Connect(const char* pszIP, unsigned short iPort); // Does not resolve hostnames, pass an IP.
@@ -210,3 +224,5 @@ private:
 
 	bool m_bDisconnected; // Remain disconnected while this is on.
 };
+
+}

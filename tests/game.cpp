@@ -149,7 +149,12 @@ int main(int argc, const char** args)
 	}
 #endif
 
-	if (!vb_util_server_create(4, &debug_printf, &command_callback, multicast_group, port))
+	vb_util_set_multicast_group(multicast_group);
+	vb_util_set_tcp_port(port);
+	vb_util_set_output_callback(&debug_printf);
+	vb_util_set_command_callback(&command_callback);
+
+	if (!vb_util_server_create("Viewback Test Server"))
 	{
 		printf("Couldn't install config\n");
 		return 1;

@@ -29,21 +29,18 @@ THE SOFTWARE.
 
 #include "../server/viewback_shared.h"
 
+#include "viewback_client.h"
+
+namespace vb
+{
+
 class CViewbackServersThread
 {
-public:
-	class CServer
-	{
-	public:
-		unsigned long address;
-		time_t        last_ping;
-	};
-
 public:
 	static bool Run();
 	static void Shutdown();
 
-	static unsigned long GetServer() { return s_best_server; }
+	static std::vector<CServerListing> GetServers();
 
 private:
 	CViewbackServersThread() {};
@@ -61,8 +58,12 @@ private:
 
 	vb__socket_t          m_socket;
 
-	std::map<unsigned long, CServer> m_aServers;
+	std::map<unsigned long, CServerListing> m_aServers;
 
-	static std::atomic<long> s_best_server;
+	static std::vector<CServerListing> s_servers_drop;
+	static pthread_mutex_t      s_servers_drop_mutex;
+
 	static std::atomic<bool> s_bShutdown;
 };
+
+}

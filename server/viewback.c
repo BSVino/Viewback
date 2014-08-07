@@ -40,7 +40,8 @@ void vb_config_initialize(vb_config_t* config)
 	memset(config, 0, sizeof(vb_config_t));
 
 	config->multicast_group = VB_DEFAULT_MULTICAST_ADDRESS;
-	config->port = VB_DEFAULT_PORT;
+	config->tcp_port = VB_DEFAULT_PORT;
+	config->multicast_port = VB_DEFAULT_PORT;
 	config->max_connections = 4;
 }
 
@@ -137,8 +138,11 @@ vb_bool vb_config_install(vb_config_t* config, void* memory, size_t memory_size)
 	if (!VB->config.multicast_group || !*VB->config.multicast_group)
 		VB->config.multicast_group = VB_DEFAULT_MULTICAST_ADDRESS;
 
-	if (!VB->config.port)
-		VB->config.port = VB_DEFAULT_PORT;
+	if (!VB->config.multicast_port)
+		VB->config.multicast_port = VB_DEFAULT_PORT;
+
+	if (!VB->config.tcp_port)
+		VB->config.tcp_port = VB_DEFAULT_PORT;
 
 	return 1;
 }
@@ -429,7 +433,7 @@ vb_bool vb_server_create()
 	memset(&VB->multicast_addr, 0, sizeof(VB->multicast_addr));
 	VB->multicast_addr.sin_family = AF_INET;
 	VB->multicast_addr.sin_addr.s_addr = inet_addr(VB->config.multicast_group);
-	VB->multicast_addr.sin_port = htons(VB->config.port);
+	VB->multicast_addr.sin_port = htons(VB->config.multicast_port);
 	VB->last_multicast = 0;
 
 	VB->tcp_socket = socket(AF_INET, SOCK_STREAM, 0);
@@ -437,12 +441,14 @@ vb_bool vb_server_create()
 	if (!vb__socket_valid(VB->tcp_socket))
 		goto error;
 
+#if 0
 	{
 		int on = 1;
 		int off = 0;
-		setsockopt(VB->tcp_socket, SOL_SOCKET, SO_REUSEADDR, (const char*) &on, sizeof(on));
-		setsockopt(VB->tcp_socket, SOL_SOCKET, SO_LINGER, (const char*) &off, sizeof(off));
+		setsockopt(VB->tcp_socket, SOL_SOCKET, SO_REUSEADDR, (const char*)&on, sizeof(on));
+		setsockopt(VB->tcp_socket, SOL_SOCKET, SO_LINGER, (const char*)&off, sizeof(off));
 	}
+#endif
 
 #ifdef __APPLE__
 	/* Don't generate SIGPIPE when writing to dead socket, we check all writes. */
@@ -456,9 +462,19 @@ vb_bool vb_server_create()
 	memset(&tcp_addr, 0, sizeof(tcp_addr));
 	tcp_addr.sin_family = AF_INET;
 	tcp_addr.sin_addr.s_addr = INADDR_ANY;
-	tcp_addr.sin_port = htons(VB->config.port);
+	tcp_addr.sin_port = htons(VB->config.tcp_port);
 
-	if (bind(VB->tcp_socket, (struct sockaddr*) &tcp_addr, sizeof tcp_addr) != 0)
+	int i;
+	for (i = 0; i < 5; i++)
+	{
+		if (bind(VB->tcp_socket, (struct sockaddr*) &tcp_addr, sizeof tcp_addr) == 0)
+			break;
+
+		VB->config.tcp_port += 1;
+		tcp_addr.sin_port = htons(VB->config.tcp_port);
+	}
+
+	if (i == 5)
 		goto error;
 
 	if (listen(VB->tcp_socket, SOMAXCONN) != 0)
@@ -584,8 +600,25 @@ void vb_server_update(vb_uint64 current_game_time)
 	/* Advertise ourselves once per second. */
 	if (current_time > VB->last_multicast)
 	{
-		const char message[] = "VB: HELLO WORLD"; /* TODO: put game info here. */
-		if (sendto(VB->multicast_socket, (const char*)message, sizeof(message), 0, (struct sockaddr *)&VB->multicast_addr, sizeof(VB->multicast_addr)) < 0)
+		const char* server_name = VB->config.server_name;
+		if (!server_name || server_name[0] == '\0')
+			server_name = "Viewback Server";
+
+		// 2 for "VB" + 1 for version byte + 2 for port number = 5
+		int header_length = 5;
+		int message_length = header_length + strlen(server_name) + 1; // 1 for null terminal
+		vb__stack_allocate(char, message, message_length);
+		message[0] = 'V';
+		message[1] = 'B';
+		message[2] = 1; // Version byte. If the format changes, we bump this so the client can parse it properly.
+
+		unsigned short tcp_port = htons(VB->config.tcp_port);
+		*((unsigned short*)&message[3]) = tcp_port;
+
+		message[header_length] = '\0';
+		vb__strcat(message + header_length, message_length - header_length, server_name);
+
+		if (sendto(VB->multicast_socket, (const char*)message, message_length, 0, (struct sockaddr *)&VB->multicast_addr, sizeof(VB->multicast_addr)) < 0)
 			VBPrintf("Multicast sendto failed, error %d\n", vb__socket_error());
 
 		VB->last_multicast = current_time;

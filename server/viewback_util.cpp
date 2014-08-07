@@ -66,6 +66,17 @@ static vector<CChannel> g_channels;
 static vector<CGroup> g_groups;
 static void* g_memory = NULL;
 
+class CVBUtilConfig
+{
+public:
+	unsigned char max_connections;
+	vb_debug_output_callback output;
+	vb_command_callback command;
+	const char* multicast_group;
+	unsigned short multicast_port;
+	unsigned short tcp_port;
+} g_util_config;
+
 vb_channel_handle_t vb_util_find_channel(const char* name)
 {
 	for (size_t i = 0; i < g_channels.size(); i++)
@@ -97,6 +108,8 @@ void vb_util_initialize()
 
 	free(g_memory);
 	g_memory = NULL;
+
+	memset(&g_util_config, 0, sizeof(g_util_config));
 }
 
 void vb_util_add_channel(const char* name, vb_data_type_t type, /*out*/ vb_channel_handle_t* handle)
@@ -183,6 +196,35 @@ vb_bool vb_util_set_range_s(const char* channel, float range_min, float range_ma
 }
 #endif
 
+void vb_util_set_max_connections(unsigned char max_connections)
+{
+	g_util_config.max_connections = max_connections;
+}
+
+void vb_util_set_output_callback(vb_debug_output_callback output)
+{
+	g_util_config.output = output;
+}
+
+void vb_util_set_command_callback(vb_command_callback command)
+{
+	g_util_config.command = command;
+}
+
+void vb_util_set_multicast_group(const char* multicast_group)
+{
+	g_util_config.multicast_group = multicast_group;
+}
+
+void vb_util_set_multicast_port(unsigned short multicast_port)
+{
+	g_util_config.multicast_port = multicast_port;
+}
+
+void vb_util_set_tcp_port(unsigned short tcp_port)
+{
+	g_util_config.tcp_port = tcp_port;
+}
 
 // RAII class to free a vector's memory
 template<typename T>
@@ -206,7 +248,7 @@ private:
 	vector<T>& vec;
 };
 
-vb_bool vb_util_server_create(unsigned char max_connections, vb_debug_output_callback output, vb_command_callback command, const char* multicast_group, unsigned short port)
+vb_bool vb_util_server_create(const char* server_name)
 {
 	vb_config_release();
 
@@ -221,11 +263,16 @@ vb_bool vb_util_server_create(unsigned char max_connections, vb_debug_output_cal
 
 	vb_config_initialize(&config);
 
-	config.max_connections = max_connections;
-	config.multicast_group = multicast_group;
-	config.port = port;
-	config.debug_output_callback = output;
-	config.command_callback = command;
+	config.server_name = server_name;
+
+	if (g_util_config.max_connections)
+		config.max_connections = g_util_config.max_connections;
+
+	config.multicast_group = g_util_config.multicast_group;
+	config.multicast_port = g_util_config.multicast_port;
+	config.tcp_port = g_util_config.tcp_port;
+	config.debug_output_callback = g_util_config.output;
+	config.command_callback = g_util_config.command;
 
 	config.num_data_channels = g_channels.size();
 	config.num_data_groups = g_groups.size();
