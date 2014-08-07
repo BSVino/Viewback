@@ -46,6 +46,10 @@ int main()
 
 	srand((int)last_time);
 
+	printf("Searching for servers...\n");
+	while (!vb.HasConnection())
+		vb.FindServer();
+
 	for (;;)
 	{
 		vb.Update();
