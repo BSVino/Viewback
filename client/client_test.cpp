@@ -12,6 +12,8 @@
 
 #pragma warning(disable:4702) // unreachable code. The last part of main() is unreachable, which is okay since this is just a sample.
 
+using namespace vb;
+
 void ConsoleOutput(const char* pszOutput)
 {
 	printf("Console output: %s", pszOutput);
