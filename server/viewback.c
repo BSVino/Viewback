@@ -449,6 +449,12 @@ vb_bool vb_data_add_control_slider_float(const char* name, float range_min, floa
 	if (!name[0])
 		return 0;
 
+	if (steps < 0)
+		return 0;
+
+	if (range_max <= range_min)
+		return 0;
+
 	if (VB->next_control >= VB->config.num_data_controls)
 		return 0;
 

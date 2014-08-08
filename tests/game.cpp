@@ -64,6 +64,16 @@ void difficulty_callback(float difficulty)
 	vb_console_append(s.str().c_str());
 }
 
+void brightness_callback(float brightness)
+{
+	ostringstream s;
+	s << "Brightness set to: ";
+	s << brightness;
+	s << "\n";
+
+	vb_console_append(s.str().c_str());
+}
+
 void debug_printf(const char* text)
 {
 	printf("%s", text);
@@ -175,6 +185,7 @@ int main(int argc, const char** args)
 
 	vb_util_add_control_button("Pause", &pause_callback);
 	vb_util_add_control_slider_float("Difficulty", 0, 10, 21, &difficulty_callback);
+	vb_util_add_control_slider_float("Brightness", 0, 1, 0, &brightness_callback);
 
 	vb_util_set_multicast_group(multicast_group);
 	vb_util_set_tcp_port(port);
