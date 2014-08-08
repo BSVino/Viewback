@@ -62,11 +62,13 @@ inline bool vb_data_type_t_Parse(
 }
 enum vb_control_t {
   VB_CONTROL_NONE = 0,
-  VB_CONTROL_BUTTON = 1
+  VB_CONTROL_BUTTON = 1,
+  VB_CONTROL_SLIDER_FLOAT = 2,
+  VB_CONTROL_MAX = 3
 };
 bool vb_control_t_IsValid(int value);
 const vb_control_t vb_control_t_MIN = VB_CONTROL_NONE;
-const vb_control_t vb_control_t_MAX = VB_CONTROL_BUTTON;
+const vb_control_t vb_control_t_MAX = VB_CONTROL_MAX;
 const int vb_control_t_ARRAYSIZE = vb_control_t_MAX + 1;
 
 const ::google::protobuf::EnumDescriptor* vb_control_t_descriptor();
@@ -661,20 +663,50 @@ class DataControl : public ::google::protobuf::Message {
   inline ::vb_control_t type() const;
   inline void set_type(::vb_control_t value);
 
+  // optional float range_min_float = 3;
+  inline bool has_range_min_float() const;
+  inline void clear_range_min_float();
+  static const int kRangeMinFloatFieldNumber = 3;
+  inline float range_min_float() const;
+  inline void set_range_min_float(float value);
+
+  // optional float range_max_float = 4;
+  inline bool has_range_max_float() const;
+  inline void clear_range_max_float();
+  static const int kRangeMaxFloatFieldNumber = 4;
+  inline float range_max_float() const;
+  inline void set_range_max_float(float value);
+
+  // optional uint32 num_steps = 5;
+  inline bool has_num_steps() const;
+  inline void clear_num_steps();
+  static const int kNumStepsFieldNumber = 5;
+  inline ::google::protobuf::uint32 num_steps() const;
+  inline void set_num_steps(::google::protobuf::uint32 value);
+
   // @@protoc_insertion_point(class_scope:DataControl)
  private:
   inline void set_has_name();
   inline void clear_has_name();
   inline void set_has_type();
   inline void clear_has_type();
+  inline void set_has_range_min_float();
+  inline void clear_has_range_min_float();
+  inline void set_has_range_max_float();
+  inline void clear_has_range_max_float();
+  inline void set_has_num_steps();
+  inline void clear_has_num_steps();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
   ::std::string* name_;
   int type_;
+  float range_min_float_;
+  float range_max_float_;
+  ::google::protobuf::uint32 num_steps_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(2 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(5 + 31) / 32];
 
   friend void  protobuf_AddDesc_data_2eproto();
   friend void protobuf_AssignDesc_data_2eproto();
@@ -1551,6 +1583,72 @@ inline void DataControl::set_type(::vb_control_t value) {
   assert(::vb_control_t_IsValid(value));
   set_has_type();
   type_ = value;
+}
+
+// optional float range_min_float = 3;
+inline bool DataControl::has_range_min_float() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
+}
+inline void DataControl::set_has_range_min_float() {
+  _has_bits_[0] |= 0x00000004u;
+}
+inline void DataControl::clear_has_range_min_float() {
+  _has_bits_[0] &= ~0x00000004u;
+}
+inline void DataControl::clear_range_min_float() {
+  range_min_float_ = 0;
+  clear_has_range_min_float();
+}
+inline float DataControl::range_min_float() const {
+  return range_min_float_;
+}
+inline void DataControl::set_range_min_float(float value) {
+  set_has_range_min_float();
+  range_min_float_ = value;
+}
+
+// optional float range_max_float = 4;
+inline bool DataControl::has_range_max_float() const {
+  return (_has_bits_[0] & 0x00000008u) != 0;
+}
+inline void DataControl::set_has_range_max_float() {
+  _has_bits_[0] |= 0x00000008u;
+}
+inline void DataControl::clear_has_range_max_float() {
+  _has_bits_[0] &= ~0x00000008u;
+}
+inline void DataControl::clear_range_max_float() {
+  range_max_float_ = 0;
+  clear_has_range_max_float();
+}
+inline float DataControl::range_max_float() const {
+  return range_max_float_;
+}
+inline void DataControl::set_range_max_float(float value) {
+  set_has_range_max_float();
+  range_max_float_ = value;
+}
+
+// optional uint32 num_steps = 5;
+inline bool DataControl::has_num_steps() const {
+  return (_has_bits_[0] & 0x00000010u) != 0;
+}
+inline void DataControl::set_has_num_steps() {
+  _has_bits_[0] |= 0x00000010u;
+}
+inline void DataControl::clear_has_num_steps() {
+  _has_bits_[0] &= ~0x00000010u;
+}
+inline void DataControl::clear_num_steps() {
+  num_steps_ = 0u;
+  clear_has_num_steps();
+}
+inline ::google::protobuf::uint32 DataControl::num_steps() const {
+  return num_steps_;
+}
+inline void DataControl::set_num_steps(::google::protobuf::uint32 value) {
+  set_has_num_steps();
+  num_steps_ = value;
 }
 
 // -------------------------------------------------------------------

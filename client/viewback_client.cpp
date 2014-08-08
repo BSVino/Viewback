@@ -161,9 +161,38 @@ void CViewbackClient::Update()
 					VBAssert(oControlProtobuf.has_name());
 					VBAssert(oControlProtobuf.has_type());
 
+					if (!oControlProtobuf.has_name())
+						continue;
+
+					if (!oControlProtobuf.has_type())
+						continue;
+
+					if (oControlProtobuf.type() <= 0 || oControlProtobuf.type() >= VB_CONTROL_MAX)
+					{
+						VBPrintf("Unrecognized control type: %d Need to update your monitor?\n", oControlProtobuf.type());
+						continue;
+					}
+
 					m_aDataControls.emplace_back();
 					m_aDataControls.back().m_name = oControlProtobuf.name();
 					m_aDataControls.back().m_type = oControlProtobuf.type();
+
+					switch (m_aDataControls.back().m_type)
+					{
+					case VB_CONTROL_BUTTON:
+						// No parameters.
+						break;
+
+					case VB_CONTROL_SLIDER_FLOAT:
+						m_aDataControls.back().slider_float.range_min = oControlProtobuf.range_min_float();
+						m_aDataControls.back().slider_float.range_max = oControlProtobuf.range_max_float();
+						m_aDataControls.back().slider_float.steps = oControlProtobuf.num_steps();
+						break;
+
+					default:
+						VBUnimplemented();
+						break;
+					}
 				}
 
 				VBPrintf("Installed %d controls.\n", aPackets[i].data_controls_size());
@@ -355,6 +384,15 @@ void CViewbackClient::ControlCallback(int iControl)
 
 	// This list is pumped into the data thread during the Update().
 	m_sOutgoingCommands.push_back(std::string("control: ") + aoeu);
+}
+
+void CViewbackClient::ControlCallback(int iControl, float value)
+{
+	char aoeu[100];
+	sprintf(aoeu, "control: %d %f", iControl, value);
+
+	// This list is pumped into the data thread during the Update().
+	m_sOutgoingCommands.push_back(aoeu);
 }
 
 void CViewbackClient::SendConsoleCommand(const string& sCommand)

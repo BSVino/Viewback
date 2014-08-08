@@ -65,9 +65,24 @@ public:
 class CControl
 {
 public:
-	const char*                name;
-	vb_control_t               type;
-	vb_control_button_callback callback;
+	const char*  name;
+	vb_control_t type;
+
+	union
+	{
+		vb_control_button_callback       button_callback;
+		vb_control_slider_float_callback slider_float_callback;
+	};
+
+	union
+	{
+		struct
+		{
+			float range_min;
+			float range_max;
+			int   steps;
+		} slider_float;
+	};
 };
 
 static vector<CChannel> g_channels;
@@ -211,7 +226,20 @@ void vb_util_add_control_button(const char* name, vb_control_button_callback cal
 	CControl c;
 	c.name = name;
 	c.type = VB_CONTROL_BUTTON;
-	c.callback = callback;
+	c.button_callback = callback;
+
+	g_controls.push_back(c);
+}
+
+void vb_util_add_control_slider_float(const char* name, float range_min, float range_max, int steps, vb_control_slider_float_callback callback)
+{
+	CControl c;
+	c.name = name;
+	c.type = VB_CONTROL_SLIDER_FLOAT;
+	c.slider_float_callback = callback;
+	c.slider_float.range_max = range_max;
+	c.slider_float.range_min = range_min;
+	c.slider_float.steps = steps;
 
 	g_controls.push_back(c);
 }
@@ -352,9 +380,15 @@ vb_bool vb_util_server_create(const char* server_name)
 		switch (control.type)
 		{
 		case VB_CONTROL_BUTTON:
-			if (!vb_data_add_control_button(control.name, control.callback))
+			if (!vb_data_add_control_button(control.name, control.button_callback))
 				return 0;
 			break;
+
+		case VB_CONTROL_SLIDER_FLOAT:
+			if (!vb_data_add_control_slider_float(control.name, control.slider_float.range_min, control.slider_float.range_max, control.slider_float.steps, control.slider_float_callback))
+				return 0;
+			break;
+
 		default:
 			return 0;
 		}

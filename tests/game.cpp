@@ -6,6 +6,8 @@
 #include <winsock2.h>
 #include <sys/types.h>
 #include <sys/timeb.h>
+
+#define snprintf _snprintf
 #endif
 
 #ifdef __linux__
@@ -50,6 +52,16 @@ void pause_callback()
 		vb_console_append("Paused.\n");
 	else
 		vb_console_append("Unpaused.\n");
+}
+
+void difficulty_callback(float difficulty)
+{
+	ostringstream s;
+	s << "Difficulty set to: ";
+	s << difficulty;
+	s << "\n";
+
+	vb_console_append(s.str().c_str());
 }
 
 void debug_printf(const char* text)
@@ -162,6 +174,7 @@ int main(int argc, const char** args)
 #endif
 
 	vb_util_add_control_button("Pause", &pause_callback);
+	vb_util_add_control_slider_float("Difficulty", 0, 10, 21, &difficulty_callback);
 
 	vb_util_set_multicast_group(multicast_group);
 	vb_util_set_tcp_port(port);

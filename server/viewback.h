@@ -92,6 +92,8 @@ typedef unsigned char vb_bool;
 typedef void(*vb_debug_output_callback)(const char* text);
 typedef void(*vb_command_callback)(const char* text);
 typedef void(*vb_control_button_callback)();
+typedef void(*vb_control_slider_float_callback)(float value);
+
 
 typedef struct {
 	/*
@@ -186,7 +188,7 @@ typedef struct {
 typedef unsigned short vb_channel_handle_t;
 typedef unsigned short vb_group_handle_t;
 
-/* If you change this, update it in viewback.proto as well. */
+/* If you change this, update it in data.proto as well. */
 typedef enum
 {
 	VB_DATATYPE_NONE   = 0,
@@ -195,11 +197,13 @@ typedef enum
 	VB_DATATYPE_VECTOR = 3,
 } vb_data_type_t;
 
-/* If you change this, update it in viewback.proto as well. */
+/* If you change this, update it in data.proto as well. */
 typedef enum
 {
-	VB_CONTROL_NONE   = 0,
-	VB_CONTROL_BUTTON = 1,
+	VB_CONTROL_NONE         = 0,
+	VB_CONTROL_BUTTON       = 1,
+	VB_CONTROL_SLIDER_FLOAT = 2,
+	VB_CONTROL_MAX          = 3,
 } vb_control_t;
 
 /*
@@ -282,6 +286,7 @@ vb_bool vb_data_set_range(vb_channel_handle_t handle, float range_min, float ran
 	Returns 1 on success, 0 on failure.
 */
 vb_bool vb_data_add_control_button(const char* name, vb_control_button_callback callback);
+vb_bool vb_data_add_control_slider_float(const char* name, float range_min, float range_max, int steps, vb_control_slider_float_callback callback);
 
 /*
 	After registering all of your data, call this to start up the server.

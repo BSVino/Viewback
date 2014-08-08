@@ -93,6 +93,16 @@ class CViewbackDataControl
 public:
 	std::string  m_name;
 	vb_control_t m_type;
+
+	union
+	{
+		struct
+		{
+			float range_min;
+			float range_max;
+			int   steps;
+		} slider_float;
+	};
 };
 
 // Holds all of the data associated with one handle.
@@ -180,6 +190,7 @@ public:
 	void ActivateGroup(size_t iGroup);
 
 	void ControlCallback(int iControl);
+	void ControlCallback(int iControl, float);
 
 	void SendConsoleCommand(const std::string& sCommand);
 	DebugOutputCallback GetDebugOutputCallback() { return m_pfnDebugOutput; }

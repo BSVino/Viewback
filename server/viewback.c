@@ -412,15 +412,15 @@ vb_bool vb_data_set_range(vb_channel_handle_t handle, float range_min, float ran
 }
 #endif
 
-vb_bool vb_data_add_control_button(const char* label, vb_control_button_callback callback)
+vb_bool vb_data_add_control_button(const char* name, vb_control_button_callback callback)
 {
 	if (!VB)
 		return 0;
 
-	if (!label)
+	if (!name)
 		return 0;
 
-	if (!label[0])
+	if (!name[0])
 		return 0;
 
 	if (VB->next_control >= VB->config.num_data_controls)
@@ -429,9 +429,38 @@ vb_bool vb_data_add_control_button(const char* label, vb_control_button_callback
 	if (VB->server_active)
 		return 0;
 
-	VB->controls[VB->next_control].name = label;
+	VB->controls[VB->next_control].name = name;
 	VB->controls[VB->next_control].type = VB_CONTROL_BUTTON;
-	VB->controls[VB->next_control].callback = callback;
+	VB->controls[VB->next_control].button_callback = callback;
+
+	VB->next_control++;
+
+	return 1;
+}
+
+vb_bool vb_data_add_control_slider_float(const char* name, float range_min, float range_max, int steps, vb_control_slider_float_callback callback)
+{
+	if (!VB)
+		return 0;
+
+	if (!name)
+		return 0;
+
+	if (!name[0])
+		return 0;
+
+	if (VB->next_control >= VB->config.num_data_controls)
+		return 0;
+
+	if (VB->server_active)
+		return 0;
+
+	VB->controls[VB->next_control].name = name;
+	VB->controls[VB->next_control].type = VB_CONTROL_SLIDER_FLOAT;
+	VB->controls[VB->next_control].slider_float_callback = callback;
+	VB->controls[VB->next_control].slider_float.range_min = range_min;
+	VB->controls[VB->next_control].slider_float.range_max = range_max;
+	VB->controls[VB->next_control].slider_float.steps = steps;
 
 	VB->next_control++;
 
@@ -860,13 +889,31 @@ void vb_server_update(vb_uint64 current_game_time)
 			}
 			else if (strncmp(mesg, "control: ", 9) == 0)
 			{
+				size_t message_length = strlen(mesg);
+
+				// Find out what's after the control index.
+				size_t after_control_index = 9;
+				while (after_control_index < message_length && mesg[after_control_index] != ' ')
+					after_control_index++;
+
 				int control = atoi(mesg + 9);
 
 				if (control < 0 || control >= (int)VB->next_control)
 					continue;
 
-				if (VB->controls[control].callback)
-					VB->controls[control].callback("");
+				switch (VB->controls[control].type)
+				{
+				case VB_CONTROL_BUTTON:
+					if (VB->controls[control].button_callback)
+						VB->controls[control].button_callback();
+					break;
+
+				case VB_CONTROL_SLIDER_FLOAT:
+					VBAssert(after_control_index < message_length);
+					if (after_control_index < message_length && VB->controls[control].slider_float_callback)
+						VB->controls[control].slider_float_callback((float)atof(&mesg[after_control_index]));
+					break;
+				}
 			}
 		}
 	}
@@ -1525,6 +1572,18 @@ int vb__DataControl_write(struct vb__DataControl *_DataControl, void *_buffer, i
 	offset = vb__write_wire_format(2, PB_WIRE_TYPE_VARINT, _buffer, offset);
 	offset = vb__write_raw_varint32(_DataControl->_type, _buffer, offset);
 
+	unsigned long *min_ptr = (unsigned long *)&_DataControl->_range_min_float;
+	unsigned long *max_ptr = (unsigned long *)&_DataControl->_range_max_float;
+
+	offset = vb__write_wire_format(3, PB_WIRE_TYPE_32BIT, _buffer, offset);
+	offset = vb__write_raw_little_endian32(*min_ptr, _buffer, offset);
+
+	offset = vb__write_wire_format(4, PB_WIRE_TYPE_32BIT, _buffer, offset);
+	offset = vb__write_raw_little_endian32(*max_ptr, _buffer, offset);
+
+	offset = vb__write_wire_format(5, PB_WIRE_TYPE_VARINT, _buffer, offset);
+	offset = vb__write_raw_varint32(_DataControl->_num_steps, _buffer, offset);
+
 	return offset;
 }
 
@@ -1757,6 +1816,23 @@ void vb__Packet_initialize_registrations(struct vb__Packet* packet, struct vb__D
 		data_controls[i]._name = VB->controls[i].name;
 		data_controls[i]._name_len = strlen(VB->controls[i].name);
 		data_controls[i]._type = VB->controls[i].type;
+
+		switch (VB->controls[i].type)
+		{
+		case VB_CONTROL_BUTTON:
+			// No parameters.
+			break;
+
+		case VB_CONTROL_SLIDER_FLOAT:
+			data_controls[i]._range_min_float = VB->controls[i].slider_float.range_min;
+			data_controls[i]._range_max_float = VB->controls[i].slider_float.range_max;
+			data_controls[i]._num_steps = VB->controls[i].slider_float.steps;
+			break;
+
+		default:
+			VBUnimplemented();
+			break;
+		}
 	}
 }
 
@@ -1898,6 +1974,16 @@ size_t vb__Packet_get_message_size(struct vb__Packet *_Packet)
 
 			size += 1; /* One byte for "name" field number and wire type. */
 			size += 4; /* 4 bytes to support really long strings. */
+
+			// Float ranges
+			size += 1; /* One byte for the field number and wire type. */
+			size += 4; /* 4 bytes for a float. */
+
+			size += 1; /* One byte for the field number and wire type. */
+			size += 4; /* 4 bytes for a float. */
+
+			size += 1; /* One byte for "num_steps" field number and wire type. */
+			size += 4; /* Four bytes because you never know. */
 
 			/* Add on the size for each string. */
 			size += _Packet->_data_controls[i]._name_len;

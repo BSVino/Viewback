@@ -15,8 +15,10 @@ enum vb_data_type_t {
 }
 
 enum vb_control_t {
-	VB_CONTROL_NONE   = 0;
-	VB_CONTROL_BUTTON = 1;
+	VB_CONTROL_NONE         = 0;
+	VB_CONTROL_BUTTON       = 1;
+	VB_CONTROL_SLIDER_FLOAT = 2;
+	VB_CONTROL_MAX          = 3;
 }
 
 message Data {
@@ -54,6 +56,10 @@ message DataLabel {
 message DataControl {
 	optional string name       = 1;
 	optional vb_control_t type = 2;
+
+	optional float range_min_float = 3;
+	optional float range_max_float = 4;
+	optional uint32 num_steps      = 5;
 }
 
 message Packet {

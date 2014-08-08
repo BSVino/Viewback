@@ -73,9 +73,24 @@ typedef struct
 
 typedef struct
 {
-	const char*                name;
-	vb_control_t               type;
-	vb_control_button_callback callback;
+	const char*  name;
+	vb_control_t type;
+
+	union
+	{
+		vb_control_button_callback       button_callback;
+		vb_control_slider_float_callback slider_float_callback;
+	};
+
+	union
+	{
+		struct
+		{
+			float range_min;
+			float range_max;
+			int   steps;
+		} slider_float;
+	};
 } vb__data_control_t;
 
 typedef struct
@@ -177,6 +192,9 @@ struct vb__DataControl {
 	int            _name_len;
 	const char*    _name;
 	vb_control_t   _type;
+	float          _range_min_float;
+	float          _range_max_float;
+	unsigned int   _num_steps;
 };
 
 struct vb__Packet {
