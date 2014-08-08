@@ -80,6 +80,7 @@ typedef struct
 	{
 		vb_control_button_callback       button_callback;
 		vb_control_slider_float_callback slider_float_callback;
+		vb_control_slider_int_callback   slider_int_callback;
 	};
 
 	union
@@ -90,6 +91,13 @@ typedef struct
 			float range_max;
 			int   steps;
 		} slider_float;
+
+		struct
+		{
+			int range_min;
+			int range_max;
+			int step_size;
+		} slider_int;
 	};
 } vb__data_control_t;
 
@@ -195,6 +203,9 @@ struct vb__DataControl {
 	float          _range_min_float;
 	float          _range_max_float;
 	unsigned int   _num_steps;
+	int            _range_min_int;
+	int            _range_max_int;
+	unsigned int   _step_size;
 };
 
 struct vb__Packet {

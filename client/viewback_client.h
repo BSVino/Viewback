@@ -102,6 +102,13 @@ public:
 			float range_max;
 			int   steps;
 		} slider_float;
+
+		struct
+		{
+			int range_min;
+			int range_max;
+			int step_size;
+		} slider_int;
 	};
 };
 
@@ -191,6 +198,7 @@ public:
 
 	void ControlCallback(int iControl);
 	void ControlCallback(int iControl, float);
+	void ControlCallback(int iControl, int);
 
 	void SendConsoleCommand(const std::string& sCommand);
 	DebugOutputCallback GetDebugOutputCallback() { return m_pfnDebugOutput; }

@@ -110,6 +110,7 @@ vb_bool vb_util_set_range_s(const char* channel, float range_min, float range_ma
 */
 void vb_util_add_control_button(const char* name, vb_control_button_callback callback);
 void vb_util_add_control_slider_float(const char* name, float range_min, float range_max, int steps, vb_control_slider_float_callback callback);
+void vb_util_add_control_slider_int(const char* name, int range_min, int range_max, int step_size, vb_control_slider_int_callback callback);
 
 // For info on these advanced commands see the vb_config_t structure in viewback.h
 void vb_util_set_max_connections(unsigned char max_connections);

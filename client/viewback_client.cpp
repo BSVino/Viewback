@@ -189,6 +189,12 @@ void CViewbackClient::Update()
 						m_aDataControls.back().slider_float.steps = oControlProtobuf.num_steps();
 						break;
 
+					case VB_CONTROL_SLIDER_INT:
+						m_aDataControls.back().slider_int.range_min = oControlProtobuf.range_min_int();
+						m_aDataControls.back().slider_int.range_max = oControlProtobuf.range_max_int();
+						m_aDataControls.back().slider_int.step_size = oControlProtobuf.step_size();
+						break;
+
 					default:
 						VBUnimplemented();
 						break;
@@ -390,6 +396,15 @@ void CViewbackClient::ControlCallback(int iControl, float value)
 {
 	char aoeu[100];
 	sprintf(aoeu, "control: %d %f", iControl, value);
+
+	// This list is pumped into the data thread during the Update().
+	m_sOutgoingCommands.push_back(aoeu);
+}
+
+void CViewbackClient::ControlCallback(int iControl, int value)
+{
+	char aoeu[100];
+	sprintf(aoeu, "control: %d %d", iControl, value);
 
 	// This list is pumped into the data thread during the Update().
 	m_sOutgoingCommands.push_back(aoeu);

@@ -125,12 +125,15 @@ void protobuf_AssignDesc_data_2eproto() {
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(DataLabel));
   DataControl_descriptor_ = file->message_type(4);
-  static const int DataControl_offsets_[5] = {
+  static const int DataControl_offsets_[8] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataControl, name_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataControl, type_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataControl, range_min_float_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataControl, range_max_float_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataControl, num_steps_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataControl, range_min_int_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataControl, range_max_int_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataControl, step_size_),
   };
   DataControl_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -227,21 +230,23 @@ void protobuf_AddDesc_data_2eproto() {
     "\021\n\trange_min\030\004 \001(\002\022\021\n\trange_max\030\005 \001(\002\"/\n"
     "\tDataGroup\022\014\n\004name\030\001 \001(\t\022\024\n\010channels\030\002 \003"
     "(\rB\002\020\001\":\n\tDataLabel\022\017\n\007channel\030\001 \001(\r\022\r\n\005"
-    "value\030\002 \001(\r\022\r\n\005label\030\003 \001(\t\"}\n\013DataContro"
-    "l\022\014\n\004name\030\001 \001(\t\022\033\n\004type\030\002 \001(\0162\r.vb_contr"
-    "ol_t\022\027\n\017range_min_float\030\003 \001(\002\022\027\n\017range_m"
-    "ax_float\030\004 \001(\002\022\021\n\tnum_steps\030\005 \001(\r\"\321\001\n\006Pa"
-    "cket\022\023\n\004data\030\001 \001(\0132\005.Data\022#\n\rdata_channe"
-    "ls\030\002 \003(\0132\014.DataChannel\022\037\n\013data_groups\030\003 "
-    "\003(\0132\n.DataGroup\022\037\n\013data_labels\030\004 \003(\0132\n.D"
-    "ataLabel\022#\n\rdata_controls\030\005 \003(\0132\014.DataCo"
-    "ntrol\022\026\n\016console_output\030\006 \001(\t\022\016\n\006status\030"
-    "\007 \001(\t*j\n\016vb_data_type_t\022\024\n\020VB_DATATYPE_N"
-    "ONE\020\000\022\023\n\017VB_DATATYPE_INT\020\001\022\025\n\021VB_DATATYP"
-    "E_FLOAT\020\002\022\026\n\022VB_DATATYPE_VECTOR\020\003*k\n\014vb_"
-    "control_t\022\023\n\017VB_CONTROL_NONE\020\000\022\025\n\021VB_CON"
-    "TROL_BUTTON\020\001\022\033\n\027VB_CONTROL_SLIDER_FLOAT"
-    "\020\002\022\022\n\016VB_CONTROL_MAX\020\003", 1022);
+    "value\030\002 \001(\r\022\r\n\005label\030\003 \001(\t\"\276\001\n\013DataContr"
+    "ol\022\014\n\004name\030\001 \001(\t\022\033\n\004type\030\002 \001(\0162\r.vb_cont"
+    "rol_t\022\027\n\017range_min_float\030\003 \001(\002\022\027\n\017range_"
+    "max_float\030\004 \001(\002\022\021\n\tnum_steps\030\005 \001(\r\022\025\n\rra"
+    "nge_min_int\030\006 \001(\r\022\025\n\rrange_max_int\030\007 \001(\r"
+    "\022\021\n\tstep_size\030\010 \001(\r\"\321\001\n\006Packet\022\023\n\004data\030\001"
+    " \001(\0132\005.Data\022#\n\rdata_channels\030\002 \003(\0132\014.Dat"
+    "aChannel\022\037\n\013data_groups\030\003 \003(\0132\n.DataGrou"
+    "p\022\037\n\013data_labels\030\004 \003(\0132\n.DataLabel\022#\n\rda"
+    "ta_controls\030\005 \003(\0132\014.DataControl\022\026\n\016conso"
+    "le_output\030\006 \001(\t\022\016\n\006status\030\007 \001(\t*j\n\016vb_da"
+    "ta_type_t\022\024\n\020VB_DATATYPE_NONE\020\000\022\023\n\017VB_DA"
+    "TATYPE_INT\020\001\022\025\n\021VB_DATATYPE_FLOAT\020\002\022\026\n\022V"
+    "B_DATATYPE_VECTOR\020\003*\206\001\n\014vb_control_t\022\023\n\017"
+    "VB_CONTROL_NONE\020\000\022\025\n\021VB_CONTROL_BUTTON\020\001"
+    "\022\033\n\027VB_CONTROL_SLIDER_FLOAT\020\002\022\031\n\025VB_CONT"
+    "ROL_SLIDER_INT\020\003\022\022\n\016VB_CONTROL_MAX\020\004", 1116);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "data.proto", &protobuf_RegisterTypes);
   Data::default_instance_ = new Data();
@@ -291,6 +296,7 @@ bool vb_control_t_IsValid(int value) {
     case 1:
     case 2:
     case 3:
+    case 4:
       return true;
     default:
       return false;
@@ -1851,6 +1857,9 @@ const int DataControl::kTypeFieldNumber;
 const int DataControl::kRangeMinFloatFieldNumber;
 const int DataControl::kRangeMaxFloatFieldNumber;
 const int DataControl::kNumStepsFieldNumber;
+const int DataControl::kRangeMinIntFieldNumber;
+const int DataControl::kRangeMaxIntFieldNumber;
+const int DataControl::kStepSizeFieldNumber;
 #endif  // !_MSC_VER
 
 DataControl::DataControl()
@@ -1874,6 +1883,9 @@ void DataControl::SharedCtor() {
   range_min_float_ = 0;
   range_max_float_ = 0;
   num_steps_ = 0u;
+  range_min_int_ = 0u;
+  range_max_int_ = 0u;
+  step_size_ = 0u;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -1921,6 +1933,9 @@ void DataControl::Clear() {
     range_min_float_ = 0;
     range_max_float_ = 0;
     num_steps_ = 0u;
+    range_min_int_ = 0u;
+    range_max_int_ = 0u;
+    step_size_ = 0u;
   }
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
@@ -2013,6 +2028,54 @@ bool DataControl::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
+        if (input->ExpectTag(48)) goto parse_range_min_int;
+        break;
+      }
+
+      // optional uint32 range_min_int = 6;
+      case 6: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_range_min_int:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, &range_min_int_)));
+          set_has_range_min_int();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(56)) goto parse_range_max_int;
+        break;
+      }
+
+      // optional uint32 range_max_int = 7;
+      case 7: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_range_max_int:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, &range_max_int_)));
+          set_has_range_max_int();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(64)) goto parse_step_size;
+        break;
+      }
+
+      // optional uint32 step_size = 8;
+      case 8: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_step_size:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, &step_size_)));
+          set_has_step_size();
+        } else {
+          goto handle_uninterpreted;
+        }
         if (input->ExpectAtEnd()) return true;
         break;
       }
@@ -2065,6 +2128,21 @@ void DataControl::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteUInt32(5, this->num_steps(), output);
   }
 
+  // optional uint32 range_min_int = 6;
+  if (has_range_min_int()) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(6, this->range_min_int(), output);
+  }
+
+  // optional uint32 range_max_int = 7;
+  if (has_range_max_int()) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(7, this->range_max_int(), output);
+  }
+
+  // optional uint32 step_size = 8;
+  if (has_step_size()) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(8, this->step_size(), output);
+  }
+
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -2102,6 +2180,21 @@ void DataControl::SerializeWithCachedSizes(
   // optional uint32 num_steps = 5;
   if (has_num_steps()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(5, this->num_steps(), target);
+  }
+
+  // optional uint32 range_min_int = 6;
+  if (has_range_min_int()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(6, this->range_min_int(), target);
+  }
+
+  // optional uint32 range_max_int = 7;
+  if (has_range_max_int()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(7, this->range_max_int(), target);
+  }
+
+  // optional uint32 step_size = 8;
+  if (has_step_size()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(8, this->step_size(), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -2143,6 +2236,27 @@ int DataControl::ByteSize() const {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::UInt32Size(
           this->num_steps());
+    }
+
+    // optional uint32 range_min_int = 6;
+    if (has_range_min_int()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::UInt32Size(
+          this->range_min_int());
+    }
+
+    // optional uint32 range_max_int = 7;
+    if (has_range_max_int()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::UInt32Size(
+          this->range_max_int());
+    }
+
+    // optional uint32 step_size = 8;
+    if (has_step_size()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::UInt32Size(
+          this->step_size());
     }
 
   }
@@ -2187,6 +2301,15 @@ void DataControl::MergeFrom(const DataControl& from) {
     if (from.has_num_steps()) {
       set_num_steps(from.num_steps());
     }
+    if (from.has_range_min_int()) {
+      set_range_min_int(from.range_min_int());
+    }
+    if (from.has_range_max_int()) {
+      set_range_max_int(from.range_max_int());
+    }
+    if (from.has_step_size()) {
+      set_step_size(from.step_size());
+    }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
 }
@@ -2215,6 +2338,9 @@ void DataControl::Swap(DataControl* other) {
     std::swap(range_min_float_, other->range_min_float_);
     std::swap(range_max_float_, other->range_max_float_);
     std::swap(num_steps_, other->num_steps_);
+    std::swap(range_min_int_, other->range_min_int_);
+    std::swap(range_max_int_, other->range_max_int_);
+    std::swap(step_size_, other->step_size_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);

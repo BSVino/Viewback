@@ -93,6 +93,7 @@ typedef void(*vb_debug_output_callback)(const char* text);
 typedef void(*vb_command_callback)(const char* text);
 typedef void(*vb_control_button_callback)();
 typedef void(*vb_control_slider_float_callback)(float value);
+typedef void(*vb_control_slider_int_callback)(int value);
 
 
 typedef struct {
@@ -203,7 +204,8 @@ typedef enum
 	VB_CONTROL_NONE         = 0,
 	VB_CONTROL_BUTTON       = 1,
 	VB_CONTROL_SLIDER_FLOAT = 2,
-	VB_CONTROL_MAX          = 3,
+	VB_CONTROL_SLIDER_INT   = 3,
+	VB_CONTROL_MAX          = 4,
 } vb_control_t;
 
 /*
@@ -287,6 +289,7 @@ vb_bool vb_data_set_range(vb_channel_handle_t handle, float range_min, float ran
 */
 vb_bool vb_data_add_control_button(const char* name, vb_control_button_callback callback);
 vb_bool vb_data_add_control_slider_float(const char* name, float range_min, float range_max, int steps, vb_control_slider_float_callback callback);
+vb_bool vb_data_add_control_slider_int(const char* name, int range_min, int range_max, int step_size, vb_control_slider_int_callback callback);
 
 /*
 	After registering all of your data, call this to start up the server.

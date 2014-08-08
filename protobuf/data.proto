@@ -18,7 +18,8 @@ enum vb_control_t {
 	VB_CONTROL_NONE         = 0;
 	VB_CONTROL_BUTTON       = 1;
 	VB_CONTROL_SLIDER_FLOAT = 2;
-	VB_CONTROL_MAX          = 3;
+	VB_CONTROL_SLIDER_INT   = 3;
+	VB_CONTROL_MAX          = 4;
 }
 
 message Data {
@@ -60,6 +61,10 @@ message DataControl {
 	optional float range_min_float = 3;
 	optional float range_max_float = 4;
 	optional uint32 num_steps      = 5;
+
+	optional uint32 range_min_int = 6;
+	optional uint32 range_max_int = 7;
+	optional uint32 step_size     = 8;
 }
 
 message Packet {

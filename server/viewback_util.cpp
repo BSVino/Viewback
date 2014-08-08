@@ -72,6 +72,7 @@ public:
 	{
 		vb_control_button_callback       button_callback;
 		vb_control_slider_float_callback slider_float_callback;
+		vb_control_slider_int_callback   slider_int_callback;
 	};
 
 	union
@@ -82,6 +83,13 @@ public:
 			float range_max;
 			int   steps;
 		} slider_float;
+
+		struct
+		{
+			int range_min;
+			int range_max;
+			int step_size;
+		} slider_int;
 	};
 };
 
@@ -244,6 +252,19 @@ void vb_util_add_control_slider_float(const char* name, float range_min, float r
 	g_controls.push_back(c);
 }
 
+void vb_util_add_control_slider_int(const char* name, int range_min, int range_max, int step_size, vb_control_slider_int_callback callback)
+{
+	CControl c;
+	c.name = name;
+	c.type = VB_CONTROL_SLIDER_INT;
+	c.slider_int_callback = callback;
+	c.slider_int.range_max = range_max;
+	c.slider_int.range_min = range_min;
+	c.slider_int.step_size = step_size;
+
+	g_controls.push_back(c);
+}
+
 void vb_util_set_max_connections(unsigned char max_connections)
 {
 	g_util_config.max_connections = max_connections;
@@ -386,6 +407,11 @@ vb_bool vb_util_server_create(const char* server_name)
 
 		case VB_CONTROL_SLIDER_FLOAT:
 			if (!vb_data_add_control_slider_float(control.name, control.slider_float.range_min, control.slider_float.range_max, control.slider_float.steps, control.slider_float_callback))
+				return 0;
+			break;
+
+		case VB_CONTROL_SLIDER_INT:
+			if (!vb_data_add_control_slider_int(control.name, control.slider_int.range_min, control.slider_int.range_max, control.slider_int.step_size, control.slider_int_callback))
 				return 0;
 			break;
 

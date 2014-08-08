@@ -74,6 +74,16 @@ void brightness_callback(float brightness)
 	vb_console_append(s.str().c_str());
 }
 
+void bots_callback(int bots)
+{
+	ostringstream s;
+	s << "Number of bots set to: ";
+	s << bots;
+	s << "\n";
+
+	vb_console_append(s.str().c_str());
+}
+
 void debug_printf(const char* text)
 {
 	printf("%s", text);
@@ -186,6 +196,7 @@ int main(int argc, const char** args)
 	vb_util_add_control_button("Pause", &pause_callback);
 	vb_util_add_control_slider_float("Difficulty", 0, 10, 21, &difficulty_callback);
 	vb_util_add_control_slider_float("Brightness", 0, 1, 0, &brightness_callback);
+	vb_util_add_control_slider_int("Bots", 0, 6, 1, &bots_callback);
 
 	vb_util_set_multicast_group(multicast_group);
 	vb_util_set_tcp_port(port);

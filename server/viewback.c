@@ -473,6 +473,41 @@ vb_bool vb_data_add_control_slider_float(const char* name, float range_min, floa
 	return 1;
 }
 
+vb_bool vb_data_add_control_slider_int(const char* name, int range_min, int range_max, int step_size, vb_control_slider_int_callback callback)
+{
+	if (!VB)
+		return 0;
+
+	if (!name)
+		return 0;
+
+	if (!name[0])
+		return 0;
+
+	if (step_size < 1)
+		return 0;
+
+	if (range_max <= range_min)
+		return 0;
+
+	if (VB->next_control >= VB->config.num_data_controls)
+		return 0;
+
+	if (VB->server_active)
+		return 0;
+
+	VB->controls[VB->next_control].name = name;
+	VB->controls[VB->next_control].type = VB_CONTROL_SLIDER_INT;
+	VB->controls[VB->next_control].slider_int_callback = callback;
+	VB->controls[VB->next_control].slider_int.range_min = range_min;
+	VB->controls[VB->next_control].slider_int.range_max = range_max;
+	VB->controls[VB->next_control].slider_int.step_size = step_size;
+
+	VB->next_control++;
+
+	return 1;
+}
+
 vb_bool vb_server_create()
 {
 	if (!VB)
@@ -918,6 +953,12 @@ void vb_server_update(vb_uint64 current_game_time)
 					VBAssert(after_control_index < message_length);
 					if (after_control_index < message_length && VB->controls[control].slider_float_callback)
 						VB->controls[control].slider_float_callback((float)atof(&mesg[after_control_index]));
+					break;
+
+				case VB_CONTROL_SLIDER_INT:
+					VBAssert(after_control_index < message_length);
+					if (after_control_index < message_length && VB->controls[control].slider_int_callback)
+						VB->controls[control].slider_int_callback(atoi(&mesg[after_control_index]));
 					break;
 				}
 			}
@@ -1578,17 +1619,32 @@ int vb__DataControl_write(struct vb__DataControl *_DataControl, void *_buffer, i
 	offset = vb__write_wire_format(2, PB_WIRE_TYPE_VARINT, _buffer, offset);
 	offset = vb__write_raw_varint32(_DataControl->_type, _buffer, offset);
 
-	unsigned long *min_ptr = (unsigned long *)&_DataControl->_range_min_float;
-	unsigned long *max_ptr = (unsigned long *)&_DataControl->_range_max_float;
+	if (_DataControl->_type == VB_CONTROL_SLIDER_FLOAT)
+	{
+		unsigned long *min_ptr = (unsigned long *)&_DataControl->_range_min_float;
+		unsigned long *max_ptr = (unsigned long *)&_DataControl->_range_max_float;
 
-	offset = vb__write_wire_format(3, PB_WIRE_TYPE_32BIT, _buffer, offset);
-	offset = vb__write_raw_little_endian32(*min_ptr, _buffer, offset);
+		offset = vb__write_wire_format(3, PB_WIRE_TYPE_32BIT, _buffer, offset);
+		offset = vb__write_raw_little_endian32(*min_ptr, _buffer, offset);
 
-	offset = vb__write_wire_format(4, PB_WIRE_TYPE_32BIT, _buffer, offset);
-	offset = vb__write_raw_little_endian32(*max_ptr, _buffer, offset);
+		offset = vb__write_wire_format(4, PB_WIRE_TYPE_32BIT, _buffer, offset);
+		offset = vb__write_raw_little_endian32(*max_ptr, _buffer, offset);
 
-	offset = vb__write_wire_format(5, PB_WIRE_TYPE_VARINT, _buffer, offset);
-	offset = vb__write_raw_varint32(_DataControl->_num_steps, _buffer, offset);
+		offset = vb__write_wire_format(5, PB_WIRE_TYPE_VARINT, _buffer, offset);
+		offset = vb__write_raw_varint32(_DataControl->_num_steps, _buffer, offset);
+	}
+
+	if (_DataControl->_type == VB_CONTROL_SLIDER_INT)
+	{
+		offset = vb__write_wire_format(6, PB_WIRE_TYPE_VARINT, _buffer, offset);
+		offset = vb__write_raw_varint32(_DataControl->_range_min_int, _buffer, offset);
+
+		offset = vb__write_wire_format(7, PB_WIRE_TYPE_VARINT, _buffer, offset);
+		offset = vb__write_raw_varint32(_DataControl->_range_max_int, _buffer, offset);
+
+		offset = vb__write_wire_format(8, PB_WIRE_TYPE_VARINT, _buffer, offset);
+		offset = vb__write_raw_varint32(_DataControl->_step_size, _buffer, offset);
+	}
 
 	return offset;
 }
@@ -1835,6 +1891,12 @@ void vb__Packet_initialize_registrations(struct vb__Packet* packet, struct vb__D
 			data_controls[i]._num_steps = VB->controls[i].slider_float.steps;
 			break;
 
+		case VB_CONTROL_SLIDER_INT:
+			data_controls[i]._range_min_int = VB->controls[i].slider_int.range_min;
+			data_controls[i]._range_max_int = VB->controls[i].slider_int.range_max;
+			data_controls[i]._step_size = VB->controls[i].slider_int.step_size;
+			break;
+
 		default:
 			VBUnimplemented();
 			break;
@@ -1981,7 +2043,8 @@ size_t vb__Packet_get_message_size(struct vb__Packet *_Packet)
 			size += 1; /* One byte for "name" field number and wire type. */
 			size += 4; /* 4 bytes to support really long strings. */
 
-			// Float ranges
+			// Float slider is the largest in size so we'll do it and
+			// leave the rest alone, since they never appear together.
 			size += 1; /* One byte for the field number and wire type. */
 			size += 4; /* 4 bytes for a float. */
 
