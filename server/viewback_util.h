@@ -106,7 +106,8 @@ vb_bool vb_util_set_range_s(const char* channel, float range_min, float range_ma
 #endif
 
 /*
-	Register a control that can be used to modify runtime parameters.
+	Register a control, a more convenient way to send commands to the game.
+	For more info see the notes in voteback.h for vb_data_add_control_button().
 */
 void vb_util_add_control_button(const char* name, vb_control_button_callback callback);
 void vb_util_add_control_slider_float(const char* name, float range_min, float range_max, int steps, vb_control_slider_float_callback callback);

@@ -284,7 +284,19 @@ vb_bool vb_data_set_range(vb_channel_handle_t handle, float range_min, float ran
 #endif
 
 /*
-	Register a control.
+	Register a control, a more convenient way to send commands to the game.
+	Float sliders are given a min and max range (the highest and lowest values
+	on the slider) and a "steps" parameter, which specifies how many total values
+	are selectable on the slider. For example, if steps is 3 then the three
+	selectable values are range_min, range_max, and (range_min + range_max)/2.
+	If steps is 0 then the range is treated as continuous and any value in
+	[range_min, range_max] can be chosen.
+	Int sliders are given a min and max range as well, but the step_size
+	specifies the difference between each selectable value. For example if
+	step_size is 1 then your values are 1, 2, 3, 4 and if it is 2 then your
+	values are 2, 4, 6, 8.
+	When a user fiddles with the control in the monitor, the callback is
+	triggered.
 	Returns 1 on success, 0 on failure.
 */
 vb_bool vb_data_add_control_button(const char* name, vb_control_button_callback callback);
