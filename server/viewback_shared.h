@@ -71,6 +71,7 @@ THE SOFTWARE.
 
 #else
 #define VBAssert(x) {}
+#define VBUnimplemented() {}
 #endif
 
 extern void vb__debug_printf(const char* format, ...);
