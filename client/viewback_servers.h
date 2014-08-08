@@ -60,6 +60,8 @@ private:
 
 	std::map<unsigned long, CServerListing> m_aServers;
 
+	time_t m_iNextServerListUpdate;
+
 	static std::vector<CServerListing> s_servers_drop;
 	static pthread_mutex_t      s_servers_drop_mutex;
 

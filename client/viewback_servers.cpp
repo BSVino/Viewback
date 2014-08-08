@@ -55,6 +55,7 @@ void CViewbackServersThread::Shutdown()
 bool CViewbackServersThread::Initialize()
 {
 	m_aServers.clear();
+	m_iNextServerListUpdate = 0;
 
 	struct ip_mreq mreq;
 
@@ -127,6 +128,31 @@ bool last_ping_sort(const CServerListing& l, const CServerListing& r)
 
 void CViewbackServersThread::Pump()
 {
+	time_t now;
+	time(&now);
+
+	if (now >= m_iNextServerListUpdate)
+	{
+		std::vector<CServerListing> server_list;
+		for (map<unsigned long, CServerListing>::iterator it = m_aServers.begin(); it != m_aServers.end(); it++)
+		{
+			if (now - it->second.last_ping > 10)
+				continue;
+
+			server_list.push_back(it->second);
+		}
+
+		std::sort(server_list.begin(), server_list.end(), &last_ping_sort);
+
+		pthread_mutex_lock(&s_servers_drop_mutex);
+
+		s_servers_drop = server_list;
+
+		pthread_mutex_unlock(&s_servers_drop_mutex);
+
+		m_iNextServerListUpdate = now + 1;
+	}
+
 	char msgbuf[MSGBUFSIZE];
 
 	struct sockaddr_in addr;
@@ -157,7 +183,6 @@ void CViewbackServersThread::Pump()
 		// Version is too new.
 		return;
 
-	time_t now;
 	time(&now);
 
 	unsigned long server_address = ntohl(addr.sin_addr.s_addr);
@@ -184,24 +209,8 @@ void CViewbackServersThread::Pump()
 	server.name = server_name;
 	server.tcp_port = server_port;
 
-	std::vector<CServerListing> server_list;
-	for (map<unsigned long, CServerListing>::iterator it = m_aServers.begin(); it != m_aServers.end(); it++)
-	{
-		if (now - it->second.last_ping > 10)
-			continue;
-
-		server_list.push_back(it->second);
-	}
-
-	std::sort(server_list.begin(), server_list.end(), &last_ping_sort);
-
-	pthread_mutex_lock(&s_servers_drop_mutex);
-
-	s_servers_drop = server_list;
-
-	pthread_mutex_unlock(&s_servers_drop_mutex);
-
-	return;
+	// Force update now.
+	m_iNextServerListUpdate = 0;
 }
 
 vector<CServerListing> CViewbackServersThread::GetServers()

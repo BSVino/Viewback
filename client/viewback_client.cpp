@@ -276,13 +276,26 @@ void CViewbackClient::Update()
 	}
 	else
 	{
-		for (size_t i = 0; i < m_aData.size(); i++)
+		if (m_aData.size())
 		{
-			auto& oData = m_aData[i];
+			// We've been disconnected. Clear it all out.
+			for (size_t i = 0; i < m_aData.size(); i++)
+			{
+				auto& oData = m_aData[i];
 
-			oData.m_aFloatData.clear();
-			oData.m_aIntData.clear();
-			oData.m_aVectorData.clear();
+				oData.m_aFloatData.clear();
+				oData.m_aIntData.clear();
+				oData.m_aVectorData.clear();
+			}
+
+			m_aData.clear();
+
+			m_aDataChannels.clear();
+			m_aDataControls.clear();
+			m_aDataGroups.clear();
+			m_aMeta.clear();
+
+			m_pfnRegistrationUpdate();
 		}
 	}
 }
