@@ -667,6 +667,50 @@ void vb__connection_setup(vb__connection_t* connection)
 	memset(connection->active_channels, 0, vb__config_get_channel_mask_length(&VB->config));
 }
 
+void vb__send_registrations(vb__connection_t* connection)
+{
+	VBPrintf("Sending registrations to %d.\n", connection->socket);
+
+	struct vb__Packet packet;
+	vb__stack_allocate(struct vb__DataChannel, channels, VB->next_channel * sizeof(struct vb__DataChannel));
+	vb__stack_allocate(struct vb__DataGroup, groups, VB->next_group * sizeof(struct vb__DataGroup));
+	vb__stack_allocate(struct vb__DataLabel, labels, VB->next_label * sizeof(struct vb__DataLabel));
+	vb__stack_allocate(struct vb__DataControl, controls, VB->next_control * sizeof(struct vb__DataControl));
+
+	/* Initialize group channel membership numbers. */
+	for (size_t j = 0; j < VB->next_group; j++)
+		groups[j]._channels_repeated_len = 0;
+
+	/* Count up how many there are. */
+	for (size_t j = 0; j < VB->next_group_member; j++)
+		groups[VB->group_members[j].group]._channels_repeated_len++;
+
+	/* Now that we know how many there are we can allocate the memory.
+	We can't just do them in a big loop because VLA's will go out of scope if they're defined in the loop. */
+	int total_length = 0;
+	for (size_t j = 0; j < VB->next_group; j++)
+		total_length += groups[j]._channels_repeated_len * sizeof(*groups[j]._channels);
+
+	vb__stack_allocate(unsigned long, group_channels, total_length);
+
+	int current_group_channel = 0;
+	for (size_t j = 0; j < VB->next_group; j++)
+	{
+		groups[j]._channels = &group_channels[current_group_channel];
+		current_group_channel += groups[j]._channels_repeated_len;
+	}
+
+	vb__Packet_initialize_registrations(&packet, channels, VB->next_channel, groups, VB->next_group, labels, VB->next_label, controls, VB->next_control);
+
+	size_t message_predicted_length = vb__Packet_get_message_size(&packet);
+	Packet_alloca(message, message_predicted_length);
+
+	size_t message_actual_length = vb__write_length_prepended_message(&packet, message, message_predicted_length, &vb__Packet_serialize);
+
+	if (message_actual_length)
+		vb__socket_send(&connection->socket, (const char*)message, message_actual_length);
+}
+
 #ifdef VIEWBACK_TIME_DOUBLE
 void vb_server_update(double current_game_time)
 #else
@@ -791,21 +835,23 @@ void vb_server_update(vb_uint64 current_game_time)
 
 				if (vb__socket_set_blocking(incoming_socket, 0) == 0)
 				{
-					int off = 0;
-					setsockopt(incoming_socket, SOL_SOCKET, SO_LINGER, (const char*) &off, sizeof(int));
-
 					vb__connection_setup(&VB->connections[open_socket]);
 
 					socket_success = 1;
 				}
 			}
 
-			if (!socket_success)
+			if (socket_success)
+			{
+				VBPrintf("Successful. Socket: %d\n", incoming_socket);
+				vb__send_registrations(&VB->connections[open_socket]);
+			}
+			else
+			{
+				VBPrintf("Not enough connections, increase max_connections\n");
 				vb__socket_close(incoming_socket);
+			}
 		}
-
-		if (vb__socket_valid(incoming_socket))
-			VBPrintf("Successful. Socket: %d\n", incoming_socket);
 		else
 			VBPrintf("Dropped.\n");
 	}
@@ -836,51 +882,7 @@ void vb_server_update(vb_uint64 current_game_time)
 
 			if (strcmp(mesg, "registrations") == 0)
 			{
-				VBPrintf("Sending registrations to %d.\n", VB->connections[i].socket);
-
-				struct vb__Packet packet;
-				vb__stack_allocate(struct vb__DataChannel, channels, VB->next_channel * sizeof(struct vb__DataChannel));
-				vb__stack_allocate(struct vb__DataGroup, groups, VB->next_group * sizeof(struct vb__DataGroup));
-				vb__stack_allocate(struct vb__DataLabel, labels, VB->next_label * sizeof(struct vb__DataLabel));
-				vb__stack_allocate(struct vb__DataControl, controls, VB->next_control * sizeof(struct vb__DataControl));
-
-				/* Initialize group channel membership numbers. */
-				for (size_t j = 0; j < VB->next_group; j++)
-					groups[j]._channels_repeated_len = 0;
-
-				/* Count up how many there are. */
-				for (size_t j = 0; j < VB->next_group_member; j++)
-					groups[VB->group_members[j].group]._channels_repeated_len++;
-
-				/* Now that we know how many there are we can allocate the memory.
-				We can't just do them in a big loop because VLA's will go out of scope if they're defined in the loop. */
-				int total_length = 0;
-				for (size_t j = 0; j < VB->next_group; j++)
-					total_length += groups[j]._channels_repeated_len * sizeof(*groups[j]._channels);
-
-				vb__stack_allocate(unsigned long, group_channels, total_length);
-
-				int current_group_channel = 0;
-				for (size_t j = 0; j < VB->next_group; j++)
-				{
-					groups[j]._channels = &group_channels[current_group_channel];
-					current_group_channel += groups[j]._channels_repeated_len;
-				}
-
-				vb__Packet_initialize_registrations(&packet, channels, VB->next_channel, groups, VB->next_group, labels, VB->next_label, controls, VB->next_control);
-
-				size_t message_predicted_length = vb__Packet_get_message_size(&packet);
-				Packet_alloca(message, message_predicted_length);
-
-				size_t message_actual_length = vb__write_length_prepended_message(&packet, message, message_predicted_length, &vb__Packet_serialize);
-
-				if (message_actual_length)
-				{
-					vb_bool success = vb__socket_send(&VB->connections[i].socket, (const char*)message, message_actual_length);
-
-					if (!success)
-						continue;
-				}
+				vb__send_registrations(&VB->connections[i]);
 			}
 			else if (strncmp(mesg, "console: ", 9) == 0)
 			{

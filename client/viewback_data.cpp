@@ -76,6 +76,15 @@ bool CViewbackDataThread::Initialize(unsigned long address, unsigned short port)
 		return false;
 	}
 
+	// Any data drops are lying around from last time, so clear them out.
+	s_aDataDrop.clear();
+	s_sCommandDrop.clear();
+
+	s_bConnected = false;
+	s_bDataDropReady = false;
+	s_bCommandDropReady = true;
+	s_bDisconnect = false;
+
 	CCleanupSocket c(m_socket);
 
 	struct sockaddr_in addr;
@@ -91,19 +100,6 @@ bool CViewbackDataThread::Initialize(unsigned long address, unsigned short port)
 	}
 
 	VBPrintf("Connected to Viewback server at %s:%d.\n", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
-
-	// Start by requesting a list of data registrations from the server.
-	const char registrations[] = "registrations";
-	send(m_socket, (const char*)registrations, sizeof(registrations), 0);
-
-	// Any data drops are lying around from last time, so clear them out.
-	s_aDataDrop.clear();
-	s_sCommandDrop.clear();
-
-	s_bConnected = false;
-	s_bDataDropReady = false;
-	s_bCommandDropReady = true;
-	s_bDisconnect = false;
 
 	if (pthread_create(&m_iThread, NULL, (void *(*) (void *))&CViewbackDataThread::ThreadMain, (void*)this) != 0)
 	{
