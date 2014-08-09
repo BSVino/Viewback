@@ -348,7 +348,7 @@ void CViewbackClient::FindServer()
 	m_bDisconnected = false;
 
 	in_addr in;
-	in.S_un.S_addr = htonl(server_list[0].address);
+	in.s_addr = htonl(server_list[0].address);
 
 	Connect(inet_ntoa(in), server_list[0].tcp_port);
 }
