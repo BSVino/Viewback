@@ -1,16 +1,17 @@
 Viewback - A Video Game Design Tool
 ===================================
 
-Viewback is a tool for helping you to design video games. It lets you examine
-and control your game's internal state from your handheld device. It can be
-used as a debugging tool or as a way to monitor usability playtests without
-interfering with the user's experience.
+Viewback is a tool to help game designers conduct usability play tests. It
+forwards the debug information from your game to your wireless device, where
+you can see it and the player can't. You can diagnose problems with the game
+while your playtester enjoys her experience. Now you can see changes to
+internal game state and send commands to the game in real time.
 
-Viewback is written in C and is extremely memory efficient. For typical usage
-Viewback can do everything it does in less than 500 bytes of memory. At its
-worst it should not need more than a few kilobytes. This makes Viewback
-appropriate for use in embedded devices and game consoles. Viewback also avoids
-blocking socket operations, so it should never slow your game down.
+The Viewback server is written in C and can be easily integrated into any game
+engine. It uses a permissive MIT license, avoids blocking networking calls, and
+uses only a few hundred bytes of memory. The server compiles on any c compiler
+with no dependencies, and the monitor is available for Windows and Android,
+with OSX and iOS coming soon.
 
 Since Viewback is written in C it can be used in just about any game engine
 environment. Any engine written in C or C++ (Id Tech engines, Unreal, Source)
