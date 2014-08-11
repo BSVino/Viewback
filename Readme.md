@@ -175,3 +175,13 @@ The status string is like the console but it's always visible. New status
 lines replace old lines and they never scroll off the screen. Use it for
 things like the framerate, memory used, and how many monsters are currently
 spawned.
+
+Credits
+-------
+
+* Initial implementation by me, (@VinoBS)[http://twitter.com/VinoBS]
+* Thanks to (@SteveSwink)[http://twitter.com/SteveSwink] because I had the original idea for Viewback while reading his amazing book, (Game Feel)[http://www.amazon.com/Game-Feel-Designers-Sensation-Kaufmann/dp/0123743281]
+* Thanks to (@nothings)[http://twitter.com/nothings] and (@cmuratori)[http://twitter.com/cmuratori] for helping me think about API design.
+* Thanks to (@deplinenoise)[http://twitter.com/deplinenoise] because I unscrupulously stole a lot of his networking code from (Webby)[http://github.com/deplinenoise/webby].
+* Special thanks to (Cognizant)[http://www.cognizant.com/] for awarding me a generous scholarship based on my work on Viewback.
+
