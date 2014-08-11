@@ -9,7 +9,7 @@ internal game state and send commands to the game in real time.
 
 The Viewback server is written in C and can be easily integrated into any game
 engine. It uses a permissive MIT license, avoids blocking networking calls, and
-uses only a few hundred bytes of memory. The server compiles on any c compiler
+uses only a few hundred bytes of memory. The server compiles on any C compiler
 with no dependencies, and the monitor is available for Windows and Android,
 with OSX and iOS coming soon.
 
