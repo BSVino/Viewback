@@ -64,6 +64,7 @@ typedef unsigned char vb_bool;
 	vb_config_t config;
 	vb_config_initialize(&config);
 
+	// Here you specify how many of each feature you will use.
 	config.num_data_channels = 2;
 
 	size_t memory_size = vb_config_get_memory_required(&config);
@@ -72,6 +73,9 @@ typedef unsigned char vb_bool;
 	if (!vb_config_install(&config, m_memory, memory_size))
 		return 0;
 
+	// Since 2 channels were specified in the config, you can call
+	// vb_data_add_channel() at most twice before it will return
+	// an error.
 	vb_channel_handle_t channel;
 	if (!vb_data_add_channel("Test", VB_DATATYPE_INT, &channel))
 		return 0;
