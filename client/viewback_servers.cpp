@@ -39,6 +39,8 @@ CViewbackServersThread& CViewbackServersThread::ServersThread()
 
 bool CViewbackServersThread::Run()
 {
+	pthread_mutex_init(&s_servers_drop_mutex, nullptr);
+
 	return ServersThread().Initialize();
 }
 
@@ -50,6 +52,8 @@ void CViewbackServersThread::Shutdown()
 
 	ServersThread().m_aServers.clear();
 	vb__socket_close(ServersThread().m_socket);
+
+	pthread_mutex_destroy(&s_servers_drop_mutex);
 }
 
 bool CViewbackServersThread::Initialize()
@@ -111,12 +115,8 @@ bool CViewbackServersThread::Initialize()
 
 void CViewbackServersThread::ThreadMain(CViewbackServersThread* pThis)
 {
-	pthread_mutex_init(&pThis->s_servers_drop_mutex, nullptr);
-
 	while (!s_bShutdown)
 		pThis->Pump();
-
-	pthread_mutex_destroy(&pThis->s_servers_drop_mutex);
 }
 
 bool last_ping_sort(const CServerListing& l, const CServerListing& r)
