@@ -108,7 +108,7 @@ int main(int argc, const char** args)
 		return 1;
 #endif
 
-	vb_util_initialize();
+	//vb_util_initialize(); // This is optional.
 
 	unsigned short port = 0;
 

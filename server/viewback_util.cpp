@@ -97,6 +97,7 @@ static vector<CChannel> g_channels;
 static vector<CGroup> g_groups;
 static vector<CControl> g_controls;
 static void* g_memory = NULL;
+static bool g_initialized = false;
 
 class CVBUtilConfig
 {
@@ -141,10 +142,15 @@ void vb_util_initialize()
 	g_memory = NULL;
 
 	memset(&g_util_config, 0, sizeof(g_util_config));
+
+	g_initialized = true;
 }
 
 void vb_util_add_channel(const char* name, vb_data_type_t type, /*out*/ vb_channel_handle_t* handle)
 {
+	if (!g_initialized)
+		vb_util_initialize();
+
 	CChannel c;
 	c.name = name;
 	c.type = type;
@@ -156,6 +162,9 @@ void vb_util_add_channel(const char* name, vb_data_type_t type, /*out*/ vb_chann
 
 void vb_util_add_group(const char* name, /*out*/ vb_group_handle_t* handle)
 {
+	if (!g_initialized)
+		vb_util_initialize();
+
 	CGroup g;
 	g.name = name;
 
@@ -166,11 +175,17 @@ void vb_util_add_group(const char* name, /*out*/ vb_group_handle_t* handle)
 
 void vb_util_add_channel_to_group(vb_group_handle_t group, vb_channel_handle_t channel)
 {
+	if (!g_initialized)
+		vb_util_initialize();
+
 	g_groups[group].channels.push_back(channel);
 }
 
 vb_bool vb_util_add_channel_to_group_s(const char* group, const char* channel)
 {
+	if (!g_initialized)
+		vb_util_initialize();
+
 	vb_group_handle_t group_handle = vb_util_find_group(group);
 
 	if (group_handle == VB_GROUP_NONE)
@@ -188,6 +203,9 @@ vb_bool vb_util_add_channel_to_group_s(const char* group, const char* channel)
 
 void vb_util_add_label(vb_channel_handle_t handle, int value, const char* label)
 {
+	if (!g_initialized)
+		vb_util_initialize();
+
 	CLabel l;
 	l.name = label;
 	l.value = value;
@@ -197,6 +215,9 @@ void vb_util_add_label(vb_channel_handle_t handle, int value, const char* label)
 
 vb_bool vb_util_add_label_s(const char* channel, int value, const char* label)
 {
+	if (!g_initialized)
+		vb_util_initialize();
+
 	vb_channel_handle_t handle = vb_util_find_channel(channel);
 
 	if (handle == VB_CHANNEL_NONE)
@@ -210,12 +231,18 @@ vb_bool vb_util_add_label_s(const char* channel, int value, const char* label)
 #ifndef VB_NO_RANGE
 void vb_util_set_range(vb_channel_handle_t handle, float range_min, float range_max)
 {
+	if (!g_initialized)
+		vb_util_initialize();
+
 	g_channels[handle].range_min = range_min;
 	g_channels[handle].range_max = range_max;
 }
 
 vb_bool vb_util_set_range_s(const char* channel, float range_min, float range_max)
 {
+	if (!g_initialized)
+		vb_util_initialize();
+
 	vb_channel_handle_t handle = vb_util_find_channel(channel);
 
 	if (handle == VB_CHANNEL_NONE)
@@ -229,6 +256,9 @@ vb_bool vb_util_set_range_s(const char* channel, float range_min, float range_ma
 
 void vb_util_add_control_button(const char* name, vb_control_button_callback callback)
 {
+	if (!g_initialized)
+		vb_util_initialize();
+
 	CControl c;
 	c.name = name;
 	c.type = VB_CONTROL_BUTTON;
@@ -239,6 +269,9 @@ void vb_util_add_control_button(const char* name, vb_control_button_callback cal
 
 void vb_util_add_control_slider_float(const char* name, float range_min, float range_max, int steps, vb_control_slider_float_callback callback)
 {
+	if (!g_initialized)
+		vb_util_initialize();
+
 	CControl c;
 	c.name = name;
 	c.type = VB_CONTROL_SLIDER_FLOAT;
@@ -252,6 +285,9 @@ void vb_util_add_control_slider_float(const char* name, float range_min, float r
 
 void vb_util_add_control_slider_int(const char* name, int range_min, int range_max, int step_size, vb_control_slider_int_callback callback)
 {
+	if (!g_initialized)
+		vb_util_initialize();
+
 	CControl c;
 	c.name = name;
 	c.type = VB_CONTROL_SLIDER_INT;
@@ -265,21 +301,33 @@ void vb_util_add_control_slider_int(const char* name, int range_min, int range_m
 
 void vb_util_set_max_connections(unsigned char max_connections)
 {
+	if (!g_initialized)
+		vb_util_initialize();
+
 	g_util_config.max_connections = max_connections;
 }
 
 void vb_util_set_output_callback(vb_debug_output_callback output)
 {
+	if (!g_initialized)
+		vb_util_initialize();
+
 	g_util_config.output = output;
 }
 
 void vb_util_set_command_callback(vb_command_callback command)
 {
+	if (!g_initialized)
+		vb_util_initialize();
+
 	g_util_config.command = command;
 }
 
 void vb_util_set_tcp_port(unsigned short tcp_port)
 {
+	if (!g_initialized)
+		vb_util_initialize();
+
 	g_util_config.tcp_port = tcp_port;
 }
 
@@ -307,6 +355,9 @@ private:
 
 vb_bool vb_util_server_create(const char* server_name)
 {
+	if (!g_initialized)
+		vb_util_initialize();
+
 	vb_config_release();
 
 	free(g_memory);

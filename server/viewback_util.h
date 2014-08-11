@@ -34,7 +34,7 @@ extern "C" {
 	Sample code follows. For more complex examples, see tests/game.cpp
 
 
-	vb_util_initialize();
+	vb_util_initialize(); // This is optional.
 
 	vb_channel_handle_t channel;
 	vb_util_add_channel("Test", VB_DATATYPE_INT, &channel);
@@ -53,7 +53,8 @@ extern "C" {
 */
 
 /*
-	Call this first. If can call this again to clear out a previous config.
+	This is optional. You can call this after server shutdown to clear out a
+	previous config.
 */
 void vb_util_initialize();
 

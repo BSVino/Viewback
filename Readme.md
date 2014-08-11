@@ -42,8 +42,7 @@ interface that allows you to allocate the memory that Viewback uses.
 
 	#include "viewback_util.h"
 
-	// Call this first.
-	vb_util_initialize();
+	vb_util_initialize(); // This is optional.
 
 	// A "channel" is a stream of data to be sent to the Viewback monitor for display.
 	// Here we create an integer channel called "Health".
