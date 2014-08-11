@@ -30,8 +30,13 @@ Installation Instructions
 -------------------------
 
 First, copy all files in the server directory to a directory inside your
-source tree. Then add viewback.cpp and viewback_util.cpp to your project
-files. Now you are done.
+source tree. If you're familiar with git, you can use a git submodule for
+this purpose. Then add viewback.cpp and viewback_util.cpp to your project
+files. In whichever files you want to use Viewback, add at the top:
+
+	#include "viewback_util.h"
+
+Now you are ready to implement the API.
 
 Sample Code
 -----------
