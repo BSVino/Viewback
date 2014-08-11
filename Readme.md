@@ -7,6 +7,17 @@ you can see it and the player can't. Now you can diagnose problems with the
 game while your playtester enjoys her experience. You can see changes to
 internal game state and send commands to the game in real time.
 
+[Watch this video to see how it works.](https://www.youtube.com/watch?v=vzF4IUAhqgI)
+
+Downloads
+---------
+
+* [The Viewback Monitor for Windows](http://vinoisnotouzo.com/viewback/ViewbackMonitor.zip) - Includes a test "game". Run the game and the monitor at the same time and the test game should show up in the monitor.
+* [The Viewback Monitor for Android](http://vinoisnotouzo.com/viewback/ViewbackMonitor.apk) - Requires Android 4.3. If you would like to see it on Android < 4.3, bug me about it and I'll move it higher in my priority list.
+
+Integration
+-----------
+
 The Viewback server is written in C and can be easily integrated into any game
 engine. It uses a permissive MIT license, avoids blocking networking calls, and
 uses only a few hundred bytes of memory. The server compiles on any C compiler
