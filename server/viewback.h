@@ -161,26 +161,11 @@ typedef struct {
 	vb_debug_output_callback debug_output_callback;
 
 	/*
-		Must be a valid IP group eg "239.127.251.37" If this is NULL the
-		default will be used. See: http://en.wikipedia.org/wiki/Multicast_address
-		If you change this then Viewback clients won't be able to connect
-		automatically and will have to connect manually. You should probably
-		leave it 0 unless your network is special.
-	*/
-	const char* multicast_group;
-
-	/*
-		This port will be used for UDP multicast connections. 0 means use the
-		default port. If you change this then Viewback clients won't be able
-		to connect automatically and will have to connect manually. You should
-		probably leave it 0 unless your network is special.
-	*/
-	unsigned short multicast_port;
-
-	/*
 		This port will be used for TCP connections. 0 means use an automatically
-		assigned default port. The multicast signal broadcasts the TCP port so
-		there's no reason to set this unless your network is special.
+		assigned default port. If the specified port is not available, the next
+		5 ports will be tried until an open port is found. The multicast signal
+		broadcasts the TCP port so there's no reason to set this unless your
+		network is special.
 	*/
 	unsigned short tcp_port;
 

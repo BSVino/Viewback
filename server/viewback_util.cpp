@@ -104,8 +104,6 @@ public:
 	unsigned char max_connections;
 	vb_debug_output_callback output;
 	vb_command_callback command;
-	const char* multicast_group;
-	unsigned short multicast_port;
 	unsigned short tcp_port;
 } g_util_config;
 
@@ -280,16 +278,6 @@ void vb_util_set_command_callback(vb_command_callback command)
 	g_util_config.command = command;
 }
 
-void vb_util_set_multicast_group(const char* multicast_group)
-{
-	g_util_config.multicast_group = multicast_group;
-}
-
-void vb_util_set_multicast_port(unsigned short multicast_port)
-{
-	g_util_config.multicast_port = multicast_port;
-}
-
 void vb_util_set_tcp_port(unsigned short tcp_port)
 {
 	g_util_config.tcp_port = tcp_port;
@@ -337,8 +325,6 @@ vb_bool vb_util_server_create(const char* server_name)
 	if (g_util_config.max_connections)
 		config.max_connections = g_util_config.max_connections;
 
-	config.multicast_group = g_util_config.multicast_group;
-	config.multicast_port = g_util_config.multicast_port;
 	config.tcp_port = g_util_config.tcp_port;
 	config.debug_output_callback = g_util_config.output;
 	config.command_callback = g_util_config.command;

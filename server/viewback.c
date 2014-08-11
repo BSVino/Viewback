@@ -39,9 +39,7 @@ void vb_config_initialize(vb_config_t* config)
 {
 	memset(config, 0, sizeof(vb_config_t));
 
-	config->multicast_group = VB_DEFAULT_MULTICAST_ADDRESS;
 	config->tcp_port = VB_DEFAULT_PORT;
-	config->multicast_port = VB_DEFAULT_PORT;
 	config->max_connections = 4;
 }
 
@@ -136,12 +134,6 @@ vb_bool vb_config_install(vb_config_t* config, void* memory, size_t memory_size)
 	}
 
 	VB->server_active = 0;
-
-	if (!VB->config.multicast_group || !*VB->config.multicast_group)
-		VB->config.multicast_group = VB_DEFAULT_MULTICAST_ADDRESS;
-
-	if (!VB->config.multicast_port)
-		VB->config.multicast_port = VB_DEFAULT_PORT;
 
 	if (!VB->config.tcp_port)
 		VB->config.tcp_port = VB_DEFAULT_PORT;
@@ -530,8 +522,8 @@ vb_bool vb_server_create()
 
 	memset(&VB->multicast_addr, 0, sizeof(VB->multicast_addr));
 	VB->multicast_addr.sin_family = AF_INET;
-	VB->multicast_addr.sin_addr.s_addr = inet_addr(VB->config.multicast_group);
-	VB->multicast_addr.sin_port = htons(VB->config.multicast_port);
+	VB->multicast_addr.sin_addr.s_addr = inet_addr(VB_DEFAULT_MULTICAST_ADDRESS);
+	VB->multicast_addr.sin_port = htons(VB_DEFAULT_PORT);
 	VB->last_multicast = 0;
 
 	VB->tcp_socket = socket(AF_INET, SOCK_STREAM, 0);

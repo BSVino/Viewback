@@ -111,7 +111,6 @@ int main(int argc, const char** args)
 	vb_util_initialize();
 
 	unsigned short port = 0;
-	const char* multicast_group = NULL;
 
 	for (int i = 1; i < argc; i++)
 	{
@@ -119,11 +118,6 @@ int main(int argc, const char** args)
 		{
 			i++;
 			port = (unsigned short)atoi(args[i]);
-		}
-		else if (strcmp(args[i], "--multicast-group") == 0 && i < argc - 1)
-		{
-			i++;
-			multicast_group = args[i];
 		}
 	}
 
@@ -204,8 +198,6 @@ int main(int argc, const char** args)
 	vb_util_add_control_slider_int("Bots", 0, 6, 1, &bots_callback);
 	vb_util_add_control_button("Infinite loop", &freeze_callback);
 
-	vb_util_set_multicast_group(multicast_group);
-	vb_util_set_tcp_port(port);
 	vb_util_set_output_callback(&debug_printf);
 	vb_util_set_command_callback(&command_callback);
 

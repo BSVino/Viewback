@@ -117,8 +117,6 @@ void vb_util_add_control_slider_int(const char* name, int range_min, int range_m
 void vb_util_set_max_connections(unsigned char max_connections);
 void vb_util_set_output_callback(vb_debug_output_callback output);
 void vb_util_set_command_callback(vb_command_callback command);
-void vb_util_set_multicast_group(const char* multicast_group);
-void vb_util_set_multicast_port(unsigned short multicast_port);
 void vb_util_set_tcp_port(unsigned short tcp_port);
 
 /*
