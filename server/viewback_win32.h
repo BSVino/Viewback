@@ -66,3 +66,8 @@ static void vb__strcat(char* dest, size_t size, const char* src)
 {
 	strcat_s(dest, size, src);
 }
+
+static void vb__thread_yield()
+{
+	Sleep(0);
+}

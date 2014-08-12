@@ -134,6 +134,8 @@ void CViewbackDataThread::ThreadMain(CViewbackDataThread* pThis)
 
 void CViewbackDataThread::Pump()
 {
+	vb__thread_yield();
+
 	MaintainDrops();
 
 	char msgbuf[MSGBUFSIZE];

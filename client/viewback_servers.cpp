@@ -128,6 +128,8 @@ bool last_ping_sort(const CServerListing& l, const CServerListing& r)
 
 void CViewbackServersThread::Pump()
 {
+	vb__thread_yield();
+
 	time_t now;
 	time(&now);
 

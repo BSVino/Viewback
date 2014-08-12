@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+#include <sched.h>
 
 typedef int vb__socket_t;
 typedef socklen_t vb__socklen_t;
@@ -43,3 +44,7 @@ static void vb__strcat(char* dest, size_t size, const char* src)
 	strcat(dest, src);
 }
 
+static void vb__thread_yield()
+{
+	sched_yield();
+}
