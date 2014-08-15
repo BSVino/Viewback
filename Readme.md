@@ -1,7 +1,7 @@
 Viewback - A Video Game Design Tool
 ===================================
 
-Viewback is a tool to help game designers conduct usability play tests. It
+Viewback is a tool that helps game designers conduct usability play tests. It
 forwards the debug information from your game to your wireless device, where
 you can see it and the player can't. Now you can diagnose problems with the
 game while your playtester enjoys her experience. You can see changes to
@@ -41,7 +41,7 @@ Installation Instructions
 -------------------------
 
 First, copy all files in the server directory to a directory inside your
-source tree. If you're familiar with git, you can use a git submodule for
+source tree. If you're familiar with git, you can use a [git submodule](http://git-scm.com/docs/git-submodule) for
 this purpose. Then add viewback.cpp and viewback_util.cpp to your project
 files. In whichever files you want to use Viewback, add at the top:
 
