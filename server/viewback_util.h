@@ -53,8 +53,8 @@ extern "C" {
 */
 
 /*
-	This is optional. You can call this after server shutdown to clear out a
-	previous config.
+	This is optional. You can call this before server creation to restart your
+	configuration. It frees all the memory used by the util functions.
 */
 void vb_util_initialize();
 

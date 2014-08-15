@@ -460,6 +460,8 @@ vb_bool vb_util_server_create(const char* server_name)
 	if (!vb_server_create())
 		return 0;
 
+	g_initialized = false;
+
 	return 1;
 }
 
