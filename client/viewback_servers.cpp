@@ -94,7 +94,7 @@ bool CViewbackServersThread::Initialize()
 	}
 
 	/* use setsockopt() to request that the kernel join a multicast group */
-	mreq.imr_multiaddr.s_addr=inet_addr(VB_DEFAULT_MULTICAST_ADDRESS);
+	inet_pton(AF_INET, VB_DEFAULT_MULTICAST_ADDRESS, &mreq.imr_multiaddr);
 	mreq.imr_interface.s_addr=htonl(INADDR_ANY);
 	if (setsockopt(m_socket, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char*)&mreq, sizeof(mreq)) < 0)
 	{

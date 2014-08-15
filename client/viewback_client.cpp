@@ -317,7 +317,9 @@ void CViewbackClient::Connect(const char* pszIP, unsigned short iPort)
 
 	VBPrintf("Connecting to server at %s ...\n", pszIP);
 
-	bool bResult =  CViewbackDataThread::Connect(ntohl(inet_addr(pszIP)), iPort);
+	IN_ADDR address;
+	inet_pton(AF_INET, pszIP, &address);
+	bool bResult = CViewbackDataThread::Connect(ntohl(address.s_addr), iPort);
 
 	if (bResult)
 		VBPrintf("Success.\n");

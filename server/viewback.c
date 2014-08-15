@@ -522,7 +522,7 @@ vb_bool vb_server_create()
 
 	memset(&VB->multicast_addr, 0, sizeof(VB->multicast_addr));
 	VB->multicast_addr.sin_family = AF_INET;
-	VB->multicast_addr.sin_addr.s_addr = inet_addr(VB_DEFAULT_MULTICAST_ADDRESS);
+	inet_pton(AF_INET, VB_DEFAULT_MULTICAST_ADDRESS, &VB->multicast_addr.sin_addr);
 	VB->multicast_addr.sin_port = htons(VB_DEFAULT_PORT);
 	VB->last_multicast = 0;
 
