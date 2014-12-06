@@ -70,9 +70,6 @@ size_t vb_config_get_memory_required(vb_config_t* config)
 	if (!config)
 		return 0;
 
-	if (config->num_data_channels <= 0)
-		return 0;
-
 	if (config->num_data_labels < 0)
 		return 0;
 
@@ -511,6 +508,7 @@ vb_bool vb_server_create()
 	VB->multicast_socket = socket(AF_INET, SOCK_DGRAM, 0);
 
 	if (!vb__socket_valid(VB->multicast_socket))
+		// Did you call WSAStartup() first?
 		return 0;
 
 	int ttl = 10;
@@ -715,6 +713,8 @@ void vb_server_update(vb_uint64 current_game_time)
 	if (!VB->server_active)
 		return;
 
+	// This sort of thing can happen the header is compiled with VIEWBACK_TIME_DOUBLE
+	// and viewback.cpp is not
 	VBAssert(current_game_time >= VB->current_time);
 
 	// This sort of thing can happen the header is compiled with VIEWBACK_TIME_DOUBLE
