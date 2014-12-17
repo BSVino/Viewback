@@ -60,6 +60,8 @@ interface that allows you to allocate the memory that Viewback uses.
 
 	vb_util_initialize(); // This is optional.
 
+	// WINDOWS USERS: If you have not already, make sure you call [WSAStartup()](http://msdn.microsoft.com/en-us/library/windows/desktop/ms742213%28v=vs.85%29.aspx). See the Viewback test code for an example.
+
 	// A "channel" is a stream of data to be sent to the Viewback monitor for display.
 	// Here we create an integer channel called "Health".
 	vb_channel_handle_t health_channel;
