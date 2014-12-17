@@ -347,7 +347,8 @@ vb_bool vb_data_send_vector_s(const char* channel, float x, float y, float z);
 
 /*
 	Any text that goes to your console can also be piped into Viewback for
-	display in the monitor.
+	display in the monitor. The text is sent immediately so transient storage
+	is OK.
 	Returns 1 on success, 0 on failure.
 */
 vb_bool vb_console_append(const char* text);
@@ -355,7 +356,8 @@ vb_bool vb_console_append(const char* text);
 /*
 	Set the status text. Unlike the console, the status text doesn't append,
 	it just shows whatever is in the status. Good for fps and current assets
-	loaded and that sort of thing.
+	loaded and that sort of thing. The text is sent immediately so transient
+	storage is OK.
 	Returns 1 on success, 0 on failure.
 */
 vb_bool vb_status_set(const char* text);
