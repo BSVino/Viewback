@@ -157,7 +157,8 @@ void vb_util_add_channel(const char* name, vb_data_type_t type, /*out*/ vb_chann
 
 	g_channels.push_back(c);
 
-	*handle = (vb_channel_handle_t)g_channels.size()-1;
+	if (handle)
+		*handle = (vb_channel_handle_t)g_channels.size()-1;
 }
 
 void vb_util_add_group(const char* name, /*out*/ vb_group_handle_t* handle)
@@ -170,7 +171,8 @@ void vb_util_add_group(const char* name, /*out*/ vb_group_handle_t* handle)
 
 	g_groups.push_back(g);
 
-	*handle = (vb_group_handle_t)g_groups.size()-1;
+	if (handle)
+		*handle = (vb_group_handle_t)g_groups.size() - 1;
 }
 
 void vb_util_add_channel_to_group(vb_group_handle_t group, vb_channel_handle_t channel)
