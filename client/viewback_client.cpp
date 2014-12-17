@@ -75,7 +75,7 @@ void CViewbackClient::Update()
 		// Look for a data registration packet.
 		for (size_t i = 0; i < aPackets.size(); i++)
 		{
-			if (aPackets[i].data_channels_size())
+			if (aPackets[i].is_registration())
 			{
 				static VBVector3 aclrColors[] = {
 					VBVector3(1, 0, 0),
@@ -89,7 +89,9 @@ void CViewbackClient::Update()
 
 				// Disregard any data which came in before the registration packet, it may be from another server or old connection.
 				m_aData.clear();
+				m_aDataChannels.clear();
 				m_aDataGroups.clear();
+				m_aDataControls.clear();
 				m_aMeta.clear();
 				m_aUnhandledMessages.clear();
 				m_flLatestDataTime = 0;
@@ -187,12 +189,14 @@ void CViewbackClient::Update()
 						m_aDataControls.back().slider_float.range_min = oControlProtobuf.range_min_float();
 						m_aDataControls.back().slider_float.range_max = oControlProtobuf.range_max_float();
 						m_aDataControls.back().slider_float.steps = oControlProtobuf.num_steps();
+						m_aDataControls.back().slider_float.initial_value = oControlProtobuf.value_float();
 						break;
 
 					case VB_CONTROL_SLIDER_INT:
 						m_aDataControls.back().slider_int.range_min = oControlProtobuf.range_min_int();
 						m_aDataControls.back().slider_int.range_max = oControlProtobuf.range_max_int();
 						m_aDataControls.back().slider_int.step_size = oControlProtobuf.step_size();
+						m_aDataControls.back().slider_int.initial_value = oControlProtobuf.value_int();
 						break;
 
 					default:
@@ -208,7 +212,7 @@ void CViewbackClient::Update()
 			}
 		}
 
-		if (!m_aDataChannels.size())
+		if (!m_aDataChannels.size() && !m_aDataControls.size() && !m_aDataGroups.size())
 		{
 			// We somehow don't have any data registrations yet, so stash these messages for later.
 			// It might be possible if the server sends some messages between when the client connects and when it requests registrations.
@@ -234,6 +238,22 @@ void CViewbackClient::Update()
 
 			if (aPackets[i].has_status())
 				m_sStatus = aPackets[i].status();
+
+			if (aPackets[i].data_controls_size())
+			{
+				VBAssert(!aPackets[i].is_registration());
+
+				for (size_t j = 0; j < m_aDataControls.size(); j++)
+				{
+					if (m_aDataControls[j].m_name != aPackets[i].data_controls(0).name())
+						continue;
+
+					if (m_pfnControlUpdatedCallback)
+						m_pfnControlUpdatedCallback(j, aPackets[i].data_controls(0).value_float(), aPackets[i].data_controls(0).value_int());
+
+					break;
+				}
+			}
 		}
 
 		while (m_sOutgoingCommands.size())

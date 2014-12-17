@@ -497,6 +497,131 @@ vb_bool vb_data_add_control_slider_int(const char* name, int range_min, int rang
 	return 1;
 }
 
+size_t vb__write_length_prepended_message(struct vb__Packet *_Packet, void *_buffer, size_t length, size_t(*serialize)(struct vb__Packet *_Packet, void *_buffer, size_t length));
+vb_bool vb__socket_send(vb__socket_t* socket, const char* message, size_t message_length);
+
+vb_bool vb__data_update_control(size_t i, vb_control_t control_type, void* value, size_t skip_connection)
+{
+	vb__stack_allocate(struct vb__DataControl, control, sizeof(struct vb__DataControl));
+	memset(control, 0, sizeof(struct vb__DataControl));
+
+	struct vb__Packet packet;
+	vb__Packet_initialize(&packet);
+
+	packet._data_controls = control;
+	packet._data_controls_repeated_len = 1;
+
+	switch (control_type)
+	{
+	default:
+		VBAssert(0);
+		return 0;
+
+	case VB_CONTROL_SLIDER_FLOAT:
+		control->_initial_float = *(float*)value;
+		break;
+
+	case VB_CONTROL_SLIDER_INT:
+		control->_initial_int = *(int*)value;
+		break;
+	}
+
+	control->_name = VB->controls[i].name;
+	control->_name_len = strlen(VB->controls[i].name);
+	control->_type = VB->controls[i].type;
+
+	size_t message_predicted_length = vb__Packet_get_message_size(&packet);
+	Packet_alloca(message, message_predicted_length);
+
+	size_t message_actual_length = vb__write_length_prepended_message(&packet, message, message_predicted_length, &vb__Packet_serialize);
+
+	if (!message_actual_length)
+		return 0;
+
+	for (size_t i = 0; i < VB->config.max_connections; i++)
+	{
+		if (VB->connections[i].socket == VB_INVALID_SOCKET)
+			continue;
+
+		if (i == skip_connection)
+			continue;
+
+		vb__socket_send(&VB->connections[i].socket, (const char*)message, message_actual_length);
+	}
+
+	return 1;
+}
+
+vb_bool vb_data_set_control_slider_float_value(const char* name, float value)
+{
+	if (!VB)
+		return 0;
+
+	if (!name)
+		return 0;
+
+	if (!name[0])
+		return 0;
+
+	size_t i;
+	for (i = 0; i < VB->next_control; i++)
+	{
+		if (strcmp(VB->controls[i].name, name) == 0)
+		{
+			VBAssert(VB->controls[i].type == VB_CONTROL_SLIDER_FLOAT);
+
+			if (VB->controls[i].slider_float.initial_value == value)
+				return 1;
+
+			VB->controls[i].slider_float.initial_value = value;
+			break;
+		}
+	}
+
+	if (i >= VB->next_control)
+		return 0;
+
+	if (VB->server_active)
+		return vb__data_update_control(i, VB->controls[i].type, &value, -1);
+
+	return 1;
+}
+
+vb_bool vb_data_set_control_slider_int_value(const char* name, int value)
+{
+	if (!VB)
+		return 0;
+
+	if (!name)
+		return 0;
+
+	if (!name[0])
+		return 0;
+
+	size_t i;
+	for (i = 0; i < VB->next_control; i++)
+	{
+		if (strcmp(VB->controls[i].name, name) == 0)
+		{
+			VBAssert(VB->controls[i].type == VB_CONTROL_SLIDER_INT);
+
+			if (VB->controls[i].slider_int.initial_value == value)
+				return 1;
+
+			VB->controls[i].slider_int.initial_value = value;
+			break;
+		}
+	}
+
+	if (i >= VB->next_control)
+		return 0;
+
+	if (VB->server_active)
+		return vb__data_update_control(i, VB->controls[i].type, &value, -1);
+
+	return 1;
+}
+
 vb_bool vb_server_create()
 {
 	if (!VB)
@@ -946,13 +1071,23 @@ void vb_server_update(vb_uint64 current_game_time)
 				case VB_CONTROL_SLIDER_FLOAT:
 					VBAssert(after_control_index < message_length);
 					if (after_control_index < message_length && VB->controls[control].slider_float_callback)
-						VB->controls[control].slider_float_callback((float)atof(&mesg[after_control_index]));
+					{
+						float new_value = (float)atof(&mesg[after_control_index]);
+						VB->controls[control].slider_float.initial_value = new_value;
+						vb__data_update_control(control, VB_CONTROL_SLIDER_FLOAT, &new_value, i);
+						VB->controls[control].slider_float_callback(new_value);
+					}
 					break;
 
 				case VB_CONTROL_SLIDER_INT:
 					VBAssert(after_control_index < message_length);
 					if (after_control_index < message_length && VB->controls[control].slider_int_callback)
-						VB->controls[control].slider_int_callback(atoi(&mesg[after_control_index]));
+					{
+						int new_value = atoi(&mesg[after_control_index]);
+						VB->controls[control].slider_int.initial_value = new_value;
+						vb__data_update_control(control, VB_CONTROL_SLIDER_INT, &new_value, i);
+						VB->controls[control].slider_int_callback(new_value);
+					}
 					break;
 				}
 			}
@@ -1617,6 +1752,7 @@ int vb__DataControl_write(struct vb__DataControl *_DataControl, void *_buffer, i
 	{
 		unsigned long *min_ptr = (unsigned long *)&_DataControl->_range_min_float;
 		unsigned long *max_ptr = (unsigned long *)&_DataControl->_range_max_float;
+		unsigned long *initial = (unsigned long *)&_DataControl->_initial_float;
 
 		offset = vb__write_wire_format(3, PB_WIRE_TYPE_32BIT, _buffer, offset);
 		offset = vb__write_raw_little_endian32(*min_ptr, _buffer, offset);
@@ -1626,6 +1762,9 @@ int vb__DataControl_write(struct vb__DataControl *_DataControl, void *_buffer, i
 
 		offset = vb__write_wire_format(5, PB_WIRE_TYPE_VARINT, _buffer, offset);
 		offset = vb__write_raw_varint32(_DataControl->_num_steps, _buffer, offset);
+
+		offset = vb__write_wire_format(9, PB_WIRE_TYPE_32BIT, _buffer, offset);
+		offset = vb__write_raw_little_endian32(*initial, _buffer, offset);
 	}
 
 	if (_DataControl->_type == VB_CONTROL_SLIDER_INT)
@@ -1638,6 +1777,9 @@ int vb__DataControl_write(struct vb__DataControl *_DataControl, void *_buffer, i
 
 		offset = vb__write_wire_format(8, PB_WIRE_TYPE_VARINT, _buffer, offset);
 		offset = vb__write_raw_varint32(_DataControl->_step_size, _buffer, offset);
+
+		offset = vb__write_wire_format(10, PB_WIRE_TYPE_VARINT, _buffer, offset);
+		offset = vb__write_raw_varint32(_DataControl->_initial_int, _buffer, offset);
 	}
 
 	return offset;
@@ -1778,6 +1920,9 @@ int vb__Packet_write(struct vb__Packet *_Packet, void *_buffer, int offset)
 		offset = vb__write_raw_bytes(_Packet->_status, _Packet->_status_len, _buffer, offset);
 	}
 
+	offset = vb__write_wire_format(8, PB_WIRE_TYPE_VARINT, _buffer, offset);
+	offset = vb__write_raw_varint32(_Packet->_is_registration, _buffer, offset);
+
 	return offset;
 }
 
@@ -1790,6 +1935,7 @@ void vb__Packet_initialize_data(struct vb__Packet* packet, struct vb__Data* data
 {
 	memset(packet, 0, sizeof(struct vb__Packet));
 
+	packet->_is_registration = 0;
 	packet->_data = data;
 
 	memset(data, 0, sizeof(struct vb__Data));
@@ -1806,6 +1952,8 @@ void vb__Packet_initialize_data(struct vb__Packet* packet, struct vb__Data* data
 void vb__Packet_initialize_registrations(struct vb__Packet* packet, struct vb__DataChannel* data_channels, size_t channels, struct vb__DataGroup* data_groups, size_t groups, struct vb__DataLabel* data_labels, size_t labels, struct vb__DataControl* data_controls, size_t controls)
 {
 	memset(packet, 0, sizeof(struct vb__Packet));
+
+	packet->_is_registration = 1;
 
 	packet->_data_channels = data_channels;
 	packet->_data_channels_repeated_len = channels;
@@ -1883,12 +2031,14 @@ void vb__Packet_initialize_registrations(struct vb__Packet* packet, struct vb__D
 			data_controls[i]._range_min_float = VB->controls[i].slider_float.range_min;
 			data_controls[i]._range_max_float = VB->controls[i].slider_float.range_max;
 			data_controls[i]._num_steps = VB->controls[i].slider_float.steps;
+			data_controls[i]._initial_float = VB->controls[i].slider_float.initial_value;
 			break;
 
 		case VB_CONTROL_SLIDER_INT:
 			data_controls[i]._range_min_int = VB->controls[i].slider_int.range_min;
 			data_controls[i]._range_max_int = VB->controls[i].slider_int.range_max;
 			data_controls[i]._step_size = VB->controls[i].slider_int.step_size;
+			data_controls[i]._initial_int = VB->controls[i].slider_int.initial_value;
 			break;
 
 		default:
@@ -2048,6 +2198,12 @@ size_t vb__Packet_get_message_size(struct vb__Packet *_Packet)
 			size += 1; /* One byte for "num_steps" field number and wire type. */
 			size += 4; /* Four bytes because you never know. */
 
+			size += 1; // One byte for "value_float" field number and wire type
+			size += 1; // One byte for "value_float" data
+
+			size += 1; // One byte for "value_int" field number and wire type
+			size += 1; // One byte for "value_int" data
+
 			/* Add on the size for each string. */
 			size += _Packet->_data_controls[i]._name_len;
 		}
@@ -2066,6 +2222,9 @@ size_t vb__Packet_get_message_size(struct vb__Packet *_Packet)
 		size += 4; /* 4 bytes to support really long strings. */
 		size += _Packet->_status_len;
 	}
+
+	size += 1; // One byte for "is_registration" field number and wire type
+	size += 1; // One byte for "is_registration" data
 
 	return size;
 }

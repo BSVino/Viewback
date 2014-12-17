@@ -82,6 +82,7 @@ public:
 			float range_min;
 			float range_max;
 			int   steps;
+			float initial_value;
 		} slider_float;
 
 		struct
@@ -89,6 +90,7 @@ public:
 			int range_min;
 			int range_max;
 			int step_size;
+			int initial_value;
 		} slider_int;
 	};
 };
@@ -301,6 +303,48 @@ void vb_util_add_control_slider_int(const char* name, int range_min, int range_m
 	g_controls.push_back(c);
 }
 
+vb_bool vb_util_set_control_slider_float_value(const char* name, float value)
+{
+	if (vb_server_is_active())
+		return vb_data_set_control_slider_float_value(name, value);
+
+	for (size_t i = 0; i < g_controls.size(); i++)
+	{
+		if (g_controls[i].name == name)
+		{
+			// Should be an assert, really
+			if (g_controls[i].type != VB_CONTROL_SLIDER_FLOAT)
+				continue;
+
+			g_controls[i].slider_float.initial_value = value;
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+vb_bool vb_util_set_control_slider_int_value(const char* name, int value)
+{
+	if (vb_server_is_active())
+		return vb_data_set_control_slider_int_value(name, value);
+
+	for (size_t i = 0; i < g_controls.size(); i++)
+	{
+		if (g_controls[i].name == name)
+		{
+			// Should be an assert, really
+			if (g_controls[i].type != VB_CONTROL_SLIDER_INT)
+				continue;
+
+			g_controls[i].slider_int.initial_value = value;
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 void vb_util_set_max_connections(unsigned char max_connections)
 {
 	if (!g_initialized)
@@ -447,10 +491,14 @@ vb_bool vb_util_server_create(const char* server_name)
 		case VB_CONTROL_SLIDER_FLOAT:
 			if (!vb_data_add_control_slider_float(control.name, control.slider_float.range_min, control.slider_float.range_max, control.slider_float.steps, control.slider_float_callback))
 				return 0;
+			if (!vb_data_set_control_slider_float_value(control.name, control.slider_float.initial_value))
+				return 0;
 			break;
 
 		case VB_CONTROL_SLIDER_INT:
 			if (!vb_data_add_control_slider_int(control.name, control.slider_int.range_min, control.slider_int.range_max, control.slider_int.step_size, control.slider_int_callback))
+				return 0;
+			if (!vb_data_set_control_slider_int_value(control.name, control.slider_int.initial_value))
 				return 0;
 			break;
 

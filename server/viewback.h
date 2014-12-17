@@ -292,6 +292,11 @@ vb_bool vb_data_add_control_button(const char* name, vb_control_button_callback 
 vb_bool vb_data_add_control_slider_float(const char* name, float range_min, float range_max, int steps, vb_control_slider_float_callback callback);
 vb_bool vb_data_add_control_slider_int(const char* name, int range_min, int range_max, int step_size, vb_control_slider_int_callback callback);
 
+// During setup these procedures set the initial value of the control sliders.
+// During runtime these procedures update the clients with the new values.
+vb_bool vb_data_set_control_slider_float_value(const char* name, float value);
+vb_bool vb_data_set_control_slider_int_value(const char* name, int value);
+
 /*
 	After registering all of your data, call this to start up the server.
 */

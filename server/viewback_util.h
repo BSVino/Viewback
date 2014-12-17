@@ -114,6 +114,11 @@ void vb_util_add_control_button(const char* name, vb_control_button_callback cal
 void vb_util_add_control_slider_float(const char* name, float range_min, float range_max, int steps, vb_control_slider_float_callback callback);
 void vb_util_add_control_slider_int(const char* name, int range_min, int range_max, int step_size, vb_control_slider_int_callback callback);
 
+// During setup these procedures set the initial value of the control sliders.
+// During runtime these procedures update the clients with the new values.
+vb_bool vb_util_set_control_slider_float_value(const char* name, float value);
+vb_bool vb_util_set_control_slider_int_value(const char* name, int value);
+
 // For info on these advanced commands see the vb_config_t structure in viewback.h
 void vb_util_set_max_connections(unsigned char max_connections);
 void vb_util_set_output_callback(vb_debug_output_callback output);

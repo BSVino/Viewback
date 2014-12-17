@@ -65,6 +65,9 @@ message DataControl {
 	optional uint32 range_min_int = 6;
 	optional uint32 range_max_int = 7;
 	optional uint32 step_size     = 8;
+
+	optional float  value_float   = 9;
+	optional uint32 value_int     = 10;
 }
 
 message Packet {
@@ -75,4 +78,5 @@ message Packet {
 	repeated DataControl data_controls  = 5;
 	optional string      console_output = 6;
 	optional string      status         = 7;
+	optional bool        is_registration = 8;
 }

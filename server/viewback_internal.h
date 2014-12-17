@@ -90,6 +90,7 @@ typedef struct
 			float range_min;
 			float range_max;
 			int   steps;
+			float initial_value;
 		} slider_float;
 
 		struct
@@ -97,6 +98,7 @@ typedef struct
 			int range_min;
 			int range_max;
 			int step_size;
+			int initial_value;
 		} slider_int;
 	};
 } vb__data_control_t;
@@ -203,9 +205,11 @@ struct vb__DataControl {
 	float          _range_min_float;
 	float          _range_max_float;
 	unsigned int   _num_steps;
+	float          _initial_float;
 	int            _range_min_int;
 	int            _range_max_int;
 	unsigned int   _step_size;
+	int            _initial_int;
 };
 
 struct vb__Packet {
@@ -224,6 +228,8 @@ struct vb__Packet {
 
 	int            _status_len;
 	const char*    _status;
+
+	int _is_registration;
 };
 
 void vb__Packet_initialize(struct vb__Packet* packet);

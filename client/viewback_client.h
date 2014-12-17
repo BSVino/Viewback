@@ -101,6 +101,7 @@ public:
 			float range_min;
 			float range_max;
 			int   steps;
+			float initial_value;
 		} slider_float;
 
 		struct
@@ -108,6 +109,7 @@ public:
 			int range_min;
 			int range_max;
 			int step_size;
+			int initial_value;
 		} slider_int;
 	};
 };
@@ -171,6 +173,9 @@ typedef void(*ConsoleOutputCallback)(const char*);
 typedef void(*DebugOutputCallback)(const char*);
 typedef void(*RegistrationUpdateCallback)();
 
+// f_value is valid if the control is a float, i_value is valid if the control is an int
+typedef void(*ControlUpdatedCallback)(size_t control_id, float f_value, int i_value);
+
 class CViewbackClient
 {
 public:
@@ -199,6 +204,8 @@ public:
 	void ControlCallback(int iControl);
 	void ControlCallback(int iControl, float);
 	void ControlCallback(int iControl, int);
+
+	void SetControlUpdatedCallback(ControlUpdatedCallback callback) { m_pfnControlUpdatedCallback = callback; }
 
 	void SendConsoleCommand(const std::string& sCommand);
 	DebugOutputCallback GetDebugOutputCallback() { return m_pfnDebugOutput; }
@@ -240,6 +247,7 @@ private:
 	RegistrationUpdateCallback m_pfnRegistrationUpdate;
 	ConsoleOutputCallback      m_pfnConsoleOutput;
 	DebugOutputCallback        m_pfnDebugOutput;
+	ControlUpdatedCallback     m_pfnControlUpdatedCallback;
 
 	std::string m_sStatus;
 
