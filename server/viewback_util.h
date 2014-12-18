@@ -127,6 +127,14 @@ void vb_util_add_control_button_command(const char* name, const char* command);
 void vb_util_add_control_slider_float_command(const char* name, float range_min, float range_max, int steps, const char* command);
 void vb_util_add_control_slider_int_command(const char* name, int range_min, int range_max, int step_size, const char* command);
 
+/*
+	Register controls which monitor and update the specified variable. Viewback
+	automatically checks the variable for changes and updates all clients.
+	For more info see the notes in viewback.h
+*/
+void vb_util_add_control_slider_float_address(const char* name, float range_min, float range_max, int steps, float* address);
+void vb_util_add_control_slider_int_address(const char* name, int range_min, int range_max, int step_size, int* address);
+
 // During setup these procedures set the initial value of the control sliders.
 // During runtime these procedures update the clients with the new values.
 vb_bool vb_util_set_control_slider_float_value(const char* name, float value);

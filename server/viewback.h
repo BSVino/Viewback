@@ -301,7 +301,7 @@ vb_bool vb_data_add_control_slider_int(const char* name, int range_min, int rang
 /*
 	Register controls which execute the specified commands when they are used.
 	The command will be sent to the command callback specified in
-	vb_data_set_command_callback(). Example:
+	vb_data_set_command_callback().
 
 	For the sliders, the command can be specified in two ways. If a "%f" exists
 	in your command string, then it will be replaced with the value that the
@@ -334,6 +334,28 @@ vb_bool vb_data_add_control_slider_int(const char* name, int range_min, int rang
 vb_bool vb_data_add_control_button_command(const char* name, const char* command);
 vb_bool vb_data_add_control_slider_float_command(const char* name, float range_min, float range_max, int steps, const char* command);
 vb_bool vb_data_add_control_slider_int_command(const char* name, int range_min, int range_max, int step_size, const char* command);
+
+/*
+	Register controls which monitor and update the data in the specified memory
+	address. Viewback automatically checks the variable for changes and updates
+	all clients.
+
+	A value of NULL for the address is valid. If your data occassionally goes
+	away and comes back (say, it is freed and reallocated for some reason) then
+	you can use the "update" versions of these procedures to set the address to
+	NULL and then reset it to the new value and everything will work just fine.
+
+	Other options are the same as above.
+
+	Examples:
+
+	vb_data_add_control_slider_float_address("Player max speed", 10, 100, 0, &player->speed);
+	vb_data_add_control_slider_int_command("Number of enemies", 0, 8, 0, &game->num_enemies);
+*/
+vb_bool vb_data_add_control_slider_float_address(const char* name, float range_min, float range_max, int steps, float* address);
+vb_bool vb_data_add_control_slider_int_address(const char* name, int range_min, int range_max, int step_size, int* address);
+vb_bool vb_data_update_control_slider_float_address(const char* name, float* address);
+vb_bool vb_data_update_control_slider_int_address(const char* name, int* address);
 
 // During setup these procedures set the initial value of the control sliders.
 // During runtime these procedures update the clients with the new values.

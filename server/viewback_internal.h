@@ -92,7 +92,8 @@ typedef struct
 			float range_min;
 			float range_max;
 			int   steps;
-			float initial_value;
+			float value;
+			float* address;
 		} slider_float;
 
 		struct
@@ -100,7 +101,8 @@ typedef struct
 			int range_min;
 			int range_max;
 			int step_size;
-			int initial_value;
+			int value;
+			int* address;
 		} slider_int;
 	};
 } vb__data_control_t;

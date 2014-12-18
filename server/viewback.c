@@ -577,6 +577,54 @@ vb_bool vb_data_add_control_slider_int_command(const char* name, int range_min, 
 	return 1;
 }
 
+vb_bool vb_data_add_control_slider_float_address(const char* name, float range_min, float range_max, int steps, float* address)
+{
+	if (steps < 0)
+		return 0;
+
+	if (range_max <= range_min)
+		return 0;
+
+	vb__data_control_t* control = vb__data_add_control(name, VB_CONTROL_SLIDER_FLOAT);
+
+	if (!control)
+		return 0;
+
+	control->slider_float.range_min = range_min;
+	control->slider_float.range_max = range_max;
+	control->slider_float.steps = steps;
+	control->slider_float.address = address;
+
+	if (address)
+		control->slider_float.value = *address;
+
+	return 1;
+}
+
+vb_bool vb_data_add_control_slider_int_address(const char* name, int range_min, int range_max, int step_size, int* address)
+{
+	if (step_size < 1)
+		return 0;
+
+	if (range_max <= range_min)
+		return 0;
+
+	vb__data_control_t* control = vb__data_add_control(name, VB_CONTROL_SLIDER_INT);
+
+	if (!control)
+		return 0;
+
+	control->slider_int.range_min = range_min;
+	control->slider_int.range_max = range_max;
+	control->slider_int.step_size = step_size;
+	control->slider_int.address = address;
+
+	if (address)
+		control->slider_int.value = *address;
+
+	return 1;
+}
+
 size_t vb__write_length_prepended_message(struct vb__Packet *_Packet, void *_buffer, size_t length, size_t(*serialize)(struct vb__Packet *_Packet, void *_buffer, size_t length));
 vb_bool vb__socket_send(vb__socket_t* socket, const char* message, size_t message_length);
 
@@ -650,10 +698,14 @@ vb_bool vb_data_set_control_slider_float_value(const char* name, float value)
 		{
 			VBAssert(VB->controls[i].type == VB_CONTROL_SLIDER_FLOAT);
 
-			if (VB->controls[i].slider_float.initial_value == value)
+			if (VB->controls[i].slider_float.value == value)
 				return 1;
 
-			VB->controls[i].slider_float.initial_value = value;
+			VB->controls[i].slider_float.value = value;
+
+			if (VB->controls[i].slider_float.address)
+				*VB->controls[i].slider_float.address = value;
+
 			break;
 		}
 	}
@@ -685,10 +737,14 @@ vb_bool vb_data_set_control_slider_int_value(const char* name, int value)
 		{
 			VBAssert(VB->controls[i].type == VB_CONTROL_SLIDER_INT);
 
-			if (VB->controls[i].slider_int.initial_value == value)
+			if (VB->controls[i].slider_int.value == value)
 				return 1;
 
-			VB->controls[i].slider_int.initial_value = value;
+			VB->controls[i].slider_int.value = value;
+
+			if (VB->controls[i].slider_int.address)
+				*VB->controls[i].slider_int.address = value;
+
 			break;
 		}
 	}
@@ -1155,7 +1211,7 @@ void vb_server_update(vb_uint64 current_game_time)
 					if (after_control_index < message_length)
 					{
 						float new_value = (float)atof(&mesg[after_control_index]);
-						VB->controls[control].slider_float.initial_value = new_value;
+						VB->controls[control].slider_float.value = new_value;
 						vb__data_update_control(control, VB_CONTROL_SLIDER_FLOAT, &new_value, i);
 
 						if (VB->controls[control].slider_float_callback)
@@ -1169,6 +1225,10 @@ void vb_server_update(vb_uint64 current_game_time)
 
 							VB->config.command_callback(sprintf_buffer);
 						}
+						else if (VB->controls[control].slider_float.address)
+							*VB->controls[control].slider_float.address = new_value;
+						else
+							VBUnimplemented();
 					}
 					break;
 
@@ -1177,7 +1237,7 @@ void vb_server_update(vb_uint64 current_game_time)
 					if (after_control_index < message_length)
 					{
 						int new_value = atoi(&mesg[after_control_index]);
-						VB->controls[control].slider_int.initial_value = new_value;
+						VB->controls[control].slider_int.value = new_value;
 						vb__data_update_control(control, VB_CONTROL_SLIDER_INT, &new_value, i);
 
 						if (VB->controls[control].slider_int_callback)
@@ -1191,9 +1251,38 @@ void vb_server_update(vb_uint64 current_game_time)
 
 							VB->config.command_callback(sprintf_buffer);
 						}
+						else if (VB->controls[control].slider_int.address)
+							*VB->controls[control].slider_int.address = new_value;
+						else
+							VBUnimplemented();
 					}
 					break;
 				}
+			}
+		}
+	}
+
+	// Discover if any controls have been updated and propogate them to clients.
+	for (size_t i = 0; i < VB->config.num_data_controls; i++)
+	{
+		vb__data_control_t* control = &VB->controls[i];
+
+		if (control->type == VB_CONTROL_SLIDER_FLOAT && control->slider_float.address)
+		{
+			if (*control->slider_float.address != control->slider_float.value)
+			{
+				vb__data_update_control(i, control->type, control->slider_float.address, -1);
+
+				control->slider_float.value = *control->slider_float.address;
+			}
+		}
+		else if (control->type == VB_CONTROL_SLIDER_INT && control->slider_int.address)
+		{
+			if (*control->slider_int.address != control->slider_int.value)
+			{
+				vb__data_update_control(i, control->type, control->slider_int.address, -1);
+
+				control->slider_int.value = *control->slider_int.address;
 			}
 		}
 	}
@@ -2135,14 +2224,14 @@ void vb__Packet_initialize_registrations(struct vb__Packet* packet, struct vb__D
 			data_controls[i]._range_min_float = VB->controls[i].slider_float.range_min;
 			data_controls[i]._range_max_float = VB->controls[i].slider_float.range_max;
 			data_controls[i]._num_steps = VB->controls[i].slider_float.steps;
-			data_controls[i]._initial_float = VB->controls[i].slider_float.initial_value;
+			data_controls[i]._initial_float = VB->controls[i].slider_float.value;
 			break;
 
 		case VB_CONTROL_SLIDER_INT:
 			data_controls[i]._range_min_int = VB->controls[i].slider_int.range_min;
 			data_controls[i]._range_max_int = VB->controls[i].slider_int.range_max;
 			data_controls[i]._step_size = VB->controls[i].slider_int.step_size;
-			data_controls[i]._initial_int = VB->controls[i].slider_int.initial_value;
+			data_controls[i]._initial_int = VB->controls[i].slider_int.value;
 			break;
 
 		default:
