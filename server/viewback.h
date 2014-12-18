@@ -53,6 +53,8 @@ typedef unsigned char vb_bool;
 
 	On Windows you must call WSAStartup before using Viewback.
 
+	None of Viewback is thread safe, you must handle synchronization yourself.
+
 	Refer to the readme for more information.
 */
 
@@ -274,23 +276,64 @@ vb_bool vb_data_set_range(vb_channel_handle_t handle, float range_min, float ran
 
 /*
 	Register a control, a more convenient way to send commands to the game.
+
 	Float sliders are given a min and max range (the highest and lowest values
 	on the slider) and a "steps" parameter, which specifies how many total values
 	are selectable on the slider. For example, if steps is 3 then the three
 	selectable values are range_min, range_max, and (range_min + range_max)/2.
 	If steps is 0 then the range is treated as continuous and any value in
 	[range_min, range_max] can be chosen.
+
 	Int sliders are given a min and max range as well, but the step_size
 	specifies the difference between each selectable value. For example if
 	step_size is 1 then your values are 1, 2, 3, 4 and if it is 2 then your
 	values are 2, 4, 6, 8.
+
 	When a user fiddles with the control in the monitor, the callback is
 	triggered.
+
 	Returns 1 on success, 0 on failure.
 */
 vb_bool vb_data_add_control_button(const char* name, vb_control_button_callback callback);
 vb_bool vb_data_add_control_slider_float(const char* name, float range_min, float range_max, int steps, vb_control_slider_float_callback callback);
 vb_bool vb_data_add_control_slider_int(const char* name, int range_min, int range_max, int step_size, vb_control_slider_int_callback callback);
+
+/*
+	Register controls which execute the specified commands when they are used.
+	The command will be sent to the command callback specified in
+	vb_data_set_command_callback(). Example:
+
+	For the sliders, the command can be specified in two ways. If a "%f" exists
+	in your command string, then it will be replaced with the value that the
+	user has set the slider to, and then sent to the command callback. Otherwise
+	if a "%f" is not present, a space and then the value will be be appended to
+	the command before it is sent to the command callback.
+
+	The value-setting functions specified above work just fine for these and it
+	is a good idea to set the initial values for yourself.
+
+	Other options are the same as above.
+
+	Examples:
+
+	vb_data_add_control_button_command("Respawn", "player_respawn");
+
+	When the [Respawn] button is pressed, Viewback will send the
+	"player_respawn" command to the console callback.
+
+	vb_data_add_control_slider_float_command("Player max speed", 10, 100, 0, "player_speed");
+
+	When the slider is set to 70, this string will be sent to the command line:
+	"player_speed 70"
+
+	vb_data_add_control_slider_int_command("Number of enemies", 0, 8, 0, "enemy_count %f");
+
+	When the slider is set to 7, this string will be sent to the command line:
+	"enemy_count 7"
+*/
+vb_bool vb_data_add_control_button_command(const char* name, const char* command);
+vb_bool vb_data_add_control_slider_float_command(const char* name, float range_min, float range_max, int steps, const char* command);
+vb_bool vb_data_add_control_slider_int_command(const char* name, int range_min, int range_max, int step_size, const char* command);
 
 // During setup these procedures set the initial value of the control sliders.
 // During runtime these procedures update the clients with the new values.

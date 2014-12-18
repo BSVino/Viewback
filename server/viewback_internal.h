@@ -76,6 +76,8 @@ typedef struct
 	const char*  name;
 	vb_control_t type;
 
+	const char*  command;
+
 	union
 	{
 		vb_control_button_callback       button_callback;

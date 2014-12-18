@@ -74,6 +74,13 @@ THE SOFTWARE.
 #define VBUnimplemented() {}
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern void vb__debug_printf(const char* format, ...);
 #define VBPrintf vb__debug_printf
 
+#ifdef __cplusplus
+}
+#endif

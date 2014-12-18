@@ -28,6 +28,10 @@ extern "C" {
 	on the heap, if you don't care about that then you can use the functions
 	in this file to make life easier for yourself. They're just a more
 	convenient wrapper around viewback.h
+
+	As with the stuff in viewback.h, most of the const char* strings received
+	as parameters to procedures in this file are not copied elsewhere, so don't
+	do nasty stuff like vb_something(std::string("example").c_str());
 */
 
 /*
@@ -108,11 +112,20 @@ vb_bool vb_util_set_range_s(const char* channel, float range_min, float range_ma
 
 /*
 	Register a control, a more convenient way to send commands to the game.
-	For more info see the notes in voteback.h for vb_data_add_control_button().
+	For more info see the notes in viewback.h for vb_data_add_control_button().
 */
 void vb_util_add_control_button(const char* name, vb_control_button_callback callback);
 void vb_util_add_control_slider_float(const char* name, float range_min, float range_max, int steps, vb_control_slider_float_callback callback);
 void vb_util_add_control_slider_int(const char* name, int range_min, int range_max, int step_size, vb_control_slider_int_callback callback);
+
+/*
+	Register controls which execute the specified commands when they are used.
+	The command will be sent to the command callback specified in
+	vb_util_set_command_callback(). For more info see the notes in viewback.h
+*/
+void vb_util_add_control_button_command(const char* name, const char* command);
+void vb_util_add_control_slider_float_command(const char* name, float range_min, float range_max, int steps, const char* command);
+void vb_util_add_control_slider_int_command(const char* name, int range_min, int range_max, int step_size, const char* command);
 
 // During setup these procedures set the initial value of the control sliders.
 // During runtime these procedures update the clients with the new values.

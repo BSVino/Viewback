@@ -65,8 +65,18 @@ public:
 class CControl
 {
 public:
+	CControl()
+	{
+		command = NULL;
+		button_callback = NULL;
+		slider_float.initial_value = 0;
+	}
+
+public:
 	const char*  name;
 	vb_control_t type;
+
+	const char*  command;
 
 	union
 	{
@@ -303,6 +313,51 @@ void vb_util_add_control_slider_int(const char* name, int range_min, int range_m
 	g_controls.push_back(c);
 }
 
+void vb_util_add_control_button_command(const char* name, const char* command)
+{
+	if (!g_initialized)
+		vb_util_initialize();
+
+	CControl c;
+	c.name = name;
+	c.type = VB_CONTROL_BUTTON;
+	c.command = command;
+
+	g_controls.push_back(c);
+}
+
+void vb_util_add_control_slider_float_command(const char* name, float range_min, float range_max, int steps, const char* command)
+{
+	if (!g_initialized)
+		vb_util_initialize();
+
+	CControl c;
+	c.name = name;
+	c.type = VB_CONTROL_SLIDER_FLOAT;
+	c.command = command;
+	c.slider_float.range_max = range_max;
+	c.slider_float.range_min = range_min;
+	c.slider_float.steps = steps;
+
+	g_controls.push_back(c);
+}
+
+void vb_util_add_control_slider_int_command(const char* name, int range_min, int range_max, int step_size, const char* command)
+{
+	if (!g_initialized)
+		vb_util_initialize();
+
+	CControl c;
+	c.name = name;
+	c.type = VB_CONTROL_SLIDER_INT;
+	c.command = command;
+	c.slider_int.range_max = range_max;
+	c.slider_int.range_min = range_min;
+	c.slider_int.step_size = step_size;
+
+	g_controls.push_back(c);
+}
+
 vb_bool vb_util_set_control_slider_float_value(const char* name, float value)
 {
 	if (vb_server_is_active())
@@ -312,9 +367,7 @@ vb_bool vb_util_set_control_slider_float_value(const char* name, float value)
 	{
 		if (g_controls[i].name == name)
 		{
-			// Should be an assert, really
-			if (g_controls[i].type != VB_CONTROL_SLIDER_FLOAT)
-				continue;
+			VBAssert(g_controls[i].type == VB_CONTROL_SLIDER_FLOAT);
 
 			g_controls[i].slider_float.initial_value = value;
 			return 1;
@@ -333,9 +386,7 @@ vb_bool vb_util_set_control_slider_int_value(const char* name, int value)
 	{
 		if (g_controls[i].name == name)
 		{
-			// Should be an assert, really
-			if (g_controls[i].type != VB_CONTROL_SLIDER_INT)
-				continue;
+			VBAssert(g_controls[i].type == VB_CONTROL_SLIDER_INT);
 
 			g_controls[i].slider_int.initial_value = value;
 			return 1;
@@ -484,20 +535,44 @@ vb_bool vb_util_server_create(const char* server_name)
 		switch (control.type)
 		{
 		case VB_CONTROL_BUTTON:
-			if (!vb_data_add_control_button(control.name, control.button_callback))
-				return 0;
+			if (control.command)
+			{
+				if (!vb_data_add_control_button_command(control.name, control.command))
+					return 0;
+			}
+			else
+			{
+				if (!vb_data_add_control_button(control.name, control.button_callback))
+					return 0;
+			}
 			break;
 
 		case VB_CONTROL_SLIDER_FLOAT:
-			if (!vb_data_add_control_slider_float(control.name, control.slider_float.range_min, control.slider_float.range_max, control.slider_float.steps, control.slider_float_callback))
-				return 0;
+			if (control.command)
+			{
+				if (!vb_data_add_control_slider_float_command(control.name, control.slider_float.range_min, control.slider_float.range_max, control.slider_float.steps, control.command))
+					return 0;
+			}
+			else
+			{
+				if (!vb_data_add_control_slider_float(control.name, control.slider_float.range_min, control.slider_float.range_max, control.slider_float.steps, control.slider_float_callback))
+					return 0;
+			}
 			if (!vb_data_set_control_slider_float_value(control.name, control.slider_float.initial_value))
 				return 0;
 			break;
 
 		case VB_CONTROL_SLIDER_INT:
-			if (!vb_data_add_control_slider_int(control.name, control.slider_int.range_min, control.slider_int.range_max, control.slider_int.step_size, control.slider_int_callback))
-				return 0;
+			if (control.command)
+			{
+				if (!vb_data_add_control_slider_int_command(control.name, control.slider_int.range_min, control.slider_int.range_max, control.slider_int.step_size, control.command))
+					return 0;
+			}
+			else
+			{
+				if (!vb_data_add_control_slider_int(control.name, control.slider_int.range_min, control.slider_int.range_max, control.slider_int.step_size, control.slider_int_callback))
+					return 0;
+			}
 			if (!vb_data_set_control_slider_int_value(control.name, control.slider_int.initial_value))
 				return 0;
 			break;

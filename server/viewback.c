@@ -35,6 +35,21 @@ THE SOFTWARE.
 #define vb__stack_allocate(type, name, bytes) type name[bytes]
 #endif
 
+static char sprintf_buffer[1024];
+
+void vb__sprintf(const char* format, ...)
+{
+	va_list ap;
+	va_start(ap, format);
+#ifdef _MSC_VER
+	vsnprintf_s(sprintf_buffer, sizeof(sprintf_buffer), _TRUNCATE, format, ap);
+#else
+	vsnprintf(sprintf_buffer, sizeof(sprintf_buffer), format, ap);
+#endif
+	va_end(ap);
+}
+
+
 void vb_config_initialize(vb_config_t* config)
 {
 	memset(config, 0, sizeof(vb_config_t));
@@ -401,41 +416,51 @@ vb_bool vb_data_set_range(vb_channel_handle_t handle, float range_min, float ran
 }
 #endif
 
-vb_bool vb_data_add_control_button(const char* name, vb_control_button_callback callback)
+vb__data_control_t* vb__data_add_control(const char* name, vb_control_t type)
 {
 	if (!VB)
-		return 0;
+		return NULL;
 
 	if (!name)
-		return 0;
+		return NULL;
 
 	if (!name[0])
-		return 0;
+		return NULL;
 
 	if (VB->next_control >= VB->config.num_data_controls)
-		return 0;
+		return NULL;
 
 	if (VB->server_active)
+		return NULL;
+
+	vb__data_control_t* control = &VB->controls[VB->next_control];
+	VB->next_control++;
+
+	control->name = name;
+	control->type = type;
+
+	return control;
+}
+
+
+vb_bool vb_data_add_control_button(const char* name, vb_control_button_callback callback)
+{
+	if (!callback)
 		return 0;
 
-	VB->controls[VB->next_control].name = name;
-	VB->controls[VB->next_control].type = VB_CONTROL_BUTTON;
-	VB->controls[VB->next_control].button_callback = callback;
+	vb__data_control_t* control = vb__data_add_control(name, VB_CONTROL_BUTTON);
 
-	VB->next_control++;
+	if (!control)
+		return 0;
+
+	control->button_callback = callback;
 
 	return 1;
 }
 
 vb_bool vb_data_add_control_slider_float(const char* name, float range_min, float range_max, int steps, vb_control_slider_float_callback callback)
 {
-	if (!VB)
-		return 0;
-
-	if (!name)
-		return 0;
-
-	if (!name[0])
+	if (!callback)
 		return 0;
 
 	if (steps < 0)
@@ -444,18 +469,15 @@ vb_bool vb_data_add_control_slider_float(const char* name, float range_min, floa
 	if (range_max <= range_min)
 		return 0;
 
-	if (VB->next_control >= VB->config.num_data_controls)
+	vb__data_control_t* control = vb__data_add_control(name, VB_CONTROL_SLIDER_FLOAT);
+
+	if (!control)
 		return 0;
 
-	if (VB->server_active)
-		return 0;
-
-	VB->controls[VB->next_control].name = name;
-	VB->controls[VB->next_control].type = VB_CONTROL_SLIDER_FLOAT;
-	VB->controls[VB->next_control].slider_float_callback = callback;
-	VB->controls[VB->next_control].slider_float.range_min = range_min;
-	VB->controls[VB->next_control].slider_float.range_max = range_max;
-	VB->controls[VB->next_control].slider_float.steps = steps;
+	control->slider_float_callback = callback;
+	control->slider_float.range_min = range_min;
+	control->slider_float.range_max = range_max;
+	control->slider_float.steps = steps;
 
 	VB->next_control++;
 
@@ -464,13 +486,7 @@ vb_bool vb_data_add_control_slider_float(const char* name, float range_min, floa
 
 vb_bool vb_data_add_control_slider_int(const char* name, int range_min, int range_max, int step_size, vb_control_slider_int_callback callback)
 {
-	if (!VB)
-		return 0;
-
-	if (!name)
-		return 0;
-
-	if (!name[0])
+	if (!callback)
 		return 0;
 
 	if (step_size < 1)
@@ -479,20 +495,84 @@ vb_bool vb_data_add_control_slider_int(const char* name, int range_min, int rang
 	if (range_max <= range_min)
 		return 0;
 
-	if (VB->next_control >= VB->config.num_data_controls)
+	vb__data_control_t* control = vb__data_add_control(name, VB_CONTROL_SLIDER_INT);
+
+	if (!control)
 		return 0;
 
-	if (VB->server_active)
+	control->slider_int_callback = callback;
+	control->slider_int.range_min = range_min;
+	control->slider_int.range_max = range_max;
+	control->slider_int.step_size = step_size;
+
+	return 1;
+}
+
+vb_bool vb_data_add_control_button_command(const char* name, const char* command)
+{
+	if (!command)
 		return 0;
 
-	VB->controls[VB->next_control].name = name;
-	VB->controls[VB->next_control].type = VB_CONTROL_SLIDER_INT;
-	VB->controls[VB->next_control].slider_int_callback = callback;
-	VB->controls[VB->next_control].slider_int.range_min = range_min;
-	VB->controls[VB->next_control].slider_int.range_max = range_max;
-	VB->controls[VB->next_control].slider_int.step_size = step_size;
+	if (!command[0])
+		return 0;
 
-	VB->next_control++;
+	vb__data_control_t* control = vb__data_add_control(name, VB_CONTROL_BUTTON);
+
+	control->command = command;
+
+	return 1;
+}
+
+vb_bool vb_data_add_control_slider_float_command(const char* name, float range_min, float range_max, int steps, const char* command)
+{
+	if (!command)
+		return 0;
+
+	if (!command[0])
+		return 0;
+
+	if (steps < 0)
+		return 0;
+
+	if (range_max <= range_min)
+		return 0;
+
+	vb__data_control_t* control = vb__data_add_control(name, VB_CONTROL_SLIDER_FLOAT);
+
+	if (!control)
+		return 0;
+
+	control->command = command;
+	control->slider_float.range_min = range_min;
+	control->slider_float.range_max = range_max;
+	control->slider_float.steps = steps;
+
+	return 1;
+}
+
+vb_bool vb_data_add_control_slider_int_command(const char* name, int range_min, int range_max, int step_size, const char* command)
+{
+	if (!command)
+		return 0;
+
+	if (!command[0])
+		return 0;
+
+	if (step_size < 1)
+		return 0;
+
+	if (range_max <= range_min)
+		return 0;
+
+	vb__data_control_t* control = vb__data_add_control(name, VB_CONTROL_SLIDER_INT);
+
+	if (!control)
+		return 0;
+
+	control->command = command;
+	control->slider_int.range_min = range_min;
+	control->slider_int.range_max = range_max;
+	control->slider_int.step_size = step_size;
 
 	return 1;
 }
@@ -1066,27 +1146,51 @@ void vb_server_update(vb_uint64 current_game_time)
 				case VB_CONTROL_BUTTON:
 					if (VB->controls[control].button_callback)
 						VB->controls[control].button_callback();
+					else if (VB->controls[control].command)
+						VB->config.command_callback(VB->controls[control].command);
 					break;
 
 				case VB_CONTROL_SLIDER_FLOAT:
 					VBAssert(after_control_index < message_length);
-					if (after_control_index < message_length && VB->controls[control].slider_float_callback)
+					if (after_control_index < message_length)
 					{
 						float new_value = (float)atof(&mesg[after_control_index]);
 						VB->controls[control].slider_float.initial_value = new_value;
 						vb__data_update_control(control, VB_CONTROL_SLIDER_FLOAT, &new_value, i);
-						VB->controls[control].slider_float_callback(new_value);
+
+						if (VB->controls[control].slider_float_callback)
+							VB->controls[control].slider_float_callback(new_value);
+						else if (VB->controls[control].command)
+						{
+							if (strstr(VB->controls[control].command, "%f"))
+								vb__sprintf(VB->controls[control].command, (float)new_value);
+							else
+								vb__sprintf("%s %f", VB->controls[control].command, (float)new_value);
+
+							VB->config.command_callback(sprintf_buffer);
+						}
 					}
 					break;
 
 				case VB_CONTROL_SLIDER_INT:
 					VBAssert(after_control_index < message_length);
-					if (after_control_index < message_length && VB->controls[control].slider_int_callback)
+					if (after_control_index < message_length)
 					{
 						int new_value = atoi(&mesg[after_control_index]);
 						VB->controls[control].slider_int.initial_value = new_value;
 						vb__data_update_control(control, VB_CONTROL_SLIDER_INT, &new_value, i);
-						VB->controls[control].slider_int_callback(new_value);
+
+						if (VB->controls[control].slider_int_callback)
+							VB->controls[control].slider_int_callback(new_value);
+						else if (VB->controls[control].command)
+						{
+							if (strstr(VB->controls[control].command, "%f"))
+								vb__sprintf(VB->controls[control].command, (float)new_value);
+							else
+								vb__sprintf("%s %f", VB->controls[control].command, (float)new_value);
+
+							VB->config.command_callback(sprintf_buffer);
+						}
 					}
 					break;
 				}
