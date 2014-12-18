@@ -1,11 +1,10 @@
 Viewback - A Video Game Design Tool
 ===================================
 
-Viewback is a tool that helps game designers conduct usability play tests. It
-forwards the debug information from your game to your wireless device, where
-you can see it and the player can't. Now you can diagnose problems with the
-game while your playtester enjoys her experience. You can see changes to
-internal game state and send commands to the game in real time.
+Viewback is a data visualization tool for game designers. It forwards the
+debug information from your game to your wireless device for view during
+development and usability testing. You can see changes to game's internal
+state, debug problems on the fly, and send commands to the game in real time.
 
 [Watch this video to see how it works.](https://www.youtube.com/watch?v=vzF4IUAhqgI)
 
