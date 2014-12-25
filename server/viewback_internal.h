@@ -205,6 +205,8 @@ struct vb__DataLabel {
 struct vb__DataControl {
 	int            _name_len;
 	const char*    _name;
+	int            _command_len;
+	const char*    _command;
 	vb_control_t   _type;
 	float          _range_min_float;
 	float          _range_max_float;

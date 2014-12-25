@@ -68,6 +68,8 @@ message DataControl {
 
 	optional float  value_float   = 9;
 	optional uint32 value_int     = 10;
+
+	optional string command = 11;
 }
 
 message Packet {

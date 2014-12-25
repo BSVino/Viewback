@@ -1941,6 +1941,16 @@ int vb__DataControl_write(struct vb__DataControl *_DataControl, void *_buffer, i
 	offset = vb__write_wire_format(2, PB_WIRE_TYPE_VARINT, _buffer, offset);
 	offset = vb__write_raw_varint32(_DataControl->_type, _buffer, offset);
 
+	if (_DataControl->_type == VB_CONTROL_BUTTON)
+	{
+		if (_DataControl->_command_len != 1 || _DataControl->_command[0] != '0')
+		{
+			offset = vb__write_wire_format(11, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
+			offset = vb__write_raw_varint32(_DataControl->_command_len, _buffer, offset);
+			offset = vb__write_raw_bytes(_DataControl->_command, _DataControl->_command_len, _buffer, offset);
+		}
+	}
+
 	if (_DataControl->_type == VB_CONTROL_SLIDER_FLOAT)
 	{
 		unsigned long *min_ptr = (unsigned long *)&_DataControl->_range_min_float;
@@ -2212,6 +2222,16 @@ void vb__Packet_initialize_registrations(struct vb__Packet* packet, struct vb__D
 	{
 		data_controls[i]._name = VB->controls[i].name;
 		data_controls[i]._name_len = strlen(VB->controls[i].name);
+		if (VB->controls[i].command)
+		{
+			data_controls[i]._command = VB->controls[i].command;
+			data_controls[i]._command_len = strlen(VB->controls[i].command);
+		}
+		else
+		{
+			data_controls[i]._command = NULL;
+			data_controls[i]._command_len = 0;
+		}
 		data_controls[i]._type = VB->controls[i].type;
 
 		switch (VB->controls[i].type)
@@ -2397,8 +2417,12 @@ size_t vb__Packet_get_message_size(struct vb__Packet *_Packet)
 			size += 1; // One byte for "value_int" field number and wire type
 			size += 1; // One byte for "value_int" data
 
+			size += 1; // One byte for "command" field number and wire type
+			size += 4; // 4 bytes to support really long strings
+
 			/* Add on the size for each string. */
 			size += _Packet->_data_controls[i]._name_len;
+			size += _Packet->_data_controls[i]._command_len;
 		}
 	}
 

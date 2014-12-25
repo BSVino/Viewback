@@ -182,7 +182,7 @@ void CViewbackClient::Update()
 					switch (m_aDataControls.back().m_type)
 					{
 					case VB_CONTROL_BUTTON:
-						// No parameters.
+						m_aDataControls.back().m_command = oControlProtobuf.command();
 						break;
 
 					case VB_CONTROL_SLIDER_FLOAT:
@@ -420,6 +420,12 @@ void CViewbackClient::ActivateGroup(size_t iGroup)
 
 void CViewbackClient::ControlCallback(int iControl)
 {
+	if (m_aDataControls[iControl].m_override_command.length())
+	{
+		SendConsoleCommand(m_aDataControls[iControl].m_override_command);
+		return;
+	}
+
 	char aoeu[10];
 	sprintf(aoeu, "%d", iControl);
 

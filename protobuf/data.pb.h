@@ -720,6 +720,18 @@ class DataControl : public ::google::protobuf::Message {
   inline ::google::protobuf::uint32 value_int() const;
   inline void set_value_int(::google::protobuf::uint32 value);
 
+  // optional string command = 11;
+  inline bool has_command() const;
+  inline void clear_command();
+  static const int kCommandFieldNumber = 11;
+  inline const ::std::string& command() const;
+  inline void set_command(const ::std::string& value);
+  inline void set_command(const char* value);
+  inline void set_command(const char* value, size_t size);
+  inline ::std::string* mutable_command();
+  inline ::std::string* release_command();
+  inline void set_allocated_command(::std::string* command);
+
   // @@protoc_insertion_point(class_scope:DataControl)
  private:
   inline void set_has_name();
@@ -742,6 +754,8 @@ class DataControl : public ::google::protobuf::Message {
   inline void clear_has_value_float();
   inline void set_has_value_int();
   inline void clear_has_value_int();
+  inline void set_has_command();
+  inline void clear_has_command();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -754,10 +768,11 @@ class DataControl : public ::google::protobuf::Message {
   ::google::protobuf::uint32 range_max_int_;
   ::google::protobuf::uint32 step_size_;
   float value_float_;
+  ::std::string* command_;
   ::google::protobuf::uint32 value_int_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(10 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(11 + 31) / 32];
 
   friend void  protobuf_AddDesc_protobuf_2fdata_2eproto();
   friend void protobuf_AssignDesc_protobuf_2fdata_2eproto();
@@ -1820,6 +1835,76 @@ inline ::google::protobuf::uint32 DataControl::value_int() const {
 inline void DataControl::set_value_int(::google::protobuf::uint32 value) {
   set_has_value_int();
   value_int_ = value;
+}
+
+// optional string command = 11;
+inline bool DataControl::has_command() const {
+  return (_has_bits_[0] & 0x00000400u) != 0;
+}
+inline void DataControl::set_has_command() {
+  _has_bits_[0] |= 0x00000400u;
+}
+inline void DataControl::clear_has_command() {
+  _has_bits_[0] &= ~0x00000400u;
+}
+inline void DataControl::clear_command() {
+  if (command_ != &::google::protobuf::internal::kEmptyString) {
+    command_->clear();
+  }
+  clear_has_command();
+}
+inline const ::std::string& DataControl::command() const {
+  return *command_;
+}
+inline void DataControl::set_command(const ::std::string& value) {
+  set_has_command();
+  if (command_ == &::google::protobuf::internal::kEmptyString) {
+    command_ = new ::std::string;
+  }
+  command_->assign(value);
+}
+inline void DataControl::set_command(const char* value) {
+  set_has_command();
+  if (command_ == &::google::protobuf::internal::kEmptyString) {
+    command_ = new ::std::string;
+  }
+  command_->assign(value);
+}
+inline void DataControl::set_command(const char* value, size_t size) {
+  set_has_command();
+  if (command_ == &::google::protobuf::internal::kEmptyString) {
+    command_ = new ::std::string;
+  }
+  command_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* DataControl::mutable_command() {
+  set_has_command();
+  if (command_ == &::google::protobuf::internal::kEmptyString) {
+    command_ = new ::std::string;
+  }
+  return command_;
+}
+inline ::std::string* DataControl::release_command() {
+  clear_has_command();
+  if (command_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = command_;
+    command_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+inline void DataControl::set_allocated_command(::std::string* command) {
+  if (command_ != &::google::protobuf::internal::kEmptyString) {
+    delete command_;
+  }
+  if (command) {
+    set_has_command();
+    command_ = command;
+  } else {
+    clear_has_command();
+    command_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  }
 }
 
 // -------------------------------------------------------------------

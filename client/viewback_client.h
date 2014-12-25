@@ -93,6 +93,8 @@ class CViewbackDataControl
 public:
 	std::string  m_name;
 	vb_control_t m_type;
+	std::string  m_command;
+	std::string  m_override_command;
 
 	union
 	{
@@ -212,7 +214,7 @@ public:
 
 	inline const std::vector<CViewbackDataChannel>& GetChannels() const { return m_aDataChannels; }
 	inline const std::vector<CViewbackDataGroup>& GetGroups() const { return m_aDataGroups; }
-	inline const std::vector<CViewbackDataControl>& GetControls() const { return m_aDataControls; }
+	inline std::vector<CViewbackDataControl>& GetControls() { return m_aDataControls; }
 	inline const std::vector<CViewbackDataList>& GetData() const { return m_aData; } // DO NOT STORE without copying, this may be wiped at any time.
 	inline std::vector<CDataMetaInfo>& GetMeta() { return m_aMeta; }
 
