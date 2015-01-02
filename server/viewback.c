@@ -27,28 +27,9 @@ THE SOFTWARE.
 #include "viewback_shared.h"
 #include "viewback_internal.h"
 
-#ifdef _MSC_VER
-// No VLA's. Use alloca()
-#include <malloc.h>
-#define vb__stack_allocate(type, name, bytes) type* name = (type*)alloca(bytes)
-#else
-#define vb__stack_allocate(type, name, bytes) type name[bytes]
-#endif
+static vb__t* VB;
 
-static char sprintf_buffer[1024];
-
-void vb__sprintf(const char* format, ...)
-{
-	va_list ap;
-	va_start(ap, format);
-#ifdef _MSC_VER
-	vsnprintf_s(sprintf_buffer, sizeof(sprintf_buffer), _TRUNCATE, format, ap);
-#else
-	vsnprintf(sprintf_buffer, sizeof(sprintf_buffer), format, ap);
-#endif
-	va_end(ap);
-}
-
+#include "viewback_config.h"
 
 void vb_config_initialize(vb_config_t* config)
 {
@@ -98,8 +79,6 @@ size_t vb_config_get_memory_required(vb_config_t* config)
 		config->max_connections * sizeof(vb__connection_t)+
 		config->max_connections * vb__config_get_channel_mask_length(config);
 }
-
-static vb__t* VB;
 
 vb_bool vb_config_install(vb_config_t* config, void* memory, size_t memory_size)
 {
@@ -433,6 +412,14 @@ vb__data_control_t* vb__data_add_control(const char* name, vb_control_t type)
 	if (VB->server_active)
 		return NULL;
 
+	int name_length = strlen(name);
+	for (int i = 0; i < name_length; i++)
+	{
+		if (!vb__configfile_lex_text(name[i]))
+			// The config file uses : { and } as token separators, so they are not allowed in channel names.
+			return NULL;
+	}
+
 	vb__data_control_t* control = &VB->controls[VB->next_control];
 	VB->next_control++;
 
@@ -680,82 +667,73 @@ vb_bool vb__data_update_control(size_t i, vb_control_t control_type, void* value
 	return 1;
 }
 
-vb_bool vb_data_set_control_slider_float_value(const char* name, float value)
+vb__control_handle_t vb__data_find_control_by_name(const char* name, int length)
+{
+	for (size_t i = 0; i < VB->next_control; i++)
+	{
+		if (strncmp(VB->controls[i].name, name, length) == 0)
+			return i;
+	}
+
+	return VB_CONTROL_HANDLE_NONE;
+}
+
+vb_bool vb__data_set_control_slider_float_value_h(vb__control_handle_t handle, float value)
 {
 	if (!VB)
 		return 0;
 
-	if (!name)
+	if (handle < 0 || handle >= VB->next_control)
 		return 0;
 
-	if (!name[0])
-		return 0;
+	VBAssert(VB->controls[handle].type == VB_CONTROL_SLIDER_FLOAT);
 
-	size_t i;
-	for (i = 0; i < VB->next_control; i++)
-	{
-		if (strcmp(VB->controls[i].name, name) == 0)
-		{
-			VBAssert(VB->controls[i].type == VB_CONTROL_SLIDER_FLOAT);
+	if (VB->controls[handle].slider_float.value == value)
+		return 1;
 
-			if (VB->controls[i].slider_float.value == value)
-				return 1;
+	VB->controls[handle].slider_float.value = value;
 
-			VB->controls[i].slider_float.value = value;
-
-			if (VB->controls[i].slider_float.address)
-				*VB->controls[i].slider_float.address = value;
-
-			break;
-		}
-	}
-
-	if (i >= VB->next_control)
-		return 0;
+	if (VB->controls[handle].slider_float.address)
+		*VB->controls[handle].slider_float.address = value;
 
 	if (VB->server_active)
-		return vb__data_update_control(i, VB->controls[i].type, &value, -1);
+		return vb__data_update_control(handle, VB->controls[handle].type, &value, -1);
 
 	return 1;
 }
 
-vb_bool vb_data_set_control_slider_int_value(const char* name, int value)
+vb_bool vb__data_set_control_slider_int_value_h(vb__control_handle_t handle, int value)
 {
 	if (!VB)
 		return 0;
 
-	if (!name)
+	if (handle < 0 || handle >= VB->next_control)
 		return 0;
 
-	if (!name[0])
-		return 0;
+	VBAssert(VB->controls[handle].type == VB_CONTROL_SLIDER_INT);
 
-	size_t i;
-	for (i = 0; i < VB->next_control; i++)
-	{
-		if (strcmp(VB->controls[i].name, name) == 0)
-		{
-			VBAssert(VB->controls[i].type == VB_CONTROL_SLIDER_INT);
+	if (VB->controls[handle].slider_int.value == value)
+		return 1;
 
-			if (VB->controls[i].slider_int.value == value)
-				return 1;
+	VB->controls[handle].slider_int.value = value;
 
-			VB->controls[i].slider_int.value = value;
-
-			if (VB->controls[i].slider_int.address)
-				*VB->controls[i].slider_int.address = value;
-
-			break;
-		}
-	}
-
-	if (i >= VB->next_control)
-		return 0;
+	if (VB->controls[handle].slider_int.address)
+		*VB->controls[handle].slider_int.address = value;
 
 	if (VB->server_active)
-		return vb__data_update_control(i, VB->controls[i].type, &value, -1);
+		return vb__data_update_control(handle, VB->controls[handle].type, &value, -1);
 
 	return 1;
+}
+
+vb_bool vb_data_set_control_slider_float_value(const char* name, float value)
+{
+	return vb__data_set_control_slider_float_value_h(vb__data_find_control_by_name(name, strlen(name)), value);
+}
+
+vb_bool vb_data_set_control_slider_int_value(const char* name, int value)
+{
+	return vb__data_set_control_slider_int_value_h(vb__data_find_control_by_name(name, strlen(name)), value);
 }
 
 vb_bool vb_server_create()
@@ -831,6 +809,8 @@ vb_bool vb_server_create()
 
 	VBPrintf("Viewback server created on %s:%d (%u).\n", inet_ntoa(tcp_addr.sin_addr), ntohs(tcp_addr.sin_port), tcp_addr.sin_addr.s_addr);
 	VBPrintf("Multicasting to %s:%d.\n", inet_ntoa(VB->multicast_addr.sin_addr), ntohs(VB->multicast_addr.sin_port));
+
+	vb__configfile_load();
 
 	VB->server_active = 1;
 
@@ -1223,12 +1203,14 @@ void vb_server_update(vb_uint64 current_game_time)
 							else
 								vb__sprintf("%s %f", VB->controls[control].command, (float)new_value);
 
-							VB->config.command_callback(sprintf_buffer);
+							VB->config.command_callback(vb__sprintf_buffer);
 						}
 						else if (VB->controls[control].slider_float.address)
 							*VB->controls[control].slider_float.address = new_value;
 						else
 							VBUnimplemented();
+
+						vb__configfile_write();
 					}
 					break;
 
@@ -1249,12 +1231,14 @@ void vb_server_update(vb_uint64 current_game_time)
 							else
 								vb__sprintf("%s %f", VB->controls[control].command, (float)new_value);
 
-							VB->config.command_callback(sprintf_buffer);
+							VB->config.command_callback(vb__sprintf_buffer);
 						}
 						else if (VB->controls[control].slider_int.address)
 							*VB->controls[control].slider_int.address = new_value;
 						else
 							VBUnimplemented();
+
+						vb__configfile_write();
 					}
 					break;
 				}

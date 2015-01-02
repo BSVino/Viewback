@@ -42,10 +42,10 @@ THE SOFTWARE.
 // necessary at the time. Since you're using it now you need to implement
 // it yourself.
 #define VBUnimplemented() \
-{ \
+do { \
 	VBPrintf("Viewback unimplemented code reached in file " __FILE__ " line %d\n", __LINE__); \
 	VBDebugBreak(); \
-} \
+} while(0) \
 
 #ifdef _MSC_VER
 #define PRAGMA_WARNING_PUSH __pragma(warning(push))
@@ -58,7 +58,7 @@ THE SOFTWARE.
 #endif
 
 #define VBAssert(x) \
-{ \
+do { \
 	PRAGMA_WARNING_PUSH \
 	PRAGMA_WARNING_DISABLE(4127) /* conditional expression is constant */ \
 	if (!(x)) \
@@ -67,11 +67,11 @@ THE SOFTWARE.
 		VBPrintf("Viewback assert failed: " #x " file " __FILE__ " line %d\n", __LINE__); \
 		VBDebugBreak(); \
 	} \
-} \
+} while (0) \
 
 #else
-#define VBAssert(x) {}
-#define VBUnimplemented() {}
+#define VBAssert(x) do {} while(0)
+#define VBUnimplemented() do {} while(0)
 #endif
 
 #ifdef __cplusplus

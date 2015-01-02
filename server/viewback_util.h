@@ -147,6 +147,15 @@ void vb_util_set_command_callback(vb_command_callback command);
 void vb_util_set_tcp_port(unsigned short tcp_port);
 
 /*
+	Viewback reads and writes configuration options and persistent data to
+	a file. You can specify which file is to be used with this option.
+	Otherwise leave it NULL and a file will be automatically created in a
+	location of Viewback's choosing.
+	NOTE: Viewback doesn't make a copy so don't use memory that will be freed.
+*/
+void vb_util_set_configfile(const char* configfile);
+
+/*
 	Install the config. This function frees any memory allocated by the above functions.
 	server_name will appear in the server list as clients scan for servers, for
 	more info see the vb_config_t structure in viewback.h

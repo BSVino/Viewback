@@ -122,6 +122,7 @@ public:
 	vb_debug_output_callback output;
 	vb_command_callback command;
 	unsigned short tcp_port;
+	const char* config_file;
 } g_util_config;
 
 vb_channel_handle_t vb_util_find_channel(const char* name)
@@ -486,6 +487,11 @@ private:
 	vector<T>& vec;
 };
 
+void vb_util_set_configfile(const char* configfile)
+{
+	g_util_config.config_file = configfile;
+}
+
 vb_bool vb_util_server_create(const char* server_name)
 {
 	if (!g_initialized)
@@ -516,6 +522,8 @@ vb_bool vb_util_server_create(const char* server_name)
 	config.num_data_channels = g_channels.size();
 	config.num_data_groups = g_groups.size();
 	config.num_data_controls = g_controls.size();
+
+	config.config_file = g_util_config.config_file;
 
 	for (size_t i = 0; i < g_channels.size(); i++)
 		config.num_data_labels += g_channels[i].labels.size();

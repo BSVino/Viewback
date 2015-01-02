@@ -13,6 +13,28 @@ typedef vb_uint64 vb__time_t;
 
 // ============= Viewback stuff =============
 
+#ifdef _MSC_VER
+// No VLA's. Use alloca()
+#include <malloc.h>
+#define vb__stack_allocate(type, name, bytes) type* name = (type*)alloca(bytes)
+#else
+#define vb__stack_allocate(type, name, bytes) type name[bytes]
+#endif
+
+static char vb__sprintf_buffer[1024];
+
+void vb__sprintf(const char* format, ...)
+{
+	va_list ap;
+	va_start(ap, format);
+#ifdef _MSC_VER
+	vsnprintf_s(vb__sprintf_buffer, sizeof(vb__sprintf_buffer), _TRUNCATE, format, ap);
+#else
+	vsnprintf(vb__sprintf_buffer, sizeof(vb__sprintf_buffer), format, ap);
+#endif
+	va_end(ap);
+}
+
 #define CHANNEL_FLAG_INITIALIZED (1<<0)
 // If you add more than 8, bump the size of vb_data_channel_t::flags
 
@@ -21,6 +43,9 @@ typedef vb_uint64 vb__time_t;
 typedef unsigned char vb__data_channel_mask_t;
 #define VB_CHANNEL_NONE ((vb_channel_handle_t)~0)
 #define VB_GROUP_NONE ((vb_group_handle_t)~0)
+
+typedef unsigned short vb__control_handle_t;
+#define VB_CONTROL_HANDLE_NONE ((vb__control_handle_t)~0)
 
 typedef struct
 {
@@ -237,6 +262,10 @@ struct vb__Packet {
 
 	int _is_registration;
 };
+
+vb__control_handle_t vb__data_find_control_by_name(const char* name, int length);
+vb_bool vb__data_set_control_slider_float_value_h(vb__control_handle_t handle, float value);
+vb_bool vb__data_set_control_slider_int_value_h(vb__control_handle_t handle, int value);
 
 void vb__Packet_initialize(struct vb__Packet* packet);
 void vb__Packet_initialize_data(struct vb__Packet* packet, struct vb__Data* data, vb_data_type_t type);

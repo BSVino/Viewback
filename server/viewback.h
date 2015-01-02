@@ -175,6 +175,16 @@ typedef struct {
 	*/
 	unsigned short tcp_port;
 
+#ifndef VIEWBACK_NO_CONFIG
+	/*
+		Viewback reads and writes configuration options and persistent data to
+		a file. You can specify which file is to be used with this option.
+		Otherwise leave it NULL and a file named "viewback.cfg" will be created
+		in the current directory.
+		NOTE: Viewback doesn't make a copy so don't use memory that will be freed.
+	*/
+	const char* config_file;
+#endif
 } vb_config_t;
 
 typedef unsigned short vb_channel_handle_t;
@@ -266,7 +276,7 @@ vb_bool vb_data_get_label(vb_channel_handle_t handle, int value, /*out*/ const c
 
 #ifndef VB_NO_RANGE
 /*
-	If you set this, the monitor will fix the range to the specified values.
+	If you set this, the monitor will fix the range to the specified channel.
 	Otherwise the chart will automatically fit the window. For vector data,
 	only the max is used.
 	Returns 1 on success, 0 on failure.
