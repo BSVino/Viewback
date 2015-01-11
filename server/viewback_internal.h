@@ -134,6 +134,7 @@ typedef struct
 
 typedef struct
 {
+	// If you add something to this struct, update it in vb__memory_layout and vb__memory_copy
 	vb__socket_t socket;
 
 	vb__data_channel_mask_t* active_channels;
@@ -143,10 +144,13 @@ typedef struct
 {
 	vb_config_t config;
 
+	// If you add something to this struct, update it in vb__memory_layout and vb__memory_copy
+
 	vb__socket_t        multicast_socket;
 	struct sockaddr_in  multicast_addr;
 	time_t              last_multicast;
 	vb__socket_t        tcp_socket;
+	vb__time_t          current_time;
 
 	vb__data_channel_t* channels;
 	size_t              next_channel;
@@ -164,9 +168,8 @@ typedef struct
 	size_t              next_control;
 
 	vb__connection_t* connections;
-	char              server_active;
 
-	vb__time_t        current_time;
+	char              server_active;
 } vb__t;
 
 

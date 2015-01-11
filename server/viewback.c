@@ -32,20 +32,126 @@ static void* vb__automatic_memory = NULL;
 
 #include "viewback_config.h"
 
-void* vb__alloc(vb_config_t* config, size_t size)
-{
-	if (config->alloc_callback && config->free_callback)
-		return config->alloc_callback(size);
+extern size_t vb__config_get_channel_mask_length(vb_config_t* config);
+extern void vb__send_registrations(vb__socket_t* socket);
 
-	return malloc(size);
+vb__t* vb__alloc(vb_config_t* config, size_t size)
+{
+	vb__t* r;
+
+	if (config->alloc_callback && config->free_callback)
+		r = (vb__t*)config->alloc_callback(size);
+
+	r = (vb__t*)malloc(size);
+
+	memset(r, 0, size);
+
+	return r;
 }
 
-void vb__free(vb_config_t* config, void* memory)
+void vb__free(vb_config_t* config, vb__t* memory)
 {
 	if (config->alloc_callback && config->free_callback)
 		config->free_callback(memory);
 	else
 		free(memory);
+}
+
+void vb__memory_layout(vb__t* memory, size_t memory_size)
+{
+	vb_config_t* config = &memory->config;
+
+	memory->channels = (vb__data_channel_t*)((char*)memory + sizeof(vb__t));
+	memory->groups = (vb__data_group_t*)((char*)memory->channels + sizeof(vb__data_channel_t)*config->num_data_channels);
+	memory->group_members = (vb__data_group_member_t*)((char*)memory->groups + sizeof(vb__data_group_t)*config->num_data_groups);
+	memory->labels = (vb__data_label_t*)((char*)memory->group_members + sizeof(vb__data_group_member_t)*config->num_data_group_members);
+	memory->controls = (vb__data_control_t*)((char*)memory->labels + sizeof(vb__data_label_t)*config->num_data_labels);
+	memory->connections = (vb__connection_t*)((char*)memory->controls + sizeof(vb__data_control_t)*config->num_data_controls);
+	char* active_channels = (char*)memory->connections + sizeof(vb__connection_t)*config->max_connections;
+
+	VBAssert(active_channels + vb__config_get_channel_mask_length(config)*config->max_connections == (char*)memory + memory_size);
+
+	for (size_t i = 0; i < config->max_connections; i++)
+	{
+		memory->connections[i].socket = VB_INVALID_SOCKET;
+		memory->connections[i].active_channels = (vb__data_channel_mask_t*)(active_channels + i * vb__config_get_channel_mask_length(config));
+	}
+}
+
+void vb__memory_copy(vb__t* dest, size_t dest_size, vb__t* src)
+{
+	vb__memory_layout(dest, dest_size);
+
+	VBAssert(dest->config.num_data_channels >= src->config.num_data_channels);
+	VBAssert(dest->config.num_data_groups >= src->config.num_data_groups);
+	VBAssert(dest->config.num_data_group_members >= src->config.num_data_group_members);
+	VBAssert(dest->config.num_data_labels >= src->config.num_data_labels);
+	VBAssert(dest->config.num_data_controls >= src->config.num_data_controls);
+	VBAssert(dest->config.max_connections == src->config.max_connections);
+
+	dest->multicast_socket = src->multicast_socket;
+	dest->multicast_addr = src->multicast_addr;
+	dest->last_multicast = src->last_multicast;
+	dest->tcp_socket = src->tcp_socket;
+	dest->current_time = src->current_time;
+	dest->server_active = src->server_active;
+
+	dest->next_channel = src->next_channel;
+	for (size_t k = 0; k < src->next_channel; k++)
+		dest->channels[k] = src->channels[k];
+
+	dest->next_group = src->next_group;
+	for (size_t k = 0; k < src->next_group; k++)
+		dest->groups[k] = src->groups[k];
+
+	dest->next_group_member = src->next_group_member;
+	for (size_t k = 0; k < src->next_group_member; k++)
+		dest->group_members[k] = src->group_members[k];
+
+	dest->next_label = src->next_label;
+	for (size_t k = 0; k < src->next_label; k++)
+		dest->labels[k] = src->labels[k];
+
+	dest->next_control = src->next_control;
+	for (size_t k = 0; k < src->next_control; k++)
+		dest->controls[k] = src->controls[k];
+
+	for (size_t k = 0; k < src->config.max_connections; k++)
+	{
+		dest->connections[k].socket = src->connections[k].socket;
+		memcpy(dest->connections[k].active_channels, src->connections[k].active_channels, vb__config_get_channel_mask_length(&dest->config));
+	}
+}
+
+void vb__memory_reallocate(vb_config_t* new_config)
+{
+	size_t new_memory_size = vb_config_get_memory_required(new_config);
+
+	VBPrintf("Reallocating memory. New size: %d\n", new_memory_size);
+
+	vb__t* new_memory = vb__alloc(new_config, new_memory_size);
+	new_memory->config = *new_config;
+
+	vb__memory_copy(new_memory, new_memory_size, VB);
+
+	vb__t* old_memory = VB;
+
+	vb__automatic_memory = VB = new_memory;
+
+	vb__free(&old_memory->config, old_memory);
+}
+
+void vb__memory_add_channel(const char* name, vb_data_type_t type)
+{
+	vb_config_t new_config = VB->config;
+
+	new_config.num_data_channels++;
+
+	vb__memory_reallocate(&new_config);
+
+	vb_data_add_channel(name, type, NULL);
+
+	vb__send_registrations(NULL);
 }
 
 void vb_config_initialize(vb_config_t* config)
@@ -122,28 +228,9 @@ vb_bool vb_config_install(vb_config_t* config, void* memory, size_t memory_size)
 	memset(memory, 0, memory_size);
 
 	VB = (vb__t*)memory;
-
 	VB->config = *config;
 
-	VB->channels = (vb__data_channel_t*)((char*)memory + sizeof(vb__t));
-	VB->groups = (vb__data_group_t*)((char*)VB->channels + sizeof(vb__data_channel_t)*config->num_data_channels);
-	VB->group_members = (vb__data_group_member_t*)((char*)VB->groups + sizeof(vb__data_group_t)*config->num_data_groups);
-	VB->labels = (vb__data_label_t*)((char*)VB->group_members + sizeof(vb__data_group_member_t)*config->num_data_group_members);
-	VB->controls = (vb__data_control_t*)((char*)VB->labels + sizeof(vb__data_label_t)*config->num_data_labels);
-	VB->connections = (vb__connection_t*)((char*)VB->controls + sizeof(vb__data_control_t)*config->num_data_controls);
-	char* active_channels = (char*)VB->connections + sizeof(vb__connection_t)*config->max_connections;
-
-#ifdef _DEBUG
-	char* memory_end = active_channels + vb__config_get_channel_mask_length(config)*config->max_connections;
-	VBAssert(memory_end == (char*)memory + memory_size);
-	memory_end = memory_end; // Quiet unused warning.
-#endif
-
-	for (size_t i = 0; i < config->max_connections; i++)
-	{
-		VB->connections[i].socket = VB_INVALID_SOCKET;
-		VB->connections[i].active_channels = (vb__data_channel_mask_t*)(active_channels + i * vb__config_get_channel_mask_length(config));
-	}
+	vb__memory_layout(memory, memory_size);
 
 	VB->server_active = 0;
 
@@ -283,9 +370,6 @@ vb_bool vb_data_add_channel(const char* name, vb_data_type_t type, /*out*/ vb_ch
 		return 0;
 
 	if (VB->next_channel >= VB->config.num_data_channels)
-		return 0;
-
-	if (VB->server_active)
 		return 0;
 
 	if (handle)
@@ -925,9 +1009,13 @@ void vb__connection_setup(vb__connection_t* connection)
 	memset(connection->active_channels, 0, vb__config_get_channel_mask_length(&VB->config));
 }
 
-void vb__send_registrations(vb__connection_t* connection)
+// socket == NULL means to send registration to all connections.
+void vb__send_registrations(vb__socket_t* socket)
 {
-	VBPrintf("Sending registrations to %d.\n", connection->socket);
+	if (socket)
+		VBPrintf("Sending registrations to %d.\n", *socket);
+	else
+		VBPrintf("Sending registrations to all connections.\n");
 
 	struct vb__Packet packet;
 	vb__stack_allocate(struct vb__DataChannel, channels, VB->next_channel * sizeof(struct vb__DataChannel));
@@ -966,7 +1054,20 @@ void vb__send_registrations(vb__connection_t* connection)
 	size_t message_actual_length = vb__write_length_prepended_message(&packet, message, message_predicted_length, &vb__Packet_serialize);
 
 	if (message_actual_length)
-		vb__socket_send(&connection->socket, (const char*)message, message_actual_length);
+	{
+		if (socket)
+			vb__socket_send(socket, (const char*)message, message_actual_length);
+		else
+		{
+			for (size_t i = 0; i < VB->config.max_connections; i++)
+			{
+				if (VB->connections[i].socket == VB_INVALID_SOCKET)
+					continue;
+
+				vb__socket_send(&VB->connections[i].socket, (const char*)message, message_actual_length);
+			}
+		}
+	}
 }
 
 #ifdef VIEWBACK_TIME_DOUBLE
@@ -1104,7 +1205,7 @@ void vb_server_update(vb_uint64 current_game_time)
 			if (socket_success)
 			{
 				VBPrintf("Successful. Socket: %d\n", incoming_socket);
-				vb__send_registrations(&VB->connections[open_socket]);
+				vb__send_registrations(&VB->connections[open_socket].socket);
 			}
 			else
 			{
@@ -1142,7 +1243,7 @@ void vb_server_update(vb_uint64 current_game_time)
 
 			if (vb__strncmp(mesg, "registrations", 13, 13) == 0)
 			{
-				vb__send_registrations(&VB->connections[i]);
+				vb__send_registrations(&VB->connections[i].socket);
 			}
 			else if (vb__strncmp(mesg, "console: ", 9, 9) == 0)
 			{
@@ -1535,10 +1636,10 @@ vb_bool vb_data_send_vector(vb_channel_handle_t handle, float x, float y, float 
 
 vb_channel_handle_t vb__data_find_channel_by_name(const char* name, int length)
 {
-	for (size_t i = 0; i < VB->next_channel; i++)
+	for (size_t k = 0; k < VB->next_channel; k++)
 	{
-		if (vb__strncmp(VB->channels[i].name, name, strlen(VB->channels[i].name), length) == 0)
-			return i;
+		if (vb__strncmp(VB->channels[k].name, name, strlen(VB->channels[k].name), length) == 0)
+			return k;
 	}
 
 	return VB_CHANNEL_NONE;
@@ -1554,7 +1655,13 @@ vb_bool vb_data_send_int_s(const char* channel, int value)
 
 	vb_channel_handle_t channel_handle = vb__data_find_channel_by_name(channel, strlen(channel));
 	if (channel_handle == VB_CHANNEL_NONE)
-		return 0;
+	{
+		// If this is NULL then the user passed in a block of memory and we shouldn't mess with it.
+		if (!vb__automatic_memory)
+			return 0;
+
+		vb__memory_add_channel(channel, VB_DATATYPE_INT);
+	}
 
 	return vb_data_send_int(channel_handle, value);
 }
@@ -1569,7 +1676,13 @@ vb_bool vb_data_send_float_s(const char* channel, float value)
 
 	vb_channel_handle_t channel_handle = vb__data_find_channel_by_name(channel, strlen(channel));
 	if (channel_handle == VB_CHANNEL_NONE)
-		return 0;
+	{
+		// If this is NULL then the user passed in a block of memory and we shouldn't mess with it.
+		if (!vb__automatic_memory)
+			return 0;
+
+		vb__memory_add_channel(channel, VB_DATATYPE_FLOAT);
+	}
 
 	return vb_data_send_float(channel_handle, value);
 }
@@ -1584,7 +1697,13 @@ vb_bool vb_data_send_vector_s(const char* channel, float x, float y, float z)
 
 	vb_channel_handle_t channel_handle = vb__data_find_channel_by_name(channel, strlen(channel));
 	if (channel_handle == VB_CHANNEL_NONE)
-		return 0;
+	{
+		// If this is NULL then the user passed in a block of memory and we shouldn't mess with it.
+		if (!vb__automatic_memory)
+			return 0;
+
+		vb__memory_add_channel(channel, VB_DATATYPE_VECTOR);
+	}
 
 	return vb_data_send_vector(channel_handle, x, y, z);
 }
