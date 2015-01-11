@@ -438,6 +438,29 @@ vb_bool vb_data_send_float_s(const char* channel, float value);
 vb_bool vb_data_send_vector_s(const char* channel, float x, float y, float z);
 
 /*
+	These methods create controls that the user can modify on the monitor. They
+	are designed to be called after vb_server_create(). If you want to create
+	a control before vb_server_create(), use vb_data_add_control_*.
+
+	These procedures will only work if automatic memory allocation is used - ie
+	if NULL is passed as the memory in vb_config_install(). The initial_value
+	parameter is used only on the first load, after that the value is ignored
+	and read from persistent storage.
+
+	if automatic memory management is used:
+		if this is the first time running this procedure:
+			return initial_value
+		otherwise if the value is in persistent storage:
+			return the user's stored value
+		otherwise:
+			return initial_value
+	otherwise:
+		return initial_value
+*/
+int vb_const_int(const char* name, int initial_value);
+float vb_const_float(const char* name, float initial_value);
+
+/*
 	Any text that goes to your console can also be piped into Viewback for
 	display in the monitor. The text is sent immediately so transient storage
 	is OK.
