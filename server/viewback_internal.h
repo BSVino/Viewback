@@ -38,6 +38,10 @@ void vb__sprintf(const char* format, ...)
 #define CHANNEL_FLAG_INITIALIZED (1<<0)
 // If you add more than 8, bump the size of vb_data_channel_t::flags
 
+#define CONTROL_FLAG_CONSTANT     (1<<0)
+#define CONTROL_FLAG_CONST_ACTIVE (1<<1) // Active means it has been called from user code, not just read from the config file.
+// If you add more than 8, bump the size of vb__data_control_t::flags
+
 // This isn't really always 1 byte long. It's a bit mask large enough to hold
 // all channels, so it may be longer.
 typedef unsigned char vb__data_channel_mask_t;
@@ -100,6 +104,8 @@ typedef struct
 {
 	const char*  name;
 	vb_control_t type;
+
+	unsigned char flags; // CONTROL_FLAG_*
 
 	const char*  command;
 

@@ -30,32 +30,67 @@ THE SOFTWARE.
 static vb__t* VB;
 static void* vb__automatic_memory = NULL;
 
+extern vb__data_control_t* vb__const_float(const char* name, int name_length, float value);
+extern vb__data_control_t* vb__const_int(const char* name, int name_length, int value);
+extern void* vb__alloc_autofree(vb_config_t* config, size_t size);
+
 #include "viewback_config.h"
 
 extern size_t vb__config_get_channel_mask_length(vb_config_t* config);
 extern void vb__send_registrations(vb__socket_t* socket);
-extern vb__data_control_t* vb__data_add_control(const char* name, vb_control_t type);
+extern vb__data_control_t* vb__data_add_control(const char* name, int name_length, vb_control_t type);
 
-vb__t* vb__alloc(vb_config_t* config, size_t size)
+void* vb__alloc(vb_config_t* config, size_t size)
 {
-	vb__t* r;
+	void* r;
 
 	if (config->alloc_callback && config->free_callback)
-		r = (vb__t*)config->alloc_callback(size);
+		r = config->alloc_callback(size);
 
-	r = (vb__t*)malloc(size);
+	r = malloc(size);
 
 	memset(r, 0, size);
 
 	return r;
 }
 
-void vb__free(vb_config_t* config, vb__t* memory)
+void vb__free(vb_config_t* config, void* memory)
 {
 	if (config->alloc_callback && config->free_callback)
 		config->free_callback(memory);
 	else
 		free(memory);
+}
+
+static void** vb__autofree = NULL;
+int vb__autofree_capacity = 0;
+int vb__autofree_size = 0;
+
+// Memory allocations by this procedure will be automatically freed on server shutdown.
+void* vb__alloc_autofree(vb_config_t* config, size_t size)
+{
+	if (!vb__autofree)
+	{
+		vb__autofree_capacity = 10;
+		vb__autofree = vb__alloc(config, sizeof(void*) * vb__autofree_capacity);
+		vb__autofree_size = 0;
+	}
+
+	if (vb__autofree_size == vb__autofree_capacity)
+	{
+		VBUnimplemented(); // Untested
+		// Expand!
+		vb__autofree_capacity *= 2;
+		void* new_autofree = vb__alloc(config, sizeof(void*) * vb__autofree_capacity);
+		memcpy(new_autofree, vb__autofree, sizeof(void*) * vb__autofree_size);
+		vb__free(config, vb__autofree);
+		vb__autofree = new_autofree;
+	}
+
+	void* result = vb__autofree[vb__autofree_size] = vb__alloc(config, size);
+	vb__autofree_size += 1;
+
+	return result;
 }
 
 void vb__memory_layout(vb__t* memory, size_t memory_size)
@@ -161,7 +196,7 @@ vb_bool vb__memory_add_channel(const char* name, vb_data_type_t type)
 	return 1;
 }
 
-vb_bool vb__memory_add_control_int(const char* name, int initial_value)
+vb_bool vb__memory_add_control_int(const char* name, int name_length, int initial_value)
 {
 	vb_config_t new_config = VB->config;
 
@@ -169,7 +204,7 @@ vb_bool vb__memory_add_control_int(const char* name, int initial_value)
 
 	vb__memory_reallocate(&new_config);
 
-	vb__data_control_t* control = vb__data_add_control(name, VB_CONTROL_SLIDER_INT);
+	vb__data_control_t* control = vb__data_add_control(name, name_length, VB_CONTROL_SLIDER_INT);
 	if (!control)
 		return 0;
 
@@ -200,7 +235,7 @@ vb_bool vb__memory_add_control_int(const char* name, int initial_value)
 	return 1;
 }
 
-vb_bool vb__memory_add_control_float(const char* name, float initial_value)
+vb_bool vb__memory_add_control_float(const char* name, int name_length, float initial_value)
 {
 	vb_config_t new_config = VB->config;
 
@@ -208,7 +243,7 @@ vb_bool vb__memory_add_control_float(const char* name, float initial_value)
 
 	vb__memory_reallocate(&new_config);
 
-	vb__data_control_t* control = vb__data_add_control(name, VB_CONTROL_SLIDER_FLOAT);
+	vb__data_control_t* control = vb__data_add_control(name, name_length, VB_CONTROL_SLIDER_FLOAT);
 	if (!control)
 		return 0;
 
@@ -591,7 +626,7 @@ vb_bool vb_data_set_range(vb_channel_handle_t handle, float range_min, float ran
 }
 #endif
 
-vb__data_control_t* vb__data_add_control(const char* name, vb_control_t type)
+vb__data_control_t* vb__data_add_control(const char* name, int name_length, vb_control_t type)
 {
 	if (!VB)
 		return NULL;
@@ -605,7 +640,6 @@ vb__data_control_t* vb__data_add_control(const char* name, vb_control_t type)
 	if (VB->next_control >= VB->config.num_data_controls)
 		return NULL;
 
-	int name_length = strlen(name);
 	for (int i = 0; i < name_length; i++)
 	{
 		if (!vb__configfile_lex_text(name[i]))
@@ -623,13 +657,12 @@ vb__data_control_t* vb__data_add_control(const char* name, vb_control_t type)
 	return control;
 }
 
-
 vb_bool vb_data_add_control_button(const char* name, vb_control_button_callback callback)
 {
 	if (!callback)
 		return 0;
 
-	vb__data_control_t* control = vb__data_add_control(name, VB_CONTROL_BUTTON);
+	vb__data_control_t* control = vb__data_add_control(name, strlen(name), VB_CONTROL_BUTTON);
 
 	if (!control)
 		return 0;
@@ -650,7 +683,7 @@ vb_bool vb_data_add_control_slider_float(const char* name, float range_min, floa
 	if (range_max <= range_min)
 		return 0;
 
-	vb__data_control_t* control = vb__data_add_control(name, VB_CONTROL_SLIDER_FLOAT);
+	vb__data_control_t* control = vb__data_add_control(name, strlen(name), VB_CONTROL_SLIDER_FLOAT);
 
 	if (!control)
 		return 0;
@@ -674,7 +707,7 @@ vb_bool vb_data_add_control_slider_int(const char* name, int range_min, int rang
 	if (range_max <= range_min)
 		return 0;
 
-	vb__data_control_t* control = vb__data_add_control(name, VB_CONTROL_SLIDER_INT);
+	vb__data_control_t* control = vb__data_add_control(name, strlen(name), VB_CONTROL_SLIDER_INT);
 
 	if (!control)
 		return 0;
@@ -695,7 +728,7 @@ vb_bool vb_data_add_control_button_command(const char* name, const char* command
 	if (!command[0])
 		return 0;
 
-	vb__data_control_t* control = vb__data_add_control(name, VB_CONTROL_BUTTON);
+	vb__data_control_t* control = vb__data_add_control(name, strlen(name), VB_CONTROL_BUTTON);
 
 	control->command = command;
 
@@ -716,7 +749,7 @@ vb_bool vb_data_add_control_slider_float_command(const char* name, float range_m
 	if (range_max <= range_min)
 		return 0;
 
-	vb__data_control_t* control = vb__data_add_control(name, VB_CONTROL_SLIDER_FLOAT);
+	vb__data_control_t* control = vb__data_add_control(name, strlen(name), VB_CONTROL_SLIDER_FLOAT);
 
 	if (!control)
 		return 0;
@@ -743,7 +776,7 @@ vb_bool vb_data_add_control_slider_int_command(const char* name, int range_min, 
 	if (range_max <= range_min)
 		return 0;
 
-	vb__data_control_t* control = vb__data_add_control(name, VB_CONTROL_SLIDER_INT);
+	vb__data_control_t* control = vb__data_add_control(name, strlen(name), VB_CONTROL_SLIDER_INT);
 
 	if (!control)
 		return 0;
@@ -764,7 +797,7 @@ vb_bool vb_data_add_control_slider_float_address(const char* name, float range_m
 	if (range_max <= range_min)
 		return 0;
 
-	vb__data_control_t* control = vb__data_add_control(name, VB_CONTROL_SLIDER_FLOAT);
+	vb__data_control_t* control = vb__data_add_control(name, strlen(name), VB_CONTROL_SLIDER_FLOAT);
 
 	if (!control)
 		return 0;
@@ -788,7 +821,7 @@ vb_bool vb_data_add_control_slider_int_address(const char* name, int range_min, 
 	if (range_max <= range_min)
 		return 0;
 
-	vb__data_control_t* control = vb__data_add_control(name, VB_CONTROL_SLIDER_INT);
+	vb__data_control_t* control = vb__data_add_control(name, strlen(name), VB_CONTROL_SLIDER_INT);
 
 	if (!control)
 		return 0;
@@ -1002,7 +1035,11 @@ vb_bool vb_server_create()
 	VBPrintf("Viewback server created on %s:%d (%u).\n", inet_ntoa(tcp_addr.sin_addr), ntohs(tcp_addr.sin_port), tcp_addr.sin_addr.s_addr);
 	VBPrintf("Multicasting to %s:%d.\n", inet_ntoa(VB->multicast_addr.sin_addr), ntohs(VB->multicast_addr.sin_port));
 
-	vb__configfile_load();
+	vb__configfile_data_t configfile_data;
+	configfile_data.config = &VB->config;
+	configfile_data.action = CONFIGFILE_ACTION_LOAD_VB;
+
+	vb__configfile_load(&configfile_data);
 
 	VB->server_active = 1;
 
@@ -1027,6 +1064,13 @@ void vb_server_shutdown()
 
 	for (size_t i = 0; i < VB->config.max_connections; i++)
 		vb__socket_close(VB->connections[i].socket);
+
+	VBUnimplemented(); // Untested.
+	for (int i = 0; i < vb__autofree_size; i++)
+		vb__free(&VB->config, vb__autofree[i]);
+	vb__free(&VB->config, vb__autofree);
+	vb__autofree = NULL;
+	vb__autofree_capacity = vb__autofree_size = 0;
 
 	VB->server_active = 0;
 }
@@ -1796,7 +1840,7 @@ vb_bool vb_data_send_vector_s(const char* channel, float x, float y, float z)
 	return vb_data_send_vector(channel_handle, x, y, z);
 }
 
-float vb_const_float(const char* name, float value)
+vb__data_control_t* vb__const_float(const char* name, int name_length, float value)
 {
 	if (!name)
 		return 0;
@@ -1804,48 +1848,72 @@ float vb_const_float(const char* name, float value)
 	if (!name[0])
 		return 0;
 
-	vb_control_t control_handle = vb__data_find_control_by_name(name, strlen(name));
+	vb_control_t control_handle = vb__data_find_control_by_name(name, name_length);
 	if (control_handle == VB_CONTROL_HANDLE_NONE)
 	{
 		// If this is NULL then the user passed in a block of memory and we can't make a new control.
 		if (!vb__automatic_memory)
-			return value;
+			return NULL;
 
-		if (!vb__memory_add_control_float(name, value))
-			return value;
+		if (!vb__memory_add_control_float(name, name_length, value))
+			return NULL;
 
 		VB->controls[VB->next_control - 1].flags |= CONTROL_FLAG_CONSTANT;
 
-		return value;
+		return &VB->controls[VB->next_control - 1];
 	}
 
-	return VB->controls[control_handle].slider_float.value;
+	return &VB->controls[control_handle];
+}
+
+vb__data_control_t* vb__const_int(const char* name, int name_length, int value)
+{
+	if (!name)
+		return 0;
+
+	if (!name[0])
+		return 0;
+
+	vb_control_t control_handle = vb__data_find_control_by_name(name, name_length);
+	if (control_handle == VB_CONTROL_HANDLE_NONE)
+	{
+		// If this is NULL then the user passed in a block of memory and we can't make a new control.
+		if (!vb__automatic_memory)
+			return NULL;
+
+		if (!vb__memory_add_control_int(name, name_length, value))
+			return NULL;
+
+		VB->controls[VB->next_control - 1].flags |= CONTROL_FLAG_CONSTANT;
+
+		return &VB->controls[VB->next_control - 1];
+	}
+
+	return &VB->controls[control_handle];
+}
+
+float vb_const_float(const char* name, float value)
+{
+	vb__data_control_t* control = vb__const_float(name, strlen(name), value);
+
+	if (!control)
+		return value;
+
+	control->flags |= CONTROL_FLAG_CONST_ACTIVE;
+
+	return control->slider_float.value;
 }
 
 int vb_const_int(const char* name, int value)
 {
-	if (!name)
-		return 0;
+	vb__data_control_t* control = vb__const_int(name, strlen(name), value);
 
-	if (!name[0])
-		return 0;
-
-	vb_control_t control_handle = vb__data_find_control_by_name(name, strlen(name));
-	if (control_handle == VB_CONTROL_HANDLE_NONE)
-	{
-		// If this is NULL then the user passed in a block of memory and we can't make a new control.
-		if (!vb__automatic_memory)
-			return value;
-
-		if (!vb__memory_add_control_int(name, value))
-			return value;
-
-		VB->controls[VB->next_control - 1].flags |= CONTROL_FLAG_CONSTANT;
-
+	if (!control)
 		return value;
-	}
 
-	return VB->controls[control_handle].slider_int.value;
+	control->flags |= CONTROL_FLAG_CONST_ACTIVE;
+
+	return control->slider_int.value;
 }
 
 vb_bool vb_console_append(const char* text)

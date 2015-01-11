@@ -442,6 +442,9 @@ vb_bool vb_data_send_vector_s(const char* channel, float x, float y, float z);
 	are designed to be called after vb_server_create(). If you want to create
 	a control before vb_server_create(), use vb_data_add_control_*.
 
+	WARNING: The name you pass in is a unique identifier for this const. If you
+	change the name you are creating a new const.
+
 	These procedures will only work if automatic memory allocation is used - ie
 	if NULL is passed as the memory in vb_config_install(). The initial_value
 	parameter is used only on the first load, after that the value is ignored
