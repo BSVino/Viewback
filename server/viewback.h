@@ -95,6 +95,8 @@ typedef unsigned char vb_bool;
 	vb_server_shutdown();
 */
 
+typedef void*(*vb_alloc)(size_t memory_size);
+typedef void(*vb_free)(void* memory);
 typedef void(*vb_debug_output_callback)(const char* text);
 typedef void(*vb_command_callback)(const char* text);
 typedef void(*vb_control_button_callback)();
@@ -185,6 +187,13 @@ typedef struct {
 	*/
 	const char* config_file;
 #endif
+
+	// These are used by Viewback to allocate and free memory. Both must be
+	// present or neither will be used. If these are not specified then Viewback
+	// will use system malloc and free. These will be ignored if the user
+	// passes memory to Viewback with vb_config_install().
+	vb_alloc alloc_callback;
+	vb_free free_callback;
 } vb_config_t;
 
 typedef unsigned short vb_channel_handle_t;
@@ -223,6 +232,15 @@ size_t vb_config_get_memory_required(vb_config_t* config);
 /*
 	Pass in a config and a memory buffer of the size returned by
 	vb_config_get_memory_required() or larger.
+
+	If memory is non-NULL, Viewback will use that memory and never try to
+	resize its allocation. In this case, no channels, controls, etc can be created
+	while Viewback is running.
+
+	If memory is NULL, Viewback will initialize its own memory automatically.
+	The alloc_callback and free_callback functions will be used if they are
+	non-NULL, otherwise malloc and free will be used.
+
 	Returns 1 if the memory provided was sufficient and 0 otherwise.
 */
 vb_bool vb_config_install(vb_config_t* config, void* memory, size_t memory_size);
@@ -232,6 +250,7 @@ vb_bool vb_config_install(vb_config_t* config, void* memory, size_t memory_size)
 	vb_config_install once this function is called. Only call it after
 	vb_server_shutdown is called and vb_server_is_running returns false,
 	never while a server is running.
+	If Viewback initialized its memory automatically, it will be freed here.
 */
 void vb_config_release();
 
@@ -364,8 +383,6 @@ vb_bool vb_data_add_control_slider_int_command(const char* name, int range_min, 
 */
 vb_bool vb_data_add_control_slider_float_address(const char* name, float range_min, float range_max, int steps, float* address);
 vb_bool vb_data_add_control_slider_int_address(const char* name, int range_min, int range_max, int step_size, int* address);
-vb_bool vb_data_update_control_slider_float_address(const char* name, float* address);
-vb_bool vb_data_update_control_slider_int_address(const char* name, int* address);
 
 // During setup these procedures set the initial value of the control sliders.
 // During runtime these procedures update the clients with the new values.

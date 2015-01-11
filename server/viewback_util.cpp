@@ -112,7 +112,6 @@ public:
 static vector<CChannel> g_channels;
 static vector<CGroup> g_groups;
 static vector<CControl> g_controls;
-static void* g_memory = NULL;
 static bool g_initialized = false;
 
 class CVBUtilConfig
@@ -154,9 +153,6 @@ void vb_util_initialize()
 	g_channels.clear();
 	g_groups.clear();
 	g_controls.clear();
-
-	free(g_memory);
-	g_memory = NULL;
 
 	memset(&g_util_config, 0, sizeof(g_util_config));
 
@@ -499,9 +495,6 @@ vb_bool vb_util_server_create(const char* server_name)
 
 	vb_config_release();
 
-	free(g_memory);
-	g_memory = NULL;
-
 	// Vector memory will free at the end of this function.
 	CVectorEmancipator<CChannel> c(g_channels);
 	CVectorEmancipator<CGroup> g(g_groups);
@@ -531,10 +524,7 @@ vb_bool vb_util_server_create(const char* server_name)
 	for (size_t i = 0; i < g_groups.size(); i++)
 		config.num_data_group_members += g_groups[i].channels.size();
 
-	size_t memory_size = vb_config_get_memory_required(&config);
-	g_memory = malloc(memory_size);
-
-	if (!vb_config_install(&config, g_memory, memory_size))
+	if (!vb_config_install(&config, NULL, 0))
 		return 0;
 
 	for (size_t i = 0; i < g_channels.size(); i++)

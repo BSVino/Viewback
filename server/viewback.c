@@ -28,8 +28,25 @@ THE SOFTWARE.
 #include "viewback_internal.h"
 
 static vb__t* VB;
+static void* vb__automatic_memory = NULL;
 
 #include "viewback_config.h"
+
+void* vb__alloc(vb_config_t* config, size_t size)
+{
+	if (config->alloc_callback && config->free_callback)
+		return config->alloc_callback(size);
+
+	return malloc(size);
+}
+
+void vb__free(vb_config_t* config, void* memory)
+{
+	if (config->alloc_callback && config->free_callback)
+		config->free_callback(memory);
+	else
+		free(memory);
+}
 
 void vb_config_initialize(vb_config_t* config)
 {
@@ -85,8 +102,12 @@ vb_bool vb_config_install(vb_config_t* config, void* memory, size_t memory_size)
 	if (!config)
 		return 0;
 
+	if (vb__automatic_memory)
+		vb__free(config, vb__automatic_memory);
+	vb__automatic_memory = NULL;
+
 	if (!memory)
-		return 0;
+		vb__automatic_memory = memory = vb__alloc(config, memory_size = vb_config_get_memory_required(config));
 
 	/* Indicates there was a problem in vb_config_get_memory_required() which didn't get caught. */
 	if (memory_size == 0)
@@ -135,6 +156,12 @@ vb_bool vb_config_install(vb_config_t* config, void* memory, size_t memory_size)
 void vb_config_release()
 {
 	VBAssert(!vb_server_is_active());
+
+	if (vb__automatic_memory)
+	{
+		vb__free(&VB->config, vb__automatic_memory);
+		vb__automatic_memory = NULL;
+	}
 
 	VB = NULL;
 }
