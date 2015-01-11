@@ -273,6 +273,8 @@ void vb__Packet_initialize_registrations(struct vb__Packet* packet, struct vb__D
 size_t vb__Packet_get_message_size(struct vb__Packet *_Packet);
 size_t vb__Packet_serialize(struct vb__Packet *_Packet, void *_buffer, size_t length);
 
-
-
+int vb__strncmp(const char* s1, const char* s2, size_t n1, size_t n2)
+{
+	return strncmp(s1, s2, min(n1, n2));
+}
 

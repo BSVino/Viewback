@@ -698,7 +698,7 @@ vb__control_handle_t vb__data_find_control_by_name(const char* name, int length)
 {
 	for (size_t i = 0; i < VB->next_control; i++)
 	{
-		if (strncmp(VB->controls[i].name, name, length) == 0)
+		if (vb__strncmp(VB->controls[i].name, name, strlen(VB->controls[i].name), length) == 0)
 			return i;
 	}
 
@@ -1140,26 +1140,26 @@ void vb_server_update(vb_uint64 current_game_time)
 				continue;
 			}
 
-			if (strcmp(mesg, "registrations") == 0)
+			if (vb__strncmp(mesg, "registrations", 13, 13) == 0)
 			{
 				vb__send_registrations(&VB->connections[i]);
 			}
-			else if (strncmp(mesg, "console: ", 9) == 0)
+			else if (vb__strncmp(mesg, "console: ", 9, 9) == 0)
 			{
 				if (VB->config.command_callback)
 					(*VB->config.command_callback)(&mesg[9]);
 			}
-			else if (strncmp(mesg, "activate: ", 10) == 0)
+			else if (vb__strncmp(mesg, "activate: ", 10, 10) == 0)
 			{
 				int channel = atoi(mesg + 10);
 				vb__data_channel_activate((vb_channel_handle_t)channel, i);
 			}
-			else if (strncmp(mesg, "deactivate: ", 12) == 0)
+			else if (vb__strncmp(mesg, "deactivate: ", 12, 12) == 0)
 			{
 				int channel = atoi(mesg + 12);
 				vb__data_channel_deactivate((vb_channel_handle_t)channel, i);
 			}
-			else if (strncmp(mesg, "group: ", 7) == 0)
+			else if (vb__strncmp(mesg, "group: ", 7, 7) == 0)
 			{
 				int group = atoi(mesg + 7);
 
@@ -1190,7 +1190,7 @@ void vb_server_update(vb_uint64 current_game_time)
 #endif
 				}
 			}
-			else if (strncmp(mesg, "control: ", 9) == 0)
+			else if (vb__strncmp(mesg, "control: ", 9, 9) == 0)
 			{
 				size_t message_length = strlen(mesg);
 
@@ -1533,6 +1533,17 @@ vb_bool vb_data_send_vector(vb_channel_handle_t handle, float x, float y, float 
 	return 1;
 }
 
+vb_channel_handle_t vb__data_find_channel_by_name(const char* name, int length)
+{
+	for (size_t i = 0; i < VB->next_channel; i++)
+	{
+		if (vb__strncmp(VB->channels[i].name, name, strlen(VB->channels[i].name), length) == 0)
+			return i;
+	}
+
+	return VB_CHANNEL_NONE;
+}
+
 vb_bool vb_data_send_int_s(const char* channel, int value)
 {
 	if (!channel)
@@ -1541,13 +1552,11 @@ vb_bool vb_data_send_int_s(const char* channel, int value)
 	if (!channel[0])
 		return 0;
 
-	for (size_t i = 0; i < VB->next_channel; i++)
-	{
-		if (strcmp(VB->channels[i].name, channel) == 0 && VB->channels[i].type == VB_DATATYPE_INT)
-			return vb_data_send_int((vb_channel_handle_t)i, value);
-	}
+	vb_channel_handle_t channel_handle = vb__data_find_channel_by_name(channel, strlen(channel));
+	if (channel_handle == VB_CHANNEL_NONE)
+		return 0;
 
-	return 0;
+	return vb_data_send_int(channel_handle, value);
 }
 
 vb_bool vb_data_send_float_s(const char* channel, float value)
@@ -1558,13 +1567,11 @@ vb_bool vb_data_send_float_s(const char* channel, float value)
 	if (!channel[0])
 		return 0;
 
-	for (size_t i = 0; i < VB->next_channel; i++)
-	{
-		if (strcmp(VB->channels[i].name, channel) == 0 && VB->channels[i].type == VB_DATATYPE_FLOAT)
-			return vb_data_send_float((vb_channel_handle_t)i, value);
-	}
+	vb_channel_handle_t channel_handle = vb__data_find_channel_by_name(channel, strlen(channel));
+	if (channel_handle == VB_CHANNEL_NONE)
+		return 0;
 
-	return 0;
+	return vb_data_send_float(channel_handle, value);
 }
 
 vb_bool vb_data_send_vector_s(const char* channel, float x, float y, float z)
@@ -1575,13 +1582,11 @@ vb_bool vb_data_send_vector_s(const char* channel, float x, float y, float z)
 	if (!channel[0])
 		return 0;
 
-	for (size_t i = 0; i < VB->next_channel; i++)
-	{
-		if (strcmp(VB->channels[i].name, channel) == 0 && VB->channels[i].type == VB_DATATYPE_VECTOR)
-			return vb_data_send_vector((vb_channel_handle_t)i, x, y, z);
-	}
+	vb_channel_handle_t channel_handle = vb__data_find_channel_by_name(channel, strlen(channel));
+	if (channel_handle == VB_CHANNEL_NONE)
+		return 0;
 
-	return 0;
+	return vb_data_send_vector(channel_handle, x, y, z);
 }
 
 vb_bool vb_console_append(const char* text)

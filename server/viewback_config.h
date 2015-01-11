@@ -54,11 +54,6 @@ int vb__configfile_lex_text(char p)
 	return (p >= ' ');
 }
 
-static int vb__configfile_lex_strcmp(const char* s1, const char* s2, size_t n1, size_t n2)
-{
-	return strncmp(s1, s2, min(n1, n2));
-}
-
 static vb__token vb__configfile_lex_next()
 {
 	if (vb__p == vb__p_end)
@@ -91,7 +86,7 @@ static vb__token vb__configfile_lex_next()
 
 		vb__token_length = vb__p - vb__token_string;
 
-		if (vb__configfile_lex_strcmp(vb__token_string, "controls", vb__token_length, 8) == 0)
+		if (vb__strncmp(vb__token_string, "controls", vb__token_length, 8) == 0)
 			return vb__token_type = VB__TOKEN_CONTROLS;
 
 		return vb__token_type;
@@ -158,9 +153,9 @@ int vb__configfile_parse_control()
 	if (handle == VB_CONTROL_HANDLE_NONE)
 		return 1;
 
-	if (vb__configfile_lex_strcmp(control_value, "float", 5, control_value_len) == 0)
+	if (vb__strncmp(control_value, "float", 5, control_value_len) == 0)
 		VBAssert(VB->controls[handle].type == VB_CONTROL_SLIDER_FLOAT);
-	else if (vb__configfile_lex_strcmp(control_value, "int", 3, control_value_len) == 0)
+	else if (vb__strncmp(control_value, "int", 3, control_value_len) == 0)
 		VBAssert(VB->controls[handle].type == VB_CONTROL_SLIDER_INT);
 
 	if (vb__configfile_parse_peek(VB__TOKEN_OPEN_CURLY))
@@ -178,7 +173,7 @@ int vb__configfile_parse_control()
 			if (!vb__configfile_parse_keyvalue(&key, &key_len, &value, &value_len))
 				return 0;
 
-			if (vb__configfile_lex_strcmp(key, "value", key_len, 5) == 0)
+			if (vb__strncmp(key, "value", key_len, 5) == 0)
 			{
 				switch (VB->controls[handle].type)
 				{
