@@ -13,7 +13,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OU
 THE SOFTWARE.
 */
 
-#include "viewback.h"
+#include "viewback2.h"
 
 #include <time.h>
 #include <string.h>
@@ -32,15 +32,15 @@ static void* vb__automatic_memory = NULL;
 
 extern vb__data_control_t* vb__const_float(const char* name, int name_length, float value);
 extern vb__data_control_t* vb__const_int(const char* name, int name_length, int value);
-extern void* vb__alloc_autofree(vb_config_t* config, size_t size);
+extern void* vb__alloc_autofree(vb2_config_t* config, size_t size);
 
 #include "viewback_config.h"
 
-extern size_t vb__config_get_channel_mask_length(vb_config_t* config);
+extern size_t vb__config_get_channel_mask_length(vb2_config_t* config);
 extern void vb__send_registrations(vb__socket_t* socket);
 extern vb__data_control_t* vb__data_add_control(const char* name, int name_length, vb_control_t type);
 
-void* vb__alloc(vb_config_t* config, size_t size)
+void* vb__alloc(vb2_config_t* config, size_t size)
 {
 	void* r;
 
@@ -54,7 +54,7 @@ void* vb__alloc(vb_config_t* config, size_t size)
 	return r;
 }
 
-void vb__free(vb_config_t* config, void* memory)
+void vb__free(vb2_config_t* config, void* memory)
 {
 	if (config->alloc_callback && config->free_callback)
 		config->free_callback(memory);
@@ -67,7 +67,7 @@ int vb__autofree_capacity = 0;
 int vb__autofree_size = 0;
 
 // Memory allocations by this procedure will be automatically freed on server shutdown.
-void* vb__alloc_autofree(vb_config_t* config, size_t size)
+void* vb__alloc_autofree(vb2_config_t* config, size_t size)
 {
 	if (!vb__autofree)
 	{
@@ -95,12 +95,11 @@ void* vb__alloc_autofree(vb_config_t* config, size_t size)
 
 void vb__memory_layout(vb__t* memory, size_t memory_size)
 {
-	vb_config_t* config = &memory->config;
+	vb2_config_t* config = &memory->config;
 
 	memory->channels = (vb__data_channel_t*)((char*)memory + sizeof(vb__t));
-	memory->groups = (vb__data_group_t*)((char*)memory->channels + sizeof(vb__data_channel_t)*config->num_data_channels);
-	memory->group_members = (vb__data_group_member_t*)((char*)memory->groups + sizeof(vb__data_group_t)*config->num_data_groups);
-	memory->labels = (vb__data_label_t*)((char*)memory->group_members + sizeof(vb__data_group_member_t)*config->num_data_group_members);
+	memory->profiles = (vb__data_profile_t*)((char*)memory->channels + sizeof(vb__data_channel_t)*config->num_data_channels);
+	memory->labels = (vb__data_label_t*)((char*)memory->profiles + sizeof(vb__data_profile_t)*config->num_data_profiles);
 	memory->controls = (vb__data_control_t*)((char*)memory->labels + sizeof(vb__data_label_t)*config->num_data_labels);
 	memory->connections = (vb__connection_t*)((char*)memory->controls + sizeof(vb__data_control_t)*config->num_data_controls);
 	char* active_channels = (char*)memory->connections + sizeof(vb__connection_t)*config->max_connections;
@@ -119,8 +118,7 @@ void vb__memory_copy(vb__t* dest, size_t dest_size, vb__t* src)
 	vb__memory_layout(dest, dest_size);
 
 	VBAssert(dest->config.num_data_channels >= src->config.num_data_channels);
-	VBAssert(dest->config.num_data_groups >= src->config.num_data_groups);
-	VBAssert(dest->config.num_data_group_members >= src->config.num_data_group_members);
+	VBAssert(dest->config.num_data_profiles >= src->config.num_data_profiles);
 	VBAssert(dest->config.num_data_labels >= src->config.num_data_labels);
 	VBAssert(dest->config.num_data_controls >= src->config.num_data_controls);
 	VBAssert(dest->config.max_connections == src->config.max_connections);
@@ -136,13 +134,9 @@ void vb__memory_copy(vb__t* dest, size_t dest_size, vb__t* src)
 	for (size_t k = 0; k < src->next_channel; k++)
 		dest->channels[k] = src->channels[k];
 
-	dest->next_group = src->next_group;
-	for (size_t k = 0; k < src->next_group; k++)
-		dest->groups[k] = src->groups[k];
-
-	dest->next_group_member = src->next_group_member;
-	for (size_t k = 0; k < src->next_group_member; k++)
-		dest->group_members[k] = src->group_members[k];
+	dest->next_profile = src->next_profile;
+	for (size_t k = 0; k < src->next_profile; k++)
+		dest->profiles[k] = src->profiles[k];
 
 	dest->next_label = src->next_label;
 	for (size_t k = 0; k < src->next_label; k++)
@@ -159,7 +153,7 @@ void vb__memory_copy(vb__t* dest, size_t dest_size, vb__t* src)
 	}
 }
 
-void vb__memory_reallocate(vb_config_t* new_config)
+void vb__memory_reallocate(vb2_config_t* new_config)
 {
 	size_t new_memory_size = vb_config_get_memory_required(new_config);
 
@@ -179,7 +173,7 @@ void vb__memory_reallocate(vb_config_t* new_config)
 
 vb_bool vb__memory_add_channel(const char* name, vb_data_type_t type)
 {
-	vb_config_t new_config = VB->config;
+	vb2_config_t new_config = VB->config;
 
 	new_config.num_data_channels++;
 
@@ -198,7 +192,7 @@ vb_bool vb__memory_add_channel(const char* name, vb_data_type_t type)
 
 vb_bool vb__memory_add_control_int(const char* name, int name_length, int initial_value)
 {
-	vb_config_t new_config = VB->config;
+	vb2_config_t new_config = VB->config;
 
 	new_config.num_data_controls++;
 
@@ -237,7 +231,7 @@ vb_bool vb__memory_add_control_int(const char* name, int name_length, int initia
 
 vb_bool vb__memory_add_control_float(const char* name, int name_length, float initial_value)
 {
-	vb_config_t new_config = VB->config;
+	vb2_config_t new_config = VB->config;
 
 	new_config.num_data_controls++;
 
@@ -274,15 +268,15 @@ vb_bool vb__memory_add_control_float(const char* name, int name_length, float in
 	return 1;
 }
 
-void vb_config_initialize(vb_config_t* config)
+void vb_config_initialize(vb2_config_t* config)
 {
-	memset(config, 0, sizeof(vb_config_t));
+	memset(config, 0, sizeof(vb2_config_t));
 
 	config->tcp_port = VB_DEFAULT_PORT;
 	config->max_connections = 4;
 }
 
-size_t vb__config_get_channel_mask_length(vb_config_t* config)
+size_t vb__config_get_channel_mask_length(vb2_config_t* config)
 {
 	if (!config)
 		return 0;
@@ -304,7 +298,7 @@ size_t vb__config_get_channel_mask_length(vb_config_t* config)
 		return channels / 32 + 1;
 }
 
-size_t vb_config_get_memory_required(vb_config_t* config)
+size_t vb_config_get_memory_required(vb2_config_t* config)
 {
 	if (!config)
 		return 0;
@@ -315,15 +309,14 @@ size_t vb_config_get_memory_required(vb_config_t* config)
 	return
 		sizeof(vb__t) +
 		config->num_data_channels * sizeof(vb__data_channel_t)+
-		config->num_data_groups * sizeof(vb__data_group_t)+
-		config->num_data_group_members * sizeof(vb__data_group_member_t)+
+		config->num_data_profiles * sizeof(vb__data_profile_t)+
 		config->num_data_labels * sizeof(vb__data_label_t)+
 		config->num_data_controls * sizeof(vb__data_control_t)+
 		config->max_connections * sizeof(vb__connection_t)+
 		config->max_connections * vb__config_get_channel_mask_length(config);
 }
 
-vb_bool vb_config_install(vb_config_t* config, void* memory, size_t memory_size)
+vb_bool vb_config_install(vb2_config_t* config, void* memory, size_t memory_size)
 {
 	if (!config)
 		return 0;
@@ -503,7 +496,7 @@ vb_bool vb_data_add_channel(const char* name, vb_data_type_t type, /*out*/ vb_ch
 	return 1;
 }
 
-vb_bool vb_data_add_group(const char* name, /*out*/ vb_group_handle_t* handle)
+vb_bool vb_data_add_profile(const char* name, /*out*/ vb_profile_handle_t* handle)
 {
 	if (!VB)
 		return 0;
@@ -514,23 +507,23 @@ vb_bool vb_data_add_group(const char* name, /*out*/ vb_group_handle_t* handle)
 	if (!name[0])
 		return 0;
 
-	if (VB->next_group >= VB->config.num_data_groups)
+	if (VB->next_profile >= VB->config.num_data_profiles)
 		return 0;
 
 	if (VB->server_active)
 		return 0;
 
 	if (handle)
-		*handle = (vb_group_handle_t)VB->next_group;
+		*handle = (vb_profile_handle_t)VB->next_profile;
 
-	VB->groups[VB->next_group].name = name;
+	VB->profiles[VB->next_profile].name = name;
 
-	VB->next_group++;
+	VB->next_profile++;
 
 	return 1;
 }
 
-vb_bool vb_data_add_channel_to_group(vb_group_handle_t group, vb_channel_handle_t channel)
+vb_bool vb_data_add_channel_to_profile(vb_profile_handle_t profile, vb_channel_handle_t channel)
 {
 	if (!VB)
 		return 0;
@@ -538,19 +531,28 @@ vb_bool vb_data_add_channel_to_group(vb_group_handle_t group, vb_channel_handle_
 	if (channel < 0 || channel >= VB->next_channel)
 		return 0;
 
-	if (group < 0 || group >= VB->next_group)
+	if (profile < 0 || profile >= VB->next_profile)
 		return 0;
 
-	if (VB->next_group_member >= VB->config.num_data_group_members)
+	VB->channels[channel].profiles |= ((vb_uint64)1 << (vb_uint64)profile);
+
+	return 1;
+}
+
+vb_bool vb_data_add_control_to_profile(vb_profile_handle_t profile, const char* control)
+{
+	if (!VB)
 		return 0;
 
-	if (VB->server_active)
+	vb__control_handle_t control_handle = vb__data_find_control_by_name(control, strlen(control));
+
+	if (control_handle < 0 || control_handle >= VB->next_control)
 		return 0;
 
-	VB->group_members[VB->next_group_member].group = group;
-	VB->group_members[VB->next_group_member].channel = channel;
+	if (profile < 0 || profile >= VB->next_profile)
+		return 0;
 
-	VB->next_group_member++;
+	VB->controls[control_handle].profiles |= ((vb_uint64)1 << (vb_uint64)profile);
 
 	return 1;
 }
@@ -1144,34 +1146,40 @@ void vb__send_registrations(vb__socket_t* socket)
 
 	struct vb__Packet packet;
 	vb__stack_allocate(struct vb__DataChannel, channels, VB->next_channel * sizeof(struct vb__DataChannel));
-	vb__stack_allocate(struct vb__DataGroup, groups, VB->next_group * sizeof(struct vb__DataGroup));
+	vb__stack_allocate(struct vb__DataProfile, profiles, VB->next_profile * sizeof(struct vb__DataProfile));
 	vb__stack_allocate(struct vb__DataLabel, labels, VB->next_label * sizeof(struct vb__DataLabel));
 	vb__stack_allocate(struct vb__DataControl, controls, VB->next_control * sizeof(struct vb__DataControl));
 
 	/* Initialize group channel membership numbers. */
-	for (size_t j = 0; j < VB->next_group; j++)
-		groups[j]._channels_repeated_len = 0;
+	for (size_t j = 0; j < VB->next_profile; j++)
+		profiles[j]._channels_repeated_len = 0;
 
 	/* Count up how many there are. */
-	for (size_t j = 0; j < VB->next_group_member; j++)
-		groups[VB->group_members[j].group]._channels_repeated_len++;
+	for (size_t j = 0; j < VB->next_channel; j++)
+	{
+		for (size_t k = 0; k < VB_MAX_PROFILES; k++)
+		{
+			if (VB->channels[j].profiles & ((vb_uint64)1 << k))
+				profiles[k]._channels_repeated_len++;
+		}
+	}
 
 	/* Now that we know how many there are we can allocate the memory.
 	We can't just do them in a big loop because VLA's will go out of scope if they're defined in the loop. */
 	int total_length = 0;
-	for (size_t j = 0; j < VB->next_group; j++)
-		total_length += groups[j]._channels_repeated_len * sizeof(*groups[j]._channels);
+	for (size_t j = 0; j < VB->next_profile; j++)
+		total_length += profiles[j]._channels_repeated_len * sizeof(*profiles[j]._channels);
 
 	vb__stack_allocate(unsigned long, group_channels, total_length);
 
 	int current_group_channel = 0;
-	for (size_t j = 0; j < VB->next_group; j++)
+	for (size_t j = 0; j < VB->next_profile; j++)
 	{
-		groups[j]._channels = &group_channels[current_group_channel];
-		current_group_channel += groups[j]._channels_repeated_len;
+		profiles[j]._channels = &group_channels[current_group_channel];
+		current_group_channel += profiles[j]._channels_repeated_len;
 	}
 
-	vb__Packet_initialize_registrations(&packet, channels, VB->next_channel, groups, VB->next_group, labels, VB->next_label, controls, VB->next_control);
+	vb__Packet_initialize_registrations(&packet, channels, VB->next_channel, profiles, VB->next_profile, labels, VB->next_label, controls, VB->next_control);
 
 	size_t message_predicted_length = vb__Packet_get_message_size(&packet);
 	Packet_alloca(message, message_predicted_length);
@@ -1366,57 +1374,57 @@ void vb_server_update(vb_uint64 current_game_time)
 				continue;
 			}
 
-			if (vb__strncmp(mesg, "registrations", 13, 13) == 0)
+			if (vb__strncmp(mesg, "registrations", sizeof(mesg), 13) == 0)
 			{
 				vb__send_registrations(&VB->connections[i].socket);
 			}
-			else if (vb__strncmp(mesg, "console: ", 9, 9) == 0)
+			else if (vb__strncmp(mesg, "console: ", sizeof(mesg), 9) == 0)
 			{
 				if (VB->config.command_callback)
 					(*VB->config.command_callback)(&mesg[9]);
 			}
-			else if (vb__strncmp(mesg, "activate: ", 10, 10) == 0)
+			else if (vb__strncmp(mesg, "activate: ", sizeof(mesg), 10) == 0)
 			{
 				int channel = atoi(mesg + 10);
 				vb__data_channel_activate((vb_channel_handle_t)channel, i);
 			}
-			else if (vb__strncmp(mesg, "deactivate: ", 12, 12) == 0)
+			else if (vb__strncmp(mesg, "deactivate: ", sizeof(mesg), 12) == 0)
 			{
 				int channel = atoi(mesg + 12);
 				vb__data_channel_deactivate((vb_channel_handle_t)channel, i);
 			}
-			else if (vb__strncmp(mesg, "group: ", 7, 7) == 0)
+			else if (vb__strncmp(mesg, "group: ", sizeof(mesg), 7) == 0 || vb__strncmp(mesg, "profile: ", sizeof(mesg), 9) == 0)
 			{
-				int group = atoi(mesg + 7);
+				vb_uint64 profile = atoi(mesg + 7);
 
 				for (size_t j = 0; j < VB->next_channel; j++)
 					vb__data_channel_deactivate((vb_channel_handle_t)j, i);
 
-				for (size_t j = 0; j < VB->next_group_member; j++)
+				for (size_t j = 0; j < VB->next_channel; j++)
 				{
-					if (VB->group_members[j].group != group)
+					if (!(VB->channels[j].profiles & ((vb_uint64)1 << profile)))
 						continue;
 
-					vb__data_channel_activate(VB->group_members[j].channel, i);
+					vb__data_channel_activate(j, i);
 
 #ifndef VB_NO_COMPRESSION
-					vb__data_channel_t* channel = &VB->channels[VB->group_members[j].channel];
+					vb__data_channel_t* channel = &VB->channels[j];
 
 					if (channel->flags & CHANNEL_FLAG_INITIALIZED)
 					{
 						if (channel->type == VB_DATATYPE_INT)
-							vb_data_send_int(VB->group_members[j].channel, channel->last_int);
+							vb_data_send_int(j, channel->last_int);
 						else if (channel->type == VB_DATATYPE_FLOAT)
-							vb_data_send_float(VB->group_members[j].channel, channel->last_float);
+							vb_data_send_float(j, channel->last_float);
 						else if (channel->type == VB_DATATYPE_VECTOR)
-							vb_data_send_vector(VB->group_members[j].channel, channel->last_float_x, channel->last_float_y, channel->last_float_z);
+							vb_data_send_vector(j, channel->last_float_x, channel->last_float_y, channel->last_float_z);
 						else
 							VBAssert(!"Unknown channel type");
 					}
 #endif
 				}
 			}
-			else if (vb__strncmp(mesg, "control: ", 9, 9) == 0)
+			else if (vb__strncmp(mesg, "control: ", sizeof(mesg), 9) == 0)
 			{
 				size_t message_length = strlen(mesg);
 
@@ -2224,24 +2232,44 @@ int vb__DataChannel_write(struct vb__DataChannel *_DataChannel, void *_buffer, i
 	return offset;
 }
 
-int vb__DataGroup_write(struct vb__DataGroup *_DataGroup, void *_buffer, int offset)
+// DataGroup writes from the DataProfile structure. Profiles replaced groups,
+// so the profile writes as a group now for backwards compatibility.
+int vb__DataGroup_write(struct vb__DataProfile *_DataProfile, void *_buffer, int offset)
 {
-	VBAssert(_DataGroup->_name_len);
-	VBAssert(_DataGroup->_name);
-	VBAssert(_DataGroup->_name[0]);
+	VBAssert(_DataProfile->_name_len);
+	VBAssert(_DataProfile->_name);
+	VBAssert(_DataProfile->_name[0]);
 
-	if (_DataGroup->_name_len != 1 || _DataGroup->_name[0] != '0')
+	if (_DataProfile->_name_len != 1 || _DataProfile->_name[0] != '0')
 	{
 		offset = vb__write_wire_format(1, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
-		offset = vb__write_raw_varint32(_DataGroup->_name_len, _buffer, offset);
-		offset = vb__write_raw_bytes(_DataGroup->_name, _DataGroup->_name_len, _buffer, offset);
+		offset = vb__write_raw_varint32(_DataProfile->_name_len, _buffer, offset);
+		offset = vb__write_raw_bytes(_DataProfile->_name, _DataProfile->_name_len, _buffer, offset);
 	}
 
-	for (int channels_cnt = 0; channels_cnt < _DataGroup->_channels_repeated_len; ++channels_cnt)
+	for (int channels_cnt = 0; channels_cnt < _DataProfile->_channels_repeated_len; ++channels_cnt)
 	{
 		offset = vb__write_wire_format(2, PB_WIRE_TYPE_VARINT, _buffer, offset);
-		offset = vb__write_raw_varint32(_DataGroup->_channels[channels_cnt], _buffer, offset);
+		offset = vb__write_raw_varint32(_DataProfile->_channels[channels_cnt], _buffer, offset);
 	}
+
+	return offset;
+}
+
+int vb__DataProfile_write(struct vb__DataProfile *_DataProfile, void *_buffer, int offset)
+{
+	VBAssert(_DataProfile->_name_len);
+	VBAssert(_DataProfile->_name);
+	VBAssert(_DataProfile->_name[0]);
+
+	if (_DataProfile->_name_len != 1 || _DataProfile->_name[0] != '0')
+	{
+		offset = vb__write_wire_format(1, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
+		offset = vb__write_raw_varint32(_DataProfile->_name_len, _buffer, offset);
+		offset = vb__write_raw_bytes(_DataProfile->_name, _DataProfile->_name_len, _buffer, offset);
+	}
+
+	// Profiles don't need to write the channel list. That data is in DataChannel now.
 
 	return offset;
 }
@@ -2346,11 +2374,26 @@ int vb__DataChannel_write_delimited_to(struct vb__DataChannel *_DataChannel, voi
 	return new_offset + shift;
 }
 
-int vb__DataGroup_write_delimited_to(struct vb__DataGroup *_DataGroup, void *_buffer, int offset)
+int vb__DataGroup_write_delimited_to(struct vb__DataProfile *_DataProfile, void *_buffer, int offset)
 {
 	int i, shift, new_offset, size;
 
-	new_offset = vb__DataGroup_write(_DataGroup, _buffer, offset);
+	new_offset = vb__DataGroup_write(_DataProfile, _buffer, offset);
+	size = new_offset - offset;
+	shift = (size > 127) ? 2 : 1;
+	for (i = new_offset - 1; i >= offset; --i)
+		*((char *)_buffer + i + shift) = *((char *)_buffer + i);
+
+	vb__write_raw_varint32((unsigned long)size, _buffer, offset);
+
+	return new_offset + shift;
+}
+
+int vb__DataProfile_write_delimited_to(struct vb__DataProfile *_DataProfile, void *_buffer, int offset)
+{
+	int i, shift, new_offset, size;
+
+	new_offset = vb__DataProfile_write(_DataProfile, _buffer, offset);
 	size = new_offset - offset;
 	shift = (size > 127) ? 2 : 1;
 	for (i = new_offset - 1; i >= offset; --i)
@@ -2401,12 +2444,22 @@ int vb__DataChannel_write_with_tag(struct vb__DataChannel *_DataChannel, void *_
 	return offset;
 }
 
-int vb__DataGroup_write_with_tag(struct vb__DataGroup *_DataGroup, void *_buffer, int offset, int tag)
+int vb__DataGroup_write_with_tag(struct vb__DataProfile *_DataProfile, void *_buffer, int offset, int tag)
 {
 	/* Write tag.*/
 	offset = vb__write_wire_format(tag, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
 	/* Write content.*/
-	offset = vb__DataGroup_write_delimited_to(_DataGroup, _buffer, offset);
+	offset = vb__DataGroup_write_delimited_to(_DataProfile, _buffer, offset);
+
+	return offset;
+}
+
+int vb__DataProfile_write_with_tag(struct vb__DataProfile *_DataProfile, void *_buffer, int offset, int tag)
+{
+	/* Write tag.*/
+	offset = vb__write_wire_format(tag, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
+	/* Write content.*/
+	offset = vb__DataProfile_write_delimited_to(_DataProfile, _buffer, offset);
 
 	return offset;
 }
@@ -2443,8 +2496,11 @@ int vb__Packet_write(struct vb__Packet *_Packet, void *_buffer, int offset)
 	for (int data_channels_cnt = 0; data_channels_cnt < _Packet->_data_channels_repeated_len; ++data_channels_cnt)
 		offset = vb__DataChannel_write_with_tag(&_Packet->_data_channels[data_channels_cnt], _buffer, offset, 2);
 
-	for (int data_groups_cnt = 0; data_groups_cnt < _Packet->_data_groups_repeated_len; ++data_groups_cnt)
-		offset = vb__DataGroup_write_with_tag(&_Packet->_data_groups[data_groups_cnt], _buffer, offset, 3);
+	for (int data_profiles_cnt = 0; data_profiles_cnt < _Packet->_data_profiles_repeated_len; ++data_profiles_cnt)
+	{
+		offset = vb__DataGroup_write_with_tag(&_Packet->_data_profiles[data_profiles_cnt], _buffer, offset, 3);
+		offset = vb__DataProfile_write_with_tag(&_Packet->_data_profiles[data_profiles_cnt], _buffer, offset, 9);
+	}
 
 	for (int data_labels_cnt = 0; data_labels_cnt < _Packet->_data_labels_repeated_len; ++data_labels_cnt)
 		offset = vb__DataLabel_write_with_tag(&_Packet->_data_labels[data_labels_cnt], _buffer, offset, 4);
@@ -2495,7 +2551,7 @@ void vb__Packet_initialize_data(struct vb__Packet* packet, struct vb__Data* data
 #endif
 }
 
-void vb__Packet_initialize_registrations(struct vb__Packet* packet, struct vb__DataChannel* data_channels, size_t channels, struct vb__DataGroup* data_groups, size_t groups, struct vb__DataLabel* data_labels, size_t labels, struct vb__DataControl* data_controls, size_t controls)
+void vb__Packet_initialize_registrations(struct vb__Packet* packet, struct vb__DataChannel* data_channels, size_t channels, struct vb__DataProfile* data_profiles, size_t profiles, struct vb__DataLabel* data_labels, size_t labels, struct vb__DataControl* data_controls, size_t controls)
 {
 	memset(packet, 0, sizeof(struct vb__Packet));
 
@@ -2504,8 +2560,8 @@ void vb__Packet_initialize_registrations(struct vb__Packet* packet, struct vb__D
 	packet->_data_channels = data_channels;
 	packet->_data_channels_repeated_len = channels;
 
-	packet->_data_groups = data_groups;
-	packet->_data_groups_repeated_len = groups;
+	packet->_data_profiles = data_profiles;
+	packet->_data_profiles_repeated_len = profiles;
 
 	packet->_data_labels = data_labels;
 	packet->_data_labels_repeated_len = labels;
@@ -2514,7 +2570,7 @@ void vb__Packet_initialize_registrations(struct vb__Packet* packet, struct vb__D
 	packet->_data_controls_repeated_len = controls;
 
 	memset(data_channels, 0, sizeof(struct vb__DataChannel) * channels);
-	/* memset(data_groups, 0, sizeof(struct vb__DataGroup) * groups); /* Don't zero the groups or we'll lose the channels allocation that was done. */
+	/* memset(data_profiles, 0, sizeof(struct vb__DataProfile) * groups); /* Don't zero the profiles or we'll lose the channels allocation that was done. */
 	memset(data_labels, 0, sizeof(struct vb__DataLabel) * labels);
 	memset(data_controls, 0, sizeof(struct vb__DataControl) * controls);
 
@@ -2531,24 +2587,29 @@ void vb__Packet_initialize_registrations(struct vb__Packet* packet, struct vb__D
 #endif
 	}
 
-	VBAssert(groups == VB->next_group);
-	for (size_t i = 0; i < groups; i++)
+	VBAssert(profiles == VB->next_profile);
+	for (size_t i = 0; i < profiles; i++)
 	{
-		data_groups[i]._name = VB->groups[i].name;
-		data_groups[i]._name_len = strlen(VB->groups[i].name);
+		data_profiles[i]._name = VB->profiles[i].name;
+		data_profiles[i]._name_len = strlen(VB->profiles[i].name);
 	}
 
 	/* Re-initialize group channel membership numbers, we're going to use them as counters. */
-	for (size_t i = 0; i < VB->next_group; i++)
-		data_groups[i]._channels_repeated_len = 0;
+	for (size_t i = 0; i < VB->next_profile; i++)
+		data_profiles[i]._channels_repeated_len = 0;
 
 	/* Fill in the data. */
-	for (size_t i = 0; i < VB->next_group_member; i++)
+	for (size_t i = 0; i < VB->next_channel; i++)
 	{
-		vb__data_group_member_t* group_member = &VB->group_members[i];
-		struct vb__DataGroup* group = &data_groups[group_member->group];
-		group->_channels[group->_channels_repeated_len] = group_member->channel;
-		group->_channels_repeated_len++;
+		for (size_t k = 0; k < VB_MAX_PROFILES; k++)
+		{
+			if (VB->channels[i].profiles & ((vb_uint64)1 << k))
+			{
+				struct vb__DataProfile* profile = &data_profiles[k];
+				profile->_channels[profile->_channels_repeated_len] = i;
+				profile->_channels_repeated_len++;
+			}
+		}
 	}
 
 	VBAssert(labels == VB->next_label);
@@ -2684,20 +2745,34 @@ size_t vb__Packet_get_message_size(struct vb__Packet *_Packet)
 		}
 	}
 
-	if (_Packet->_data_groups_repeated_len)
+	if (_Packet->_data_profiles_repeated_len)
 	{
-		size += 1; /* One byte for the field number and wire type. */
-		size += 2; /* Two bytes for the length of Groups. */
+		// For everything in this section we do it once for DataProfile and
+		// again for DataGroup. DataGroup is obsolete but we send it anyway
+		// for compatibility. The supported data in DataProfile is duplicated
+		// into a group. Yes, it is a hack.
 
-		for (int i = 0; i < _Packet->_data_groups_repeated_len; i++)
+		size += 1; /* One byte for the field number and wire type. */
+		size += 2; /* Two bytes for the length of Profiles. */
+
+		size += 1; // Duplicate for group
+		size += 2;
+
+		for (int i = 0; i < _Packet->_data_profiles_repeated_len; i++)
 		{
 			size += 1; /* One byte for "name" field number and wire type. */
 			size += 4; /* 4 bytes to support really long strings. */
 
-			/* Add on the size for each string. */
-			size += _Packet->_data_groups[i]._name_len;
+			size += 1; // Duplicate for group
+			size += 4;
 
-			int channels = _Packet->_data_groups[i]._channels_repeated_len;
+			/* Add on the size for each string. */
+			size += _Packet->_data_profiles[i]._name_len;
+
+			size += _Packet->_data_profiles[i]._name_len; // Duplicate for group
+
+			// This section isn't duplicated since it only appears in the group.
+			int channels = _Packet->_data_profiles[i]._channels_repeated_len;
 			size += 1 * channels; /* One byte for "channels" field number and wire type. */
 			size += 3 * channels; /* 3 bytes is enough for a varint-encoded unsigned short. */
 		}

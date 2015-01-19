@@ -72,6 +72,10 @@ message DataControl {
 	optional string command = 11;
 }
 
+message DataProfile {
+	optional string name     = 1;
+}
+
 message Packet {
 	optional Data        data           = 1;
 	repeated DataChannel data_channels  = 2;
@@ -81,4 +85,5 @@ message Packet {
 	optional string      console_output = 6;
 	optional string      status         = 7;
 	optional bool        is_registration = 8;
+	repeated DataProfile data_profiles  = 9;
 }

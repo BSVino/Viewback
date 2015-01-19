@@ -17,8 +17,6 @@ THE SOFTWARE.
 
 #include <stddef.h>
 
-#include "viewback2.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -62,10 +60,10 @@ typedef unsigned char vb_bool;
 
 /*
 	Sample code follows. If you don't care about memory allocations then
-	an easier API is available from viewback_util.h
+	an easier API is available from viewback_util2.h
 
 
-	vb_config_t config;
+	vb2_config_t config;
 	vb_config_initialize(&config);
 
 	// Here you specify how many of each feature you will use.
@@ -123,20 +121,11 @@ typedef struct {
 	size_t num_data_channels;
 
 	/*
-		Data channels can be placed into groups. These groups can be turned on
-		and off in the client as a means to organize the data. This is the
-		maximum number of groups possible.
+		Profiles are how your data will be organized in the monitor. A profile
+		is a collection of channels and controls and an arrangement of panels.
+		There is a hard maximum of 64 profiles.
 	*/
-	size_t num_data_groups;
-
-	/*
-		You can add a data channel to a group a maximum of this number of
-		times. E.G. if you have two groups, and group 1 has channels A B and C,
-		and group 2 has C D E and F, that's 7 total group members. In other
-		words it should be at least the number of times that you want to
-		call vb_data_add_channel_to_group().
-	*/
-	size_t num_data_group_members;
+	size_t num_data_profiles;
 
 	/*
 		Some data can carry labels for when the data is a certain value.
@@ -196,21 +185,40 @@ typedef struct {
 	// passes memory to Viewback with vb_config_install().
 	vb_alloc alloc_callback;
 	vb_free free_callback;
-} vb_config_t;
+} vb2_config_t;
 
 typedef unsigned short vb_channel_handle_t;
-typedef unsigned short vb_group_handle_t;
+typedef unsigned short vb_profile_handle_t;
+
+/* If you change this, update it in data.proto as well. */
+typedef enum
+{
+	VB_DATATYPE_NONE   = 0,
+	VB_DATATYPE_INT    = 1,
+	VB_DATATYPE_FLOAT  = 2,
+	VB_DATATYPE_VECTOR = 3,
+} vb_data_type_t;
+
+/* If you change this, update it in data.proto as well. */
+typedef enum
+{
+	VB_CONTROL_NONE         = 0,
+	VB_CONTROL_BUTTON       = 1,
+	VB_CONTROL_SLIDER_FLOAT = 2,
+	VB_CONTROL_SLIDER_INT   = 3,
+	VB_CONTROL_MAX          = 4,
+} vb_control_t;
 
 /*
 	A good idea (but not required) to pass your config in here first to make
 	sure you get the default values.
 */
-void vb_config_initialize(vb_config_t* config);
+void vb_config_initialize(vb2_config_t* config);
 
 /*
 	Pass in your config and Viewback will tell you how much memory it requires.
 */
-size_t vb_config_get_memory_required(vb_config_t* config);
+size_t vb_config_get_memory_required(vb2_config_t* config);
 
 /*
 	Pass in a config and a memory buffer of the size returned by
@@ -226,7 +234,7 @@ size_t vb_config_get_memory_required(vb_config_t* config);
 
 	Returns 1 if the memory provided was sufficient and 0 otherwise.
 */
-vb_bool vb_config_install(vb_config_t* config, void* memory, size_t memory_size);
+vb_bool vb_config_install(vb2_config_t* config, void* memory, size_t memory_size);
 
 /*
 	Viewback will no longer try to reference the memory passed in by
@@ -246,24 +254,24 @@ void vb_config_release();
 vb_bool vb_data_add_channel(const char* name, vb_data_type_t type, /*out*/ vb_channel_handle_t* handle);
 
 /*
-	Register a group of data. You should provide an address to a handle and store
-	that handle somewhere. 'handle' can be NULL. 'name' will not be
+	Register a monitor profile. You should provide an address to a handle and
+	store that handle somewhere. 'handle' can be NULL. 'name' will not be
 	copied elsewhere, so make sure it is persistent memory.
 	Returns 1 on success, 0 on failure.
 */
-vb_bool vb_data_add_group(const char* name, /*out*/ vb_group_handle_t* handle)
-{
-	return vb_data_add_profile(name, handle);
-}
+vb_bool vb_data_add_profile(const char* name, /*out*/ vb_profile_handle_t* handle);
 
 /*
-	Add the specified channel of data to the specified group.
+	Add the specified channel of data to the specified profile.
 	Returns 1 on success, 0 on failure.
 */
-vb_bool vb_data_add_channel_to_group(vb_group_handle_t group, vb_channel_handle_t channel)
-{
-	return vb_data_add_channel_to_profile(group, channel);
-}
+vb_bool vb_data_add_channel_to_profile(vb_profile_handle_t profile, vb_channel_handle_t channel);
+
+/*
+	Add the specified control of data to the specified profile.
+	Returns 1 on success, 0 on failure.
+*/
+vb_bool vb_data_add_control_to_profile(vb_profile_handle_t profile, const char* control);
 
 /*
 	Register a label for integers. When the specified data has the specified value

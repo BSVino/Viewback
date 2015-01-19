@@ -75,13 +75,16 @@ void vb_util_add_channel(const char* name, vb_data_type_t type, /*out*/ vb_chann
 void vb_util_add_profile(const char* name, /*out*/ vb_profile_handle_t* handle);
 
 /*
-	Add the specified channel of data to the specified group.
+	Add the specified control or channel of data to the specified profile.
 
 	The string version performs a linear search for the specified profile and
 	channel and returns 0 if they couldn't be found, 1 otherwise.
 */
 void vb_util_add_channel_to_profile(vb_profile_handle_t profile, vb_channel_handle_t channel);
 vb_bool vb_util_add_channel_to_profile_s(const char* profile, const char* channel);
+
+void vb_util_add_control_to_profile(vb_profile_handle_t profile, const char* control);
+vb_bool vb_util_add_control_to_profile_s(const char* profile, const char* control);
 
 /*
 	Register a label for integers. When the specified data has the specified value

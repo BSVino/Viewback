@@ -13,7 +13,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OU
 THE SOFTWARE.
 */
 
-#include "viewback_util.h"
+#include "viewback_util2.h"
 
 #include <vector>
 #include <string.h>
@@ -54,12 +54,13 @@ public:
 	vector<CLabel> labels;
 };
 
-class CGroup
+class CProfile
 {
 public:
 	const char* name;
 
 	vector<vb_channel_handle_t> channels;
+	vector<const char*> controls;
 };
 
 class CControl
@@ -110,7 +111,7 @@ public:
 };
 
 static vector<CChannel> g_channels;
-static vector<CGroup> g_groups;
+static vector<CProfile> g_profiles;
 static vector<CControl> g_controls;
 static bool g_initialized = false;
 
@@ -135,15 +136,26 @@ vb_channel_handle_t vb_util_find_channel(const char* name)
 	return VB_CHANNEL_NONE;
 }
 
-vb_group_handle_t vb_util_find_group(const char* name)
+vb_profile_handle_t vb_util_find_profile(const char* name)
 {
-	for (size_t i = 0; i < g_groups.size(); i++)
+	for (size_t i = 0; i < g_profiles.size(); i++)
 	{
-		if (strcmp(g_groups[i].name, name) == 0)
-			return (vb_group_handle_t)i;
+		if (strcmp(g_profiles[i].name, name) == 0)
+			return (vb_profile_handle_t)i;
 	}
 
-	return VB_GROUP_NONE;
+	return VB_PROFILE_NONE;
+}
+
+vb__control_handle_t vb_util_find_control(const char* name)
+{
+	for (size_t i = 0; i < g_controls.size(); i++)
+	{
+		if (strcmp(g_controls[i].name, name) == 0)
+			return (vb__control_handle_t)i;
+	}
+
+	return VB_CONTROL_NONE;
 }
 
 void vb_util_initialize()
@@ -151,7 +163,7 @@ void vb_util_initialize()
 	vb_config_release();
 
 	g_channels.clear();
-	g_groups.clear();
+	g_profiles.clear();
 	g_controls.clear();
 
 	memset(&g_util_config, 0, sizeof(g_util_config));
@@ -174,36 +186,36 @@ void vb_util_add_channel(const char* name, vb_data_type_t type, /*out*/ vb_chann
 		*handle = (vb_channel_handle_t)g_channels.size()-1;
 }
 
-void vb_util_add_group(const char* name, /*out*/ vb_group_handle_t* handle)
+void vb_util_add_profile(const char* name, /*out*/ vb_profile_handle_t* handle)
 {
 	if (!g_initialized)
 		vb_util_initialize();
 
-	CGroup g;
+	CProfile g;
 	g.name = name;
 
-	g_groups.push_back(g);
+	g_profiles.push_back(g);
 
 	if (handle)
-		*handle = (vb_group_handle_t)g_groups.size() - 1;
+		*handle = (vb_profile_handle_t)g_profiles.size() - 1;
 }
 
-void vb_util_add_channel_to_group(vb_group_handle_t group, vb_channel_handle_t channel)
+void vb_util_add_channel_to_profile(vb_profile_handle_t profile, vb_channel_handle_t channel)
 {
 	if (!g_initialized)
 		vb_util_initialize();
 
-	g_groups[group].channels.push_back(channel);
+	g_profiles[profile].channels.push_back(channel);
 }
 
-vb_bool vb_util_add_channel_to_group_s(const char* group, const char* channel)
+vb_bool vb_util_add_channel_to_profile_s(const char* profile, const char* channel)
 {
 	if (!g_initialized)
 		vb_util_initialize();
 
-	vb_group_handle_t group_handle = vb_util_find_group(group);
+	vb_profile_handle_t profile_handle = vb_util_find_profile(profile);
 
-	if (group_handle == VB_GROUP_NONE)
+	if (profile_handle == VB_PROFILE_NONE)
 		return 0;
 
 	vb_channel_handle_t channel_handle = vb_util_find_channel(channel);
@@ -211,7 +223,30 @@ vb_bool vb_util_add_channel_to_group_s(const char* group, const char* channel)
 	if (channel_handle == VB_CHANNEL_NONE)
 		return 0;
 
-	vb_util_add_channel_to_group(group_handle, channel_handle);
+	vb_util_add_channel_to_profile(profile_handle, channel_handle);
+
+	return 1;
+}
+
+void vb_util_add_control_to_profile(vb_profile_handle_t profile, const char* control)
+{
+	if (!g_initialized)
+		vb_util_initialize();
+
+	g_profiles[profile].controls.push_back(control);
+}
+
+vb_bool vb_util_add_control_to_profile_s(const char* profile, const char* control)
+{
+	if (!g_initialized)
+		vb_util_initialize();
+
+	vb_profile_handle_t profile_handle = vb_util_find_profile(profile);
+
+	if (profile_handle == VB_PROFILE_NONE)
+		return 0;
+
+	vb_util_add_control_to_profile(profile_handle, control);
 
 	return 1;
 }
@@ -497,9 +532,9 @@ vb_bool vb_util_server_create(const char* server_name)
 
 	// Vector memory will free at the end of this function.
 	CVectorEmancipator<CChannel> c(g_channels);
-	CVectorEmancipator<CGroup> g(g_groups);
+	CVectorEmancipator<CProfile> g(g_profiles);
 
-	vb_config_t config;
+	vb2_config_t config;
 
 	vb_config_initialize(&config);
 
@@ -513,16 +548,13 @@ vb_bool vb_util_server_create(const char* server_name)
 	config.command_callback = g_util_config.command;
 
 	config.num_data_channels = g_channels.size();
-	config.num_data_groups = g_groups.size();
+	config.num_data_profiles = g_profiles.size();
 	config.num_data_controls = g_controls.size();
 
 	config.config_file = g_util_config.config_file;
 
 	for (size_t i = 0; i < g_channels.size(); i++)
 		config.num_data_labels += g_channels[i].labels.size();
-
-	for (size_t i = 0; i < g_groups.size(); i++)
-		config.num_data_group_members += g_groups[i].channels.size();
 
 	if (!vb_config_install(&config, NULL, 0))
 		return 0;
@@ -549,15 +581,21 @@ vb_bool vb_util_server_create(const char* server_name)
 		}
 	}
 
-	for (size_t i = 0; i < g_groups.size(); i++)
+	for (size_t i = 0; i < g_profiles.size(); i++)
 	{
-		auto& group = g_groups[i];
-		if (!vb_data_add_group(group.name, nullptr))
+		auto& profile = g_profiles[i];
+		if (!vb_data_add_profile(profile.name, nullptr))
 			return 0;
 
-		for (size_t j = 0; j < group.channels.size(); j++)
+		for (size_t j = 0; j < profile.channels.size(); j++)
 		{
-			if (!vb_data_add_channel_to_group((vb_group_handle_t)i, (vb_channel_handle_t)group.channels[j]))
+			if (!vb_data_add_channel_to_profile((vb_profile_handle_t)i, (vb_channel_handle_t)profile.channels[j]))
+				return 0;
+		}
+
+		for (size_t j = 0; j < profile.controls.size(); j++)
+		{
+			if (!vb_data_add_control_to_profile((vb_profile_handle_t)i, profile.controls[j]))
 				return 0;
 		}
 	}

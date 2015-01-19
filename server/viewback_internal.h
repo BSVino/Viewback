@@ -46,7 +46,7 @@ void vb__sprintf(const char* format, ...)
 // all channels, so it may be longer.
 typedef unsigned char vb__data_channel_mask_t;
 #define VB_CHANNEL_NONE ((vb_channel_handle_t)~0)
-#define VB_GROUP_NONE ((vb_group_handle_t)~0)
+#define VB_PROFILE_NONE ((vb_profile_handle_t)~0)
 
 typedef unsigned short vb__control_handle_t;
 #define VB_CONTROL_HANDLE_NONE ((vb__control_handle_t)~0)
@@ -54,13 +54,14 @@ typedef unsigned short vb__control_handle_t;
 typedef struct
 {
 	const char*    name;
-	vb_data_type_t type;
+	vb_uint64      profiles;
 
 #ifndef VB_NO_RANGE
 	float          range_min;
 	float          range_max;
 #endif
 
+	vb_data_type_t type;
 	unsigned char  flags; // CHANNEL_FLAG_*
 
 #ifndef VB_NO_COMPRESSION
@@ -85,13 +86,7 @@ typedef struct
 typedef struct
 {
 	const char* name;
-} vb__data_group_t;
-
-typedef struct
-{
-	vb_group_handle_t   group;
-	vb_channel_handle_t channel;
-} vb__data_group_member_t;
+} vb__data_profile_t;
 
 typedef struct
 {
@@ -103,11 +98,11 @@ typedef struct
 typedef struct
 {
 	const char*  name;
-	vb_control_t type;
-
-	unsigned char flags; // CONTROL_FLAG_*
-
 	const char*  command;
+	vb_uint64    profiles;
+
+	vb_control_t  type;
+	unsigned char flags; // CONTROL_FLAG_*
 
 	union
 	{
@@ -148,7 +143,7 @@ typedef struct
 
 typedef struct
 {
-	vb_config_t config;
+	vb2_config_t config;
 
 	// If you add something to this struct, update it in vb__memory_layout and vb__memory_copy
 
@@ -161,11 +156,8 @@ typedef struct
 	vb__data_channel_t* channels;
 	size_t              next_channel;
 
-	vb__data_group_t* groups;
-	size_t            next_group;
-
-	vb__data_group_member_t* group_members;
-	size_t                   next_group_member;
+	vb__data_profile_t* profiles;
+	size_t              next_profile;
 
 	vb__data_label_t* labels;
 	size_t            next_label;
@@ -222,7 +214,7 @@ struct vb__DataChannel {
 #endif
 };
 
-struct vb__DataGroup {
+struct vb__DataProfile {
 	const char*    _name;
 	int            _name_len;
 	unsigned long* _channels;
@@ -256,8 +248,8 @@ struct vb__Packet {
 	struct vb__Data*        _data;
 	int                     _data_channels_repeated_len;
 	struct vb__DataChannel* _data_channels;
-	int                     _data_groups_repeated_len;
-	struct vb__DataGroup*   _data_groups;
+	int                     _data_profiles_repeated_len;
+	struct vb__DataProfile* _data_profiles;
 	int                     _data_labels_repeated_len;
 	struct vb__DataLabel*   _data_labels;
 	int                     _data_controls_repeated_len;
@@ -278,7 +270,7 @@ vb_bool vb__data_set_control_slider_int_value_h(vb__control_handle_t handle, int
 
 void vb__Packet_initialize(struct vb__Packet* packet);
 void vb__Packet_initialize_data(struct vb__Packet* packet, struct vb__Data* data, vb_data_type_t type);
-void vb__Packet_initialize_registrations(struct vb__Packet* packet, struct vb__DataChannel* data_channels, size_t channels, struct vb__DataGroup* data_groups, size_t groups, struct vb__DataLabel* data_labels, size_t labels, struct vb__DataControl* data_controls, size_t controls);
+void vb__Packet_initialize_registrations(struct vb__Packet* packet, struct vb__DataChannel* data_channels, size_t channels, struct vb__DataProfile* data_profiles, size_t profiles, struct vb__DataLabel* data_labels, size_t labels, struct vb__DataControl* data_controls, size_t controls);
 size_t vb__Packet_get_message_size(struct vb__Packet *_Packet);
 size_t vb__Packet_serialize(struct vb__Packet *_Packet, void *_buffer, size_t length);
 

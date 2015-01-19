@@ -41,7 +41,7 @@ static size_t      vb__token_length;
 
 typedef struct
 {
-	vb_config_t* config;
+	vb2_config_t* config;
 
 	char action;
 

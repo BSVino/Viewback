@@ -26,3 +26,10 @@ add_executable (game_double ${GAME_DOUBLE_SOURCES})
 
 set_target_properties (game_double PROPERTIES COMPILE_DEFINITIONS "VIEWBACK_TIME_DOUBLE")
 
+set (GAME_V1_SOURCES
+	game_v1.c
+	../server/viewback.c
+	../server/viewback_util.cpp
+)
+
+add_executable (game_v1 ${GAME_V1_SOURCES})

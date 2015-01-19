@@ -29,6 +29,8 @@ THE SOFTWARE.
 #define VB_DEFAULT_PORT 51072
 #define VB_DEFAULT_MULTICAST_ADDRESS "239.127.251.37"
 
+#define VB_MAX_PROFILES 64 // sizeof(vb_uint64)
+
 #ifdef _DEBUG
 
 #ifdef __GNUC__
