@@ -33,6 +33,9 @@ const ::google::protobuf::internal::GeneratedMessageReflection*
 const ::google::protobuf::Descriptor* DataControl_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
   DataControl_reflection_ = NULL;
+const ::google::protobuf::Descriptor* Profile_descriptor_ = NULL;
+const ::google::protobuf::internal::GeneratedMessageReflection*
+  Profile_reflection_ = NULL;
 const ::google::protobuf::Descriptor* Packet_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
   Packet_reflection_ = NULL;
@@ -73,12 +76,13 @@ void protobuf_AssignDesc_protobuf_2fdata_2eproto() {
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(Data));
   DataChannel_descriptor_ = file->message_type(1);
-  static const int DataChannel_offsets_[5] = {
+  static const int DataChannel_offsets_[6] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataChannel, name_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataChannel, type_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataChannel, handle_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataChannel, range_min_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataChannel, range_max_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataChannel, profiles_),
   };
   DataChannel_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -125,7 +129,7 @@ void protobuf_AssignDesc_protobuf_2fdata_2eproto() {
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(DataLabel));
   DataControl_descriptor_ = file->message_type(4);
-  static const int DataControl_offsets_[11] = {
+  static const int DataControl_offsets_[12] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataControl, name_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataControl, type_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataControl, range_min_float_),
@@ -137,6 +141,7 @@ void protobuf_AssignDesc_protobuf_2fdata_2eproto() {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataControl, value_float_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataControl, value_int_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataControl, command_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataControl, profiles_),
   };
   DataControl_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -149,8 +154,23 @@ void protobuf_AssignDesc_protobuf_2fdata_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(DataControl));
-  Packet_descriptor_ = file->message_type(5);
-  static const int Packet_offsets_[8] = {
+  Profile_descriptor_ = file->message_type(5);
+  static const int Profile_offsets_[1] = {
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Profile, name_),
+  };
+  Profile_reflection_ =
+    new ::google::protobuf::internal::GeneratedMessageReflection(
+      Profile_descriptor_,
+      Profile::default_instance_,
+      Profile_offsets_,
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Profile, _has_bits_[0]),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Profile, _unknown_fields_),
+      -1,
+      ::google::protobuf::DescriptorPool::generated_pool(),
+      ::google::protobuf::MessageFactory::generated_factory(),
+      sizeof(Profile));
+  Packet_descriptor_ = file->message_type(6);
+  static const int Packet_offsets_[9] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Packet, data_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Packet, data_channels_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Packet, data_groups_),
@@ -159,6 +179,7 @@ void protobuf_AssignDesc_protobuf_2fdata_2eproto() {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Packet, console_output_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Packet, status_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Packet, is_registration_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Packet, profiles_),
   };
   Packet_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -196,6 +217,8 @@ void protobuf_RegisterTypes(const ::std::string&) {
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
     DataControl_descriptor_, &DataControl::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
+    Profile_descriptor_, &Profile::default_instance());
+  ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
     Packet_descriptor_, &Packet::default_instance());
 }
 
@@ -212,6 +235,8 @@ void protobuf_ShutdownFile_protobuf_2fdata_2eproto() {
   delete DataLabel_reflection_;
   delete DataControl::default_instance_;
   delete DataControl_reflection_;
+  delete Profile::default_instance_;
+  delete Profile_reflection_;
   delete Packet::default_instance_;
   delete Packet_reflection_;
 }
@@ -229,31 +254,33 @@ void protobuf_AddDesc_protobuf_2fdata_2eproto() {
     "_y\030\006 \001(\002\022\024\n\014data_float_z\030\007 \001(\002\022\023\n\013time_d"
     "ouble\030\010 \001(\001\022\023\n\013time_uint64\030\t \001(\004\022\034\n\024main"
     "tain_time_double\030\n \001(\001\022\034\n\024maintain_time_"
-    "uint64\030\013 \001(\004\"p\n\013DataChannel\022\014\n\004name\030\001 \001("
-    "\t\022\035\n\004type\030\002 \001(\0162\017.vb_data_type_t\022\016\n\006hand"
-    "le\030\003 \001(\r\022\021\n\trange_min\030\004 \001(\002\022\021\n\trange_max"
-    "\030\005 \001(\002\"/\n\tDataGroup\022\014\n\004name\030\001 \001(\t\022\024\n\010cha"
-    "nnels\030\002 \003(\rB\002\020\001\":\n\tDataLabel\022\017\n\007channel\030"
-    "\001 \001(\r\022\r\n\005value\030\002 \001(\r\022\r\n\005label\030\003 \001(\t\"\367\001\n\013"
-    "DataControl\022\014\n\004name\030\001 \001(\t\022\033\n\004type\030\002 \001(\0162"
-    "\r.vb_control_t\022\027\n\017range_min_float\030\003 \001(\002\022"
-    "\027\n\017range_max_float\030\004 \001(\002\022\021\n\tnum_steps\030\005 "
-    "\001(\r\022\025\n\rrange_min_int\030\006 \001(\r\022\025\n\rrange_max_"
-    "int\030\007 \001(\r\022\021\n\tstep_size\030\010 \001(\r\022\023\n\013value_fl"
-    "oat\030\t \001(\002\022\021\n\tvalue_int\030\n \001(\r\022\017\n\007command\030"
-    "\013 \001(\t\"\352\001\n\006Packet\022\023\n\004data\030\001 \001(\0132\005.Data\022#\n"
-    "\rdata_channels\030\002 \003(\0132\014.DataChannel\022\037\n\013da"
-    "ta_groups\030\003 \003(\0132\n.DataGroup\022\037\n\013data_labe"
-    "ls\030\004 \003(\0132\n.DataLabel\022#\n\rdata_controls\030\005 "
-    "\003(\0132\014.DataControl\022\026\n\016console_output\030\006 \001("
-    "\t\022\016\n\006status\030\007 \001(\t\022\027\n\017is_registration\030\010 \001"
-    "(\010*j\n\016vb_data_type_t\022\024\n\020VB_DATATYPE_NONE"
-    "\020\000\022\023\n\017VB_DATATYPE_INT\020\001\022\025\n\021VB_DATATYPE_F"
-    "LOAT\020\002\022\026\n\022VB_DATATYPE_VECTOR\020\003*\206\001\n\014vb_co"
-    "ntrol_t\022\023\n\017VB_CONTROL_NONE\020\000\022\025\n\021VB_CONTR"
-    "OL_BUTTON\020\001\022\033\n\027VB_CONTROL_SLIDER_FLOAT\020\002"
-    "\022\031\n\025VB_CONTROL_SLIDER_INT\020\003\022\022\n\016VB_CONTRO"
-    "L_MAX\020\004", 1207);
+    "uint64\030\013 \001(\004\"\202\001\n\013DataChannel\022\014\n\004name\030\001 \001"
+    "(\t\022\035\n\004type\030\002 \001(\0162\017.vb_data_type_t\022\016\n\006han"
+    "dle\030\003 \001(\r\022\021\n\trange_min\030\004 \001(\002\022\021\n\trange_ma"
+    "x\030\005 \001(\002\022\020\n\010profiles\030\006 \001(\004\"/\n\tDataGroup\022\014"
+    "\n\004name\030\001 \001(\t\022\024\n\010channels\030\002 \003(\rB\002\020\001\":\n\tDa"
+    "taLabel\022\017\n\007channel\030\001 \001(\r\022\r\n\005value\030\002 \001(\r\022"
+    "\r\n\005label\030\003 \001(\t\"\211\002\n\013DataControl\022\014\n\004name\030\001"
+    " \001(\t\022\033\n\004type\030\002 \001(\0162\r.vb_control_t\022\027\n\017ran"
+    "ge_min_float\030\003 \001(\002\022\027\n\017range_max_float\030\004 "
+    "\001(\002\022\021\n\tnum_steps\030\005 \001(\r\022\025\n\rrange_min_int\030"
+    "\006 \001(\r\022\025\n\rrange_max_int\030\007 \001(\r\022\021\n\tstep_siz"
+    "e\030\010 \001(\r\022\023\n\013value_float\030\t \001(\002\022\021\n\tvalue_in"
+    "t\030\n \001(\r\022\017\n\007command\030\013 \001(\t\022\020\n\010profiles\030\014 \001"
+    "(\004\"\027\n\007Profile\022\014\n\004name\030\001 \001(\t\"\206\002\n\006Packet\022\023"
+    "\n\004data\030\001 \001(\0132\005.Data\022#\n\rdata_channels\030\002 \003"
+    "(\0132\014.DataChannel\022\037\n\013data_groups\030\003 \003(\0132\n."
+    "DataGroup\022\037\n\013data_labels\030\004 \003(\0132\n.DataLab"
+    "el\022#\n\rdata_controls\030\005 \003(\0132\014.DataControl\022"
+    "\026\n\016console_output\030\006 \001(\t\022\016\n\006status\030\007 \001(\t\022"
+    "\027\n\017is_registration\030\010 \001(\010\022\032\n\010profiles\030\t \003"
+    "(\0132\010.Profile*j\n\016vb_data_type_t\022\024\n\020VB_DAT"
+    "ATYPE_NONE\020\000\022\023\n\017VB_DATATYPE_INT\020\001\022\025\n\021VB_"
+    "DATATYPE_FLOAT\020\002\022\026\n\022VB_DATATYPE_VECTOR\020\003"
+    "*\206\001\n\014vb_control_t\022\023\n\017VB_CONTROL_NONE\020\000\022\025"
+    "\n\021VB_CONTROL_BUTTON\020\001\022\033\n\027VB_CONTROL_SLID"
+    "ER_FLOAT\020\002\022\031\n\025VB_CONTROL_SLIDER_INT\020\003\022\022\n"
+    "\016VB_CONTROL_MAX\020\004", 1297);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "protobuf/data.proto", &protobuf_RegisterTypes);
   Data::default_instance_ = new Data();
@@ -261,12 +288,14 @@ void protobuf_AddDesc_protobuf_2fdata_2eproto() {
   DataGroup::default_instance_ = new DataGroup();
   DataLabel::default_instance_ = new DataLabel();
   DataControl::default_instance_ = new DataControl();
+  Profile::default_instance_ = new Profile();
   Packet::default_instance_ = new Packet();
   Data::default_instance_->InitAsDefaultInstance();
   DataChannel::default_instance_->InitAsDefaultInstance();
   DataGroup::default_instance_->InitAsDefaultInstance();
   DataLabel::default_instance_->InitAsDefaultInstance();
   DataControl::default_instance_->InitAsDefaultInstance();
+  Profile::default_instance_->InitAsDefaultInstance();
   Packet::default_instance_->InitAsDefaultInstance();
   ::google::protobuf::internal::OnShutdown(&protobuf_ShutdownFile_protobuf_2fdata_2eproto);
 }
@@ -881,6 +910,7 @@ const int DataChannel::kTypeFieldNumber;
 const int DataChannel::kHandleFieldNumber;
 const int DataChannel::kRangeMinFieldNumber;
 const int DataChannel::kRangeMaxFieldNumber;
+const int DataChannel::kProfilesFieldNumber;
 #endif  // !_MSC_VER
 
 DataChannel::DataChannel()
@@ -904,6 +934,7 @@ void DataChannel::SharedCtor() {
   handle_ = 0u;
   range_min_ = 0;
   range_max_ = 0;
+  profiles_ = GOOGLE_ULONGLONG(0);
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -951,6 +982,7 @@ void DataChannel::Clear() {
     handle_ = 0u;
     range_min_ = 0;
     range_max_ = 0;
+    profiles_ = GOOGLE_ULONGLONG(0);
   }
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
@@ -1043,6 +1075,22 @@ bool DataChannel::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
+        if (input->ExpectTag(48)) goto parse_profiles;
+        break;
+      }
+
+      // optional uint64 profiles = 6;
+      case 6: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_profiles:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
+                 input, &profiles_)));
+          set_has_profiles();
+        } else {
+          goto handle_uninterpreted;
+        }
         if (input->ExpectAtEnd()) return true;
         break;
       }
@@ -1095,6 +1143,11 @@ void DataChannel::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteFloat(5, this->range_max(), output);
   }
 
+  // optional uint64 profiles = 6;
+  if (has_profiles()) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(6, this->profiles(), output);
+  }
+
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -1132,6 +1185,11 @@ void DataChannel::SerializeWithCachedSizes(
   // optional float range_max = 5;
   if (has_range_max()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(5, this->range_max(), target);
+  }
+
+  // optional uint64 profiles = 6;
+  if (has_profiles()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(6, this->profiles(), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -1173,6 +1231,13 @@ int DataChannel::ByteSize() const {
     // optional float range_max = 5;
     if (has_range_max()) {
       total_size += 1 + 4;
+    }
+
+    // optional uint64 profiles = 6;
+    if (has_profiles()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::UInt64Size(
+          this->profiles());
     }
 
   }
@@ -1217,6 +1282,9 @@ void DataChannel::MergeFrom(const DataChannel& from) {
     if (from.has_range_max()) {
       set_range_max(from.range_max());
     }
+    if (from.has_profiles()) {
+      set_profiles(from.profiles());
+    }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
 }
@@ -1245,6 +1313,7 @@ void DataChannel::Swap(DataChannel* other) {
     std::swap(handle_, other->handle_);
     std::swap(range_min_, other->range_min_);
     std::swap(range_max_, other->range_max_);
+    std::swap(profiles_, other->profiles_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);
@@ -1870,6 +1939,7 @@ const int DataControl::kStepSizeFieldNumber;
 const int DataControl::kValueFloatFieldNumber;
 const int DataControl::kValueIntFieldNumber;
 const int DataControl::kCommandFieldNumber;
+const int DataControl::kProfilesFieldNumber;
 #endif  // !_MSC_VER
 
 DataControl::DataControl()
@@ -1899,6 +1969,7 @@ void DataControl::SharedCtor() {
   value_float_ = 0;
   value_int_ = 0u;
   command_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  profiles_ = GOOGLE_ULONGLONG(0);
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -1961,6 +2032,7 @@ void DataControl::Clear() {
         command_->clear();
       }
     }
+    profiles_ = GOOGLE_ULONGLONG(0);
   }
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
@@ -2150,6 +2222,22 @@ bool DataControl::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
+        if (input->ExpectTag(96)) goto parse_profiles;
+        break;
+      }
+
+      // optional uint64 profiles = 12;
+      case 12: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_profiles:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
+                 input, &profiles_)));
+          set_has_profiles();
+        } else {
+          goto handle_uninterpreted;
+        }
         if (input->ExpectAtEnd()) return true;
         break;
       }
@@ -2236,6 +2324,11 @@ void DataControl::SerializeWithCachedSizes(
       11, this->command(), output);
   }
 
+  // optional uint64 profiles = 12;
+  if (has_profiles()) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(12, this->profiles(), output);
+  }
+
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -2308,6 +2401,11 @@ void DataControl::SerializeWithCachedSizes(
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
         11, this->command(), target);
+  }
+
+  // optional uint64 profiles = 12;
+  if (has_profiles()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(12, this->profiles(), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -2393,6 +2491,13 @@ int DataControl::ByteSize() const {
           this->command());
     }
 
+    // optional uint64 profiles = 12;
+    if (has_profiles()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::UInt64Size(
+          this->profiles());
+    }
+
   }
   if (!unknown_fields().empty()) {
     total_size +=
@@ -2455,6 +2560,9 @@ void DataControl::MergeFrom(const DataControl& from) {
     if (from.has_command()) {
       set_command(from.command());
     }
+    if (from.has_profiles()) {
+      set_profiles(from.profiles());
+    }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
 }
@@ -2489,6 +2597,7 @@ void DataControl::Swap(DataControl* other) {
     std::swap(value_float_, other->value_float_);
     std::swap(value_int_, other->value_int_);
     std::swap(command_, other->command_);
+    std::swap(profiles_, other->profiles_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);
@@ -2507,6 +2616,231 @@ void DataControl::Swap(DataControl* other) {
 // ===================================================================
 
 #ifndef _MSC_VER
+const int Profile::kNameFieldNumber;
+#endif  // !_MSC_VER
+
+Profile::Profile()
+  : ::google::protobuf::Message() {
+  SharedCtor();
+}
+
+void Profile::InitAsDefaultInstance() {
+}
+
+Profile::Profile(const Profile& from)
+  : ::google::protobuf::Message() {
+  SharedCtor();
+  MergeFrom(from);
+}
+
+void Profile::SharedCtor() {
+  _cached_size_ = 0;
+  name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+}
+
+Profile::~Profile() {
+  SharedDtor();
+}
+
+void Profile::SharedDtor() {
+  if (name_ != &::google::protobuf::internal::kEmptyString) {
+    delete name_;
+  }
+  if (this != default_instance_) {
+  }
+}
+
+void Profile::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const ::google::protobuf::Descriptor* Profile::descriptor() {
+  protobuf_AssignDescriptorsOnce();
+  return Profile_descriptor_;
+}
+
+const Profile& Profile::default_instance() {
+  if (default_instance_ == NULL) protobuf_AddDesc_protobuf_2fdata_2eproto();
+  return *default_instance_;
+}
+
+Profile* Profile::default_instance_ = NULL;
+
+Profile* Profile::New() const {
+  return new Profile;
+}
+
+void Profile::Clear() {
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    if (has_name()) {
+      if (name_ != &::google::protobuf::internal::kEmptyString) {
+        name_->clear();
+      }
+    }
+  }
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+  mutable_unknown_fields()->Clear();
+}
+
+bool Profile::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!(EXPRESSION)) return false
+  ::google::protobuf::uint32 tag;
+  while ((tag = input->ReadTag()) != 0) {
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // optional string name = 1;
+      case 1: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_name()));
+          ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+            this->name().data(), this->name().length(),
+            ::google::protobuf::internal::WireFormat::PARSE);
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectAtEnd()) return true;
+        break;
+      }
+
+      default: {
+      handle_uninterpreted:
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
+          return true;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+  return true;
+#undef DO_
+}
+
+void Profile::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // optional string name = 1;
+  if (has_name()) {
+    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+      this->name().data(), this->name().length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE);
+    ::google::protobuf::internal::WireFormatLite::WriteString(
+      1, this->name(), output);
+  }
+
+  if (!unknown_fields().empty()) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        unknown_fields(), output);
+  }
+}
+
+::google::protobuf::uint8* Profile::SerializeWithCachedSizesToArray(
+    ::google::protobuf::uint8* target) const {
+  // optional string name = 1;
+  if (has_name()) {
+    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+      this->name().data(), this->name().length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE);
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        1, this->name(), target);
+  }
+
+  if (!unknown_fields().empty()) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        unknown_fields(), target);
+  }
+  return target;
+}
+
+int Profile::ByteSize() const {
+  int total_size = 0;
+
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    // optional string name = 1;
+    if (has_name()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::StringSize(
+          this->name());
+    }
+
+  }
+  if (!unknown_fields().empty()) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        unknown_fields());
+  }
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = total_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void Profile::MergeFrom(const ::google::protobuf::Message& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  const Profile* source =
+    ::google::protobuf::internal::dynamic_cast_if_available<const Profile*>(
+      &from);
+  if (source == NULL) {
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+    MergeFrom(*source);
+  }
+}
+
+void Profile::MergeFrom(const Profile& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    if (from.has_name()) {
+      set_name(from.name());
+    }
+  }
+  mutable_unknown_fields()->MergeFrom(from.unknown_fields());
+}
+
+void Profile::CopyFrom(const ::google::protobuf::Message& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void Profile::CopyFrom(const Profile& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool Profile::IsInitialized() const {
+
+  return true;
+}
+
+void Profile::Swap(Profile* other) {
+  if (other != this) {
+    std::swap(name_, other->name_);
+    std::swap(_has_bits_[0], other->_has_bits_[0]);
+    _unknown_fields_.Swap(&other->_unknown_fields_);
+    std::swap(_cached_size_, other->_cached_size_);
+  }
+}
+
+::google::protobuf::Metadata Profile::GetMetadata() const {
+  protobuf_AssignDescriptorsOnce();
+  ::google::protobuf::Metadata metadata;
+  metadata.descriptor = Profile_descriptor_;
+  metadata.reflection = Profile_reflection_;
+  return metadata;
+}
+
+
+// ===================================================================
+
+#ifndef _MSC_VER
 const int Packet::kDataFieldNumber;
 const int Packet::kDataChannelsFieldNumber;
 const int Packet::kDataGroupsFieldNumber;
@@ -2515,6 +2849,7 @@ const int Packet::kDataControlsFieldNumber;
 const int Packet::kConsoleOutputFieldNumber;
 const int Packet::kStatusFieldNumber;
 const int Packet::kIsRegistrationFieldNumber;
+const int Packet::kProfilesFieldNumber;
 #endif  // !_MSC_VER
 
 Packet::Packet()
@@ -2599,6 +2934,7 @@ void Packet::Clear() {
   data_groups_.Clear();
   data_labels_.Clear();
   data_controls_.Clear();
+  profiles_.Clear();
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
 }
@@ -2728,6 +3064,21 @@ bool Packet::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
+        if (input->ExpectTag(74)) goto parse_profiles;
+        break;
+      }
+
+      // repeated .Profile profiles = 9;
+      case 9: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_profiles:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+                input, add_profiles()));
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(74)) goto parse_profiles;
         if (input->ExpectAtEnd()) return true;
         break;
       }
@@ -2803,6 +3154,12 @@ void Packet::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteBool(8, this->is_registration(), output);
   }
 
+  // repeated .Profile profiles = 9;
+  for (int i = 0; i < this->profiles_size(); i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      9, this->profiles(i), output);
+  }
+
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -2869,6 +3226,13 @@ void Packet::SerializeWithCachedSizes(
   // optional bool is_registration = 8;
   if (has_is_registration()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(8, this->is_registration(), target);
+  }
+
+  // repeated .Profile profiles = 9;
+  for (int i = 0; i < this->profiles_size(); i++) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteMessageNoVirtualToArray(
+        9, this->profiles(i), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -2941,6 +3305,14 @@ int Packet::ByteSize() const {
         this->data_controls(i));
   }
 
+  // repeated .Profile profiles = 9;
+  total_size += 1 * this->profiles_size();
+  for (int i = 0; i < this->profiles_size(); i++) {
+    total_size +=
+      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+        this->profiles(i));
+  }
+
   if (!unknown_fields().empty()) {
     total_size +=
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
@@ -2970,6 +3342,7 @@ void Packet::MergeFrom(const Packet& from) {
   data_groups_.MergeFrom(from.data_groups_);
   data_labels_.MergeFrom(from.data_labels_);
   data_controls_.MergeFrom(from.data_controls_);
+  profiles_.MergeFrom(from.profiles_);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     if (from.has_data()) {
       mutable_data()->::Data::MergeFrom(from.data());
@@ -3014,6 +3387,7 @@ void Packet::Swap(Packet* other) {
     std::swap(console_output_, other->console_output_);
     std::swap(status_, other->status_);
     std::swap(is_registration_, other->is_registration_);
+    profiles_.Swap(&other->profiles_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);

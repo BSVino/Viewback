@@ -21,10 +21,7 @@ THE SOFTWARE.
 extern "C" {
 #endif
 
-#if !defined(VIEWBACK_TIME_DOUBLE)
 typedef unsigned long long vb_uint64;
-#endif
-
 typedef unsigned char vb_bool;
 
 /*

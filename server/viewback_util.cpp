@@ -581,25 +581,6 @@ vb_bool vb_util_server_create(const char* server_name)
 		}
 	}
 
-	for (size_t i = 0; i < g_profiles.size(); i++)
-	{
-		auto& profile = g_profiles[i];
-		if (!vb_data_add_profile(profile.name, nullptr))
-			return 0;
-
-		for (size_t j = 0; j < profile.channels.size(); j++)
-		{
-			if (!vb_data_add_channel_to_profile((vb_profile_handle_t)i, (vb_channel_handle_t)profile.channels[j]))
-				return 0;
-		}
-
-		for (size_t j = 0; j < profile.controls.size(); j++)
-		{
-			if (!vb_data_add_control_to_profile((vb_profile_handle_t)i, profile.controls[j]))
-				return 0;
-		}
-	}
-
 	for (size_t i = 0; i < g_controls.size(); i++)
 	{
 		auto& control = g_controls[i];
@@ -667,6 +648,25 @@ vb_bool vb_util_server_create(const char* server_name)
 
 		default:
 			return 0;
+		}
+	}
+
+	for (size_t i = 0; i < g_profiles.size(); i++)
+	{
+		auto& profile = g_profiles[i];
+		if (!vb_data_add_profile(profile.name, nullptr))
+			return 0;
+
+		for (size_t j = 0; j < profile.channels.size(); j++)
+		{
+			if (!vb_data_add_channel_to_profile((vb_profile_handle_t)i, (vb_channel_handle_t)profile.channels[j]))
+				return 0;
+		}
+
+		for (size_t j = 0; j < profile.controls.size(); j++)
+		{
+			if (!vb_data_add_control_to_profile((vb_profile_handle_t)i, profile.controls[j]))
+				return 0;
 		}
 	}
 

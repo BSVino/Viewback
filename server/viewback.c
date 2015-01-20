@@ -2229,6 +2229,9 @@ int vb__DataChannel_write(struct vb__DataChannel *_DataChannel, void *_buffer, i
 	}
 #endif
 
+	offset = vb__write_wire_format(6, PB_WIRE_TYPE_VARINT, _buffer, offset);
+	offset = vb__write_raw_varint64(_DataChannel->_profiles, _buffer, offset);
+
 	return offset;
 }
 
@@ -2355,6 +2358,9 @@ int vb__DataControl_write(struct vb__DataControl *_DataControl, void *_buffer, i
 		offset = vb__write_wire_format(10, PB_WIRE_TYPE_VARINT, _buffer, offset);
 		offset = vb__write_raw_varint32(_DataControl->_initial_int, _buffer, offset);
 	}
+
+	offset = vb__write_wire_format(12, PB_WIRE_TYPE_VARINT, _buffer, offset);
+	offset = vb__write_raw_varint64(_DataControl->_profiles, _buffer, offset);
 
 	return offset;
 }
@@ -2581,6 +2587,7 @@ void vb__Packet_initialize_registrations(struct vb__Packet* packet, struct vb__D
 		data_channels[i]._field_name_len = strlen(VB->channels[i].name);
 		data_channels[i]._handle = i;
 		data_channels[i]._type = VB->channels[i].type;
+		data_channels[i]._profiles = VB->channels[i].profiles;
 #ifndef VB_NO_RANGE
 		data_channels[i]._min = VB->channels[i].range_min;
 		data_channels[i]._max = VB->channels[i].range_max;
@@ -2637,6 +2644,7 @@ void vb__Packet_initialize_registrations(struct vb__Packet* packet, struct vb__D
 			data_controls[i]._command_len = 0;
 		}
 		data_controls[i]._type = VB->controls[i].type;
+		data_controls[i]._profiles = VB->controls[i].profiles;
 
 		switch (VB->controls[i].type)
 		{
@@ -2740,6 +2748,9 @@ size_t vb__Packet_get_message_size(struct vb__Packet *_Packet)
 			size += 1; /* One byte for the "max" number and wire type. */
 			size += 4; /* 4 bytes for a float. */
 
+			size += 1; /* One byte for the "profiles" number and wire type. */
+			size += 8; /* 8 bytes for int64. */
+
 			/* Add on the size for each string. */
 			size += _Packet->_data_channels[i]._field_name_len;
 		}
@@ -2837,6 +2848,9 @@ size_t vb__Packet_get_message_size(struct vb__Packet *_Packet)
 
 			size += 1; // One byte for "command" field number and wire type
 			size += 4; // 4 bytes to support really long strings
+
+			size += 1; /* One byte for the "profiles" number and wire type. */
+			size += 8; /* 8 bytes for int64. */
 
 			/* Add on the size for each string. */
 			size += _Packet->_data_controls[i]._name_len;

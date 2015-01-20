@@ -81,11 +81,12 @@ public:
 	std::map<int, std::string> m_asLabels;
 };
 
-class CViewbackDataGroup
+class CViewbackProfile
 {
 public:
-	std::string m_sName;
-	std::vector<size_t> m_iChannels;
+	std::string         m_name;
+	std::vector<size_t> m_channels;
+	std::vector<size_t> m_controls;
 };
 
 class CViewbackDataControl
@@ -95,6 +96,8 @@ public:
 	vb_control_t m_type;
 	std::string  m_command;
 	std::string  m_override_command;
+
+	bool m_visible;
 
 	union
 	{
@@ -201,7 +204,8 @@ public:
 	// All channels are deactivated by default.
 	void ActivateChannel(size_t iChannel);
 	void DeactivateChannel(size_t iChannel);
-	void ActivateGroup(size_t iGroup);
+	void ActivateProfile(size_t iProfile);
+	size_t GetActiveProfile() { return m_active_profile; }
 
 	void ControlCallback(int iControl);
 	void ControlCallback(int iControl, float);
@@ -213,7 +217,7 @@ public:
 	DebugOutputCallback GetDebugOutputCallback() { return m_pfnDebugOutput; }
 
 	inline const std::vector<CViewbackDataChannel>& GetChannels() const { return m_aDataChannels; }
-	inline const std::vector<CViewbackDataGroup>& GetGroups() const { return m_aDataGroups; }
+	inline const std::vector<CViewbackProfile>& GetProfiles() const { return m_aProfiles; }
 	inline std::vector<CViewbackDataControl>& GetControls() { return m_aDataControls; }
 	inline const std::vector<CViewbackDataList>& GetData() const { return m_aData; } // DO NOT STORE without copying, this may be wiped at any time.
 	inline std::vector<CDataMetaInfo>& GetMeta() { return m_aMeta; }
@@ -239,7 +243,7 @@ private:
 	std::vector<Packet> m_aUnhandledMessages;
 
 	std::vector<CViewbackDataChannel> m_aDataChannels;
-	std::vector<CViewbackDataGroup> m_aDataGroups;
+	std::vector<CViewbackProfile> m_aProfiles;
 	std::vector<CViewbackDataControl> m_aDataControls;
 	std::vector<CViewbackDataList> m_aData;
 	std::vector<CDataMetaInfo> m_aMeta;
@@ -261,6 +265,8 @@ private:
 	double m_flTimeReceivedLatestData;
 
 	double m_flDataClearTime;
+
+	size_t m_active_profile;
 
 	bool m_bDisconnected; // Remain disconnected while this is on.
 };

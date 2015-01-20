@@ -31,6 +31,8 @@ THE SOFTWARE.
 
 #define VB_MAX_PROFILES 64 // sizeof(vb_uint64)
 
+typedef unsigned long long vb_uint64;
+
 #ifdef _DEBUG
 
 #ifdef __GNUC__

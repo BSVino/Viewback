@@ -37,6 +37,7 @@ class DataChannel;
 class DataGroup;
 class DataLabel;
 class DataControl;
+class Profile;
 class Packet;
 
 enum vb_data_type_t {
@@ -350,6 +351,13 @@ class DataChannel : public ::google::protobuf::Message {
   inline float range_max() const;
   inline void set_range_max(float value);
 
+  // optional uint64 profiles = 6;
+  inline bool has_profiles() const;
+  inline void clear_profiles();
+  static const int kProfilesFieldNumber = 6;
+  inline ::google::protobuf::uint64 profiles() const;
+  inline void set_profiles(::google::protobuf::uint64 value);
+
   // @@protoc_insertion_point(class_scope:DataChannel)
  private:
   inline void set_has_name();
@@ -362,6 +370,8 @@ class DataChannel : public ::google::protobuf::Message {
   inline void clear_has_range_min();
   inline void set_has_range_max();
   inline void clear_has_range_max();
+  inline void set_has_profiles();
+  inline void clear_has_profiles();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -370,9 +380,10 @@ class DataChannel : public ::google::protobuf::Message {
   ::google::protobuf::uint32 handle_;
   float range_min_;
   float range_max_;
+  ::google::protobuf::uint64 profiles_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(5 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(6 + 31) / 32];
 
   friend void  protobuf_AddDesc_protobuf_2fdata_2eproto();
   friend void protobuf_AssignDesc_protobuf_2fdata_2eproto();
@@ -732,6 +743,13 @@ class DataControl : public ::google::protobuf::Message {
   inline ::std::string* release_command();
   inline void set_allocated_command(::std::string* command);
 
+  // optional uint64 profiles = 12;
+  inline bool has_profiles() const;
+  inline void clear_profiles();
+  static const int kProfilesFieldNumber = 12;
+  inline ::google::protobuf::uint64 profiles() const;
+  inline void set_profiles(::google::protobuf::uint64 value);
+
   // @@protoc_insertion_point(class_scope:DataControl)
  private:
   inline void set_has_name();
@@ -756,6 +774,8 @@ class DataControl : public ::google::protobuf::Message {
   inline void clear_has_value_int();
   inline void set_has_command();
   inline void clear_has_command();
+  inline void set_has_profiles();
+  inline void clear_has_profiles();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -769,10 +789,11 @@ class DataControl : public ::google::protobuf::Message {
   ::google::protobuf::uint32 step_size_;
   float value_float_;
   ::std::string* command_;
+  ::google::protobuf::uint64 profiles_;
   ::google::protobuf::uint32 value_int_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(11 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(12 + 31) / 32];
 
   friend void  protobuf_AddDesc_protobuf_2fdata_2eproto();
   friend void protobuf_AssignDesc_protobuf_2fdata_2eproto();
@@ -780,6 +801,93 @@ class DataControl : public ::google::protobuf::Message {
 
   void InitAsDefaultInstance();
   static DataControl* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class Profile : public ::google::protobuf::Message {
+ public:
+  Profile();
+  virtual ~Profile();
+
+  Profile(const Profile& from);
+
+  inline Profile& operator=(const Profile& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const Profile& default_instance();
+
+  void Swap(Profile* other);
+
+  // implements Message ----------------------------------------------
+
+  Profile* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const Profile& from);
+  void MergeFrom(const Profile& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // optional string name = 1;
+  inline bool has_name() const;
+  inline void clear_name();
+  static const int kNameFieldNumber = 1;
+  inline const ::std::string& name() const;
+  inline void set_name(const ::std::string& value);
+  inline void set_name(const char* value);
+  inline void set_name(const char* value, size_t size);
+  inline ::std::string* mutable_name();
+  inline ::std::string* release_name();
+  inline void set_allocated_name(::std::string* name);
+
+  // @@protoc_insertion_point(class_scope:Profile)
+ private:
+  inline void set_has_name();
+  inline void clear_has_name();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::std::string* name_;
+
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(1 + 31) / 32];
+
+  friend void  protobuf_AddDesc_protobuf_2fdata_2eproto();
+  friend void protobuf_AssignDesc_protobuf_2fdata_2eproto();
+  friend void protobuf_ShutdownFile_protobuf_2fdata_2eproto();
+
+  void InitAsDefaultInstance();
+  static Profile* default_instance_;
 };
 // -------------------------------------------------------------------
 
@@ -925,6 +1033,18 @@ class Packet : public ::google::protobuf::Message {
   inline bool is_registration() const;
   inline void set_is_registration(bool value);
 
+  // repeated .Profile profiles = 9;
+  inline int profiles_size() const;
+  inline void clear_profiles();
+  static const int kProfilesFieldNumber = 9;
+  inline const ::Profile& profiles(int index) const;
+  inline ::Profile* mutable_profiles(int index);
+  inline ::Profile* add_profiles();
+  inline const ::google::protobuf::RepeatedPtrField< ::Profile >&
+      profiles() const;
+  inline ::google::protobuf::RepeatedPtrField< ::Profile >*
+      mutable_profiles();
+
   // @@protoc_insertion_point(class_scope:Packet)
  private:
   inline void set_has_data();
@@ -945,10 +1065,11 @@ class Packet : public ::google::protobuf::Message {
   ::google::protobuf::RepeatedPtrField< ::DataControl > data_controls_;
   ::std::string* console_output_;
   ::std::string* status_;
+  ::google::protobuf::RepeatedPtrField< ::Profile > profiles_;
   bool is_registration_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(8 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(9 + 31) / 32];
 
   friend void  protobuf_AddDesc_protobuf_2fdata_2eproto();
   friend void protobuf_AssignDesc_protobuf_2fdata_2eproto();
@@ -1345,6 +1466,28 @@ inline float DataChannel::range_max() const {
 inline void DataChannel::set_range_max(float value) {
   set_has_range_max();
   range_max_ = value;
+}
+
+// optional uint64 profiles = 6;
+inline bool DataChannel::has_profiles() const {
+  return (_has_bits_[0] & 0x00000020u) != 0;
+}
+inline void DataChannel::set_has_profiles() {
+  _has_bits_[0] |= 0x00000020u;
+}
+inline void DataChannel::clear_has_profiles() {
+  _has_bits_[0] &= ~0x00000020u;
+}
+inline void DataChannel::clear_profiles() {
+  profiles_ = GOOGLE_ULONGLONG(0);
+  clear_has_profiles();
+}
+inline ::google::protobuf::uint64 DataChannel::profiles() const {
+  return profiles_;
+}
+inline void DataChannel::set_profiles(::google::protobuf::uint64 value) {
+  set_has_profiles();
+  profiles_ = value;
 }
 
 // -------------------------------------------------------------------
@@ -1907,6 +2050,102 @@ inline void DataControl::set_allocated_command(::std::string* command) {
   }
 }
 
+// optional uint64 profiles = 12;
+inline bool DataControl::has_profiles() const {
+  return (_has_bits_[0] & 0x00000800u) != 0;
+}
+inline void DataControl::set_has_profiles() {
+  _has_bits_[0] |= 0x00000800u;
+}
+inline void DataControl::clear_has_profiles() {
+  _has_bits_[0] &= ~0x00000800u;
+}
+inline void DataControl::clear_profiles() {
+  profiles_ = GOOGLE_ULONGLONG(0);
+  clear_has_profiles();
+}
+inline ::google::protobuf::uint64 DataControl::profiles() const {
+  return profiles_;
+}
+inline void DataControl::set_profiles(::google::protobuf::uint64 value) {
+  set_has_profiles();
+  profiles_ = value;
+}
+
+// -------------------------------------------------------------------
+
+// Profile
+
+// optional string name = 1;
+inline bool Profile::has_name() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void Profile::set_has_name() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void Profile::clear_has_name() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void Profile::clear_name() {
+  if (name_ != &::google::protobuf::internal::kEmptyString) {
+    name_->clear();
+  }
+  clear_has_name();
+}
+inline const ::std::string& Profile::name() const {
+  return *name_;
+}
+inline void Profile::set_name(const ::std::string& value) {
+  set_has_name();
+  if (name_ == &::google::protobuf::internal::kEmptyString) {
+    name_ = new ::std::string;
+  }
+  name_->assign(value);
+}
+inline void Profile::set_name(const char* value) {
+  set_has_name();
+  if (name_ == &::google::protobuf::internal::kEmptyString) {
+    name_ = new ::std::string;
+  }
+  name_->assign(value);
+}
+inline void Profile::set_name(const char* value, size_t size) {
+  set_has_name();
+  if (name_ == &::google::protobuf::internal::kEmptyString) {
+    name_ = new ::std::string;
+  }
+  name_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* Profile::mutable_name() {
+  set_has_name();
+  if (name_ == &::google::protobuf::internal::kEmptyString) {
+    name_ = new ::std::string;
+  }
+  return name_;
+}
+inline ::std::string* Profile::release_name() {
+  clear_has_name();
+  if (name_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = name_;
+    name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+inline void Profile::set_allocated_name(::std::string* name) {
+  if (name_ != &::google::protobuf::internal::kEmptyString) {
+    delete name_;
+  }
+  if (name) {
+    set_has_name();
+    name_ = name;
+  } else {
+    clear_has_name();
+    name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  }
+}
+
 // -------------------------------------------------------------------
 
 // Packet
@@ -2209,6 +2448,31 @@ inline bool Packet::is_registration() const {
 inline void Packet::set_is_registration(bool value) {
   set_has_is_registration();
   is_registration_ = value;
+}
+
+// repeated .Profile profiles = 9;
+inline int Packet::profiles_size() const {
+  return profiles_.size();
+}
+inline void Packet::clear_profiles() {
+  profiles_.Clear();
+}
+inline const ::Profile& Packet::profiles(int index) const {
+  return profiles_.Get(index);
+}
+inline ::Profile* Packet::mutable_profiles(int index) {
+  return profiles_.Mutable(index);
+}
+inline ::Profile* Packet::add_profiles() {
+  return profiles_.Add();
+}
+inline const ::google::protobuf::RepeatedPtrField< ::Profile >&
+Packet::profiles() const {
+  return profiles_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::Profile >*
+Packet::mutable_profiles() {
+  return &profiles_;
 }
 
 

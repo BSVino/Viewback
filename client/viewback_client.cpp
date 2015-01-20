@@ -90,7 +90,7 @@ void CViewbackClient::Update()
 				// Disregard any data which came in before the registration packet, it may be from another server or old connection.
 				m_aData.clear();
 				m_aDataChannels.clear();
-				m_aDataGroups.clear();
+				m_aProfiles.clear();
 				m_aDataControls.clear();
 				m_aMeta.clear();
 				m_aUnhandledMessages.clear();
@@ -127,20 +127,56 @@ void CViewbackClient::Update()
 
 				VBPrintf("Installed %d channels.\n", aPackets[i].data_channels_size());
 
-				for (int j = 0; j < aPackets[i].data_groups_size(); j++)
+				if (aPackets[i].profiles_size())
 				{
-					auto& oGroupProtobuf = aPackets[i].data_groups(j);
+					for (int j = 0; j < aPackets[i].profiles_size(); j++)
+					{
+						auto& oProfileProtobuf = aPackets[i].profiles(j);
 
-					VBAssert(oGroupProtobuf.has_name());
+						VBAssert(oProfileProtobuf.has_name());
 
-					m_aDataGroups.push_back(CViewbackDataGroup());
-					auto& oGroup = m_aDataGroups.back();
-					oGroup.m_sName = oGroupProtobuf.name();
-					for (int k = 0; k < oGroupProtobuf.channels_size(); k++)
-						oGroup.m_iChannels.push_back(oGroupProtobuf.channels(k));
+						m_aProfiles.push_back(CViewbackProfile());
+						auto& oProfile = m_aProfiles.back();
+						oProfile.m_name = oProfileProtobuf.name();
+					}
+
+					for (int k = 0; k < aPackets[i].data_channels_size(); k++)
+					{
+						for (int j = 0; j < VB_MAX_PROFILES; j++)
+						{
+							if (aPackets[i].data_channels(k).profiles() & ((vb_uint64)1 << j))
+								m_aProfiles[j].m_channels.push_back(k);
+						}
+					}
+
+					for (int k = 0; k < aPackets[i].data_controls_size(); k++)
+					{
+						for (int j = 0; j < VB_MAX_PROFILES; j++)
+						{
+							if (aPackets[i].data_controls(k).profiles() & ((vb_uint64)1 << j))
+								m_aProfiles[j].m_controls.push_back(k);
+						}
+					}
+
+					VBPrintf("Installed %d profiles.\n", aPackets[i].profiles_size());
 				}
+				else
+				{
+					for (int j = 0; j < aPackets[i].data_groups_size(); j++)
+					{
+						auto& oGroupProtobuf = aPackets[i].data_groups(j);
 
-				VBPrintf("Installed %d groups.\n", aPackets[i].data_groups_size());
+						VBAssert(oGroupProtobuf.has_name());
+
+						m_aProfiles.push_back(CViewbackProfile());
+						auto& oProfile = m_aProfiles.back();
+						oProfile.m_name = oGroupProtobuf.name();
+						for (int k = 0; k < oGroupProtobuf.channels_size(); k++)
+							oProfile.m_channels.push_back(oGroupProtobuf.channels(k));
+					}
+
+					VBPrintf("Installed %d groups from profiles.\n", aPackets[i].data_groups_size());
+				}
 
 				for (int j = 0; j < aPackets[i].data_labels_size(); j++)
 				{
@@ -212,7 +248,7 @@ void CViewbackClient::Update()
 			}
 		}
 
-		if (!m_aDataChannels.size() && !m_aDataControls.size() && !m_aDataGroups.size())
+		if (!m_aDataChannels.size() && !m_aDataControls.size() && !m_aProfiles.size())
 		{
 			// We somehow don't have any data registrations yet, so stash these messages for later.
 			// It might be possible if the server sends some messages between when the client connects and when it requests registrations.
@@ -312,7 +348,7 @@ void CViewbackClient::Update()
 
 			m_aDataChannels.clear();
 			m_aDataControls.clear();
-			m_aDataGroups.clear();
+			m_aProfiles.clear();
 			m_aMeta.clear();
 
 			m_pfnRegistrationUpdate();
@@ -358,6 +394,8 @@ void CViewbackClient::Connect(const char* pszIP, unsigned short iPort)
 	m_iServerConnectionTimeS = now.time;
 	m_iServerConnectionTimeMS = now.millitm;
 	m_flDataClearTime = 0;
+
+	m_active_profile = 0;
 }
 
 void CViewbackClient::FindServer()
@@ -403,19 +441,30 @@ void CViewbackClient::DeactivateChannel(size_t iChannel)
 	m_aDataChannels[iChannel].m_bActive = false;
 }
 
-void CViewbackClient::ActivateGroup(size_t iGroup)
+void CViewbackClient::ActivateProfile(size_t iProfile)
 {
+	if (iProfile >= m_aProfiles.size())
+		return;
+
+	m_active_profile = iProfile;
+
 	char aoeu[10];
-	sprintf(aoeu, "%d", iGroup);
+	sprintf(aoeu, "%d", iProfile);
 
 	// This list is pumped into the data thread during the Update().
-	m_sOutgoingCommands.push_back(std::string("group: ") + aoeu);
+	m_sOutgoingCommands.push_back(std::string("profile: ") + aoeu);
 
 	for (auto& oChannel : m_aDataChannels)
 		oChannel.m_bActive = false;
 
-	for (auto& i : m_aDataGroups[iGroup].m_iChannels)
+	for (auto& i : m_aProfiles[iProfile].m_channels)
 		m_aDataChannels[i].m_bActive = true;
+
+	for (auto& control : m_aDataControls)
+		control.m_visible = false;
+
+	for (auto& i : m_aProfiles[iProfile].m_controls)
+		m_aDataControls[i].m_visible = true;
 }
 
 void CViewbackClient::ControlCallback(int iControl)

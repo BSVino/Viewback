@@ -212,6 +212,8 @@ struct vb__DataChannel {
 	float          _min;
 	float          _max;
 #endif
+
+	vb_uint64 _profiles;
 };
 
 struct vb__DataProfile {
@@ -242,6 +244,8 @@ struct vb__DataControl {
 	int            _range_max_int;
 	unsigned int   _step_size;
 	int            _initial_int;
+
+	vb_uint64 _profiles;
 };
 
 struct vb__Packet {
