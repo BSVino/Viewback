@@ -262,13 +262,14 @@ vb_bool vb_data_add_profile(const char* name, /*out*/ vb_profile_handle_t* handl
 	Add the specified channel of data to the specified profile.
 	Returns 1 on success, 0 on failure.
 */
-vb_bool vb_data_add_channel_to_profile(vb_profile_handle_t profile, vb_channel_handle_t channel);
+vb_bool vb_profile_add_channel(vb_profile_handle_t profile, vb_channel_handle_t channel);
+vb_bool vb_profile_remove_channel(vb_profile_handle_t profile, vb_channel_handle_t channel);
 
 /*
 	Add the specified control of data to the specified profile.
 	Returns 1 on success, 0 on failure.
 */
-vb_bool vb_data_add_control_to_profile(vb_profile_handle_t profile, const char* control);
+vb_bool vb_profile_add_control(vb_profile_handle_t profile, const char* control);
 
 /*
 	Register a label for integers. When the specified data has the specified value

@@ -207,6 +207,9 @@ public:
 	void ActivateProfile(size_t iProfile);
 	size_t GetActiveProfile() { return m_active_profile; }
 
+	void Profile_AddChannel(size_t channel); // Adds to the current profile
+	void Profile_RemoveChannel(size_t channel); // Removes from the current profile
+
 	void ControlCallback(int iControl);
 	void ControlCallback(int iControl, float);
 	void ControlCallback(int iControl, int);

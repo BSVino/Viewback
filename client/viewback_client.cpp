@@ -467,6 +467,24 @@ void CViewbackClient::ActivateProfile(size_t iProfile)
 		m_aDataControls[i].m_visible = true;
 }
 
+void CViewbackClient::Profile_AddChannel(size_t channel)
+{
+	char aoeu[10];
+	sprintf(aoeu, "%d %d", m_active_profile, channel);
+
+	// This list is pumped into the data thread during the Update().
+	m_sOutgoingCommands.push_back(std::string("profile-add-channel: ") + aoeu);
+}
+
+void CViewbackClient::Profile_RemoveChannel(size_t channel)
+{
+	char aoeu[10];
+	sprintf(aoeu, "%d %d", m_active_profile, channel);
+
+	// This list is pumped into the data thread during the Update().
+	m_sOutgoingCommands.push_back(std::string("profile-rem-channel: ") + aoeu);
+}
+
 void CViewbackClient::ControlCallback(int iControl)
 {
 	if (m_aDataControls[iControl].m_override_command.length())

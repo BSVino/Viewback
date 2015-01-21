@@ -523,7 +523,7 @@ vb_bool vb_data_add_profile(const char* name, /*out*/ vb_profile_handle_t* handl
 	return 1;
 }
 
-vb_bool vb_data_add_channel_to_profile(vb_profile_handle_t profile, vb_channel_handle_t channel)
+vb_bool vb_profile_add_channel(vb_profile_handle_t profile, vb_channel_handle_t channel)
 {
 	if (!VB)
 		return 0;
@@ -539,7 +539,23 @@ vb_bool vb_data_add_channel_to_profile(vb_profile_handle_t profile, vb_channel_h
 	return 1;
 }
 
-vb_bool vb_data_add_control_to_profile(vb_profile_handle_t profile, const char* control)
+vb_bool vb_profile_remove_channel(vb_profile_handle_t profile, vb_channel_handle_t channel)
+{
+	if (!VB)
+		return 0;
+
+	if (channel < 0 || channel >= VB->next_channel)
+		return 0;
+
+	if (profile < 0 || profile >= VB->next_profile)
+		return 0;
+
+	VB->channels[channel].profiles &= ~((vb_uint64)1 << (vb_uint64)profile);
+
+	return 1;
+}
+
+vb_bool vb_profile_add_control(vb_profile_handle_t profile, const char* control)
 {
 	if (!VB)
 		return 0;
@@ -1423,6 +1439,36 @@ void vb_server_update(vb_uint64 current_game_time)
 					}
 #endif
 				}
+			}
+			else if (vb__strncmp(mesg, "profile-add-channel: ", sizeof(mesg), 21) == 0)
+			{
+				size_t message_length = strlen(mesg);
+
+				vb_profile_handle_t profile = atoi(mesg + 21);
+
+				size_t after_tag_index = 21;
+				while (after_tag_index < message_length && mesg[after_tag_index] != ' ')
+					after_tag_index++;
+
+				vb_channel_handle_t channel = atoi(&mesg[after_tag_index]);
+
+				vb_profile_add_channel(profile, channel);
+				vb__send_registrations(NULL);
+			}
+			else if (vb__strncmp(mesg, "profile-rem-channel: ", sizeof(mesg), 21) == 0)
+			{
+				size_t message_length = strlen(mesg);
+
+				vb_profile_handle_t profile = atoi(mesg + 21);
+
+				size_t after_tag_index = 21;
+				while (after_tag_index < message_length && mesg[after_tag_index] != ' ')
+					after_tag_index++;
+
+				vb_channel_handle_t channel = atoi(&mesg[after_tag_index]);
+
+				vb_profile_remove_channel(profile, channel);
+				vb__send_registrations(NULL);
 			}
 			else if (vb__strncmp(mesg, "control: ", sizeof(mesg), 9) == 0)
 			{
