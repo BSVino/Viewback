@@ -33,6 +33,16 @@ THE SOFTWARE.
 
 typedef unsigned long long vb_uint64;
 
+#ifdef _MSC_VER
+#define PRAGMA_WARNING_PUSH __pragma(warning(push))
+#define PRAGMA_WARNING_DISABLE(n) __pragma(warning(disable:n))
+#define PRAGMA_WARNING_POP __pragma(warning(pop))
+#else
+#define PRAGMA_WARNING_PUSH
+#define PRAGMA_WARNING_DISABLE(n)
+#define PRAGMA_WARNING_POP
+#endif
+
 #ifdef _DEBUG
 
 #ifdef __GNUC__
@@ -51,16 +61,7 @@ do { \
 	VBDebugBreak(); \
 } while(0) \
 
-#ifdef _MSC_VER
-#define PRAGMA_WARNING_PUSH __pragma(warning(push))
-#define PRAGMA_WARNING_DISABLE(n) __pragma(warning(disable:n))
-#define PRAGMA_WARNING_POP __pragma(warning(pop))
-#else
-#define PRAGMA_WARNING_PUSH
-#define PRAGMA_WARNING_DISABLE(n)
-#define PRAGMA_WARNING_POP
-#endif
-
+// An assert means something is seriously wrong and the program will die now.
 #define VBAssert(x) \
 do { \
 	PRAGMA_WARNING_PUSH \
@@ -74,9 +75,24 @@ do { \
 } while (0) \
 
 #else
-#define VBAssert(x) do {} while(0)
+#define VBAssert(x) \
+do { \
+	PRAGMA_WARNING_PUSH \
+	PRAGMA_WARNING_DISABLE(4127) /* conditional expression is constant */ \
+	if (!(x)) \
+	PRAGMA_WARNING_POP \
+	{ \
+	} \
+} while (0) \
+
 #define VBUnimplemented() do {} while(0)
 #endif
+
+// Checks are less serious than asserts. You probably got a config option wrong or something.
+#define VBCheck(x) VBAssert(x)
+
+// If you get this you definitely got a config option wrong.
+#define VBInvalidParameter(x) VBCheck(!(x)); if (x) return 0;
 
 #ifdef __cplusplus
 extern "C" {

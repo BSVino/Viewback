@@ -203,7 +203,7 @@ struct vb__Data {
 };
 
 struct vb__DataChannel {
-	int            _field_name_len;
+	size_t         _field_name_len;
 	const char*    _field_name;
 	vb_data_type_t _type;
 	unsigned long  _handle;
@@ -218,22 +218,22 @@ struct vb__DataChannel {
 
 struct vb__DataProfile {
 	const char*    _name;
-	int            _name_len;
+	size_t         _name_len;
 	unsigned long* _channels;
-	int            _channels_repeated_len;
+	size_t         _channels_repeated_len;
 };
 
 struct vb__DataLabel {
 	unsigned long  _handle;
 	int            _value;
-	int            _field_name_len;
+	size_t         _field_name_len;
 	const char*    _field_name;
 };
 
 struct vb__DataControl {
-	int            _name_len;
+	size_t         _name_len;
 	const char*    _name;
-	int            _command_len;
+	size_t         _command_len;
 	const char*    _command;
 	vb_control_t   _type;
 	float          _range_min_float;
@@ -250,25 +250,27 @@ struct vb__DataControl {
 
 struct vb__Packet {
 	struct vb__Data*        _data;
-	int                     _data_channels_repeated_len;
+	size_t                  _data_channels_repeated_len;
 	struct vb__DataChannel* _data_channels;
-	int                     _data_profiles_repeated_len;
+	size_t                  _data_profiles_repeated_len;
 	struct vb__DataProfile* _data_profiles;
-	int                     _data_labels_repeated_len;
+	size_t                  _data_labels_repeated_len;
 	struct vb__DataLabel*   _data_labels;
-	int                     _data_controls_repeated_len;
+	size_t                  _data_controls_repeated_len;
 	struct vb__DataControl* _data_controls;
 
-	int            _console_output_len;
+	size_t         _console_output_len;
 	const char*    _console_output;
 
-	int            _status_len;
+	size_t         _status_len;
 	const char*    _status;
 
 	int _is_registration;
 };
 
-vb__control_handle_t vb__data_find_control_by_name(const char* name, int length);
+vb_profile_handle_t vb__data_find_profile_by_name(const char* name, size_t length);
+vb_channel_handle_t vb__data_find_channel_by_name(const char* name, size_t length);
+vb__control_handle_t vb__data_find_control_by_name(const char* name, size_t length);
 vb_bool vb__data_set_control_slider_float_value_h(vb__control_handle_t handle, float value);
 vb_bool vb__data_set_control_slider_int_value_h(vb__control_handle_t handle, int value);
 
@@ -277,6 +279,14 @@ void vb__Packet_initialize_data(struct vb__Packet* packet, struct vb__Data* data
 void vb__Packet_initialize_registrations(struct vb__Packet* packet, struct vb__DataChannel* data_channels, size_t channels, struct vb__DataProfile* data_profiles, size_t profiles, struct vb__DataLabel* data_labels, size_t labels, struct vb__DataControl* data_controls, size_t controls);
 size_t vb__Packet_get_message_size(struct vb__Packet *_Packet);
 size_t vb__Packet_serialize(struct vb__Packet *_Packet, void *_buffer, size_t length);
+
+int vb__strcmp(const char* s1, const char* s2, size_t n1, size_t n2)
+{
+	if (n1 != n2)
+		return 1;
+
+	return strncmp(s1, s2, min(n1, n2));
+}
 
 int vb__strncmp(const char* s1, const char* s2, size_t n1, size_t n2)
 {

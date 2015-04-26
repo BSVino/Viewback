@@ -30,34 +30,35 @@ THE SOFTWARE.
 static vb__t* VB;
 static void* vb__automatic_memory = NULL;
 
-extern vb__data_control_t* vb__const_float(const char* name, int name_length, float value);
-extern vb__data_control_t* vb__const_int(const char* name, int name_length, int value);
+extern vb__data_control_t* vb__const_float(const char* name, size_t name_length, float value);
+extern vb__data_control_t* vb__const_int(const char* name, size_t name_length, int value);
 extern void* vb__alloc_autofree(vb2_config_t* config, size_t size);
 
 #include "viewback_config.h"
 
 extern size_t vb__config_get_channel_mask_length(vb2_config_t* config);
 extern void vb__send_registrations(vb__socket_t* socket);
-extern vb__data_control_t* vb__data_add_control(const char* name, int name_length, vb_control_t type);
+extern vb__data_control_t* vb__data_add_control(const char* name, size_t name_length, vb_control_t type);
 
-void* vb__alloc(vb2_config_t* config, size_t size)
+void* vb__alloc(vb2_config_t* config, size_t size, vb_alloc_type_t type)
 {
 	void* r;
 
 	if (config->alloc_callback && config->free_callback)
-		r = config->alloc_callback(size);
+		r = config->alloc_callback(size, type);
+	else
+		r = malloc(size);
 
-	r = malloc(size);
-
-	memset(r, 0, size);
+	if (r)
+		memset(r, 0, size);
 
 	return r;
 }
 
-void vb__free(vb2_config_t* config, void* memory)
+void vb__free(vb2_config_t* config, void* memory, vb_alloc_type_t type)
 {
 	if (config->alloc_callback && config->free_callback)
-		config->free_callback(memory);
+		config->free_callback(memory, type);
 	else
 		free(memory);
 }
@@ -72,7 +73,7 @@ void* vb__alloc_autofree(vb2_config_t* config, size_t size)
 	if (!vb__autofree)
 	{
 		vb__autofree_capacity = 10;
-		vb__autofree = vb__alloc(config, sizeof(void*) * vb__autofree_capacity);
+		vb__autofree = vb__alloc(config, sizeof(void*) * vb__autofree_capacity, VB_AT_AUTOFREE);
 		vb__autofree_size = 0;
 	}
 
@@ -81,13 +82,13 @@ void* vb__alloc_autofree(vb2_config_t* config, size_t size)
 		VBUnimplemented(); // Untested
 		// Expand!
 		vb__autofree_capacity *= 2;
-		void* new_autofree = vb__alloc(config, sizeof(void*) * vb__autofree_capacity);
+		void* new_autofree = vb__alloc(config, sizeof(void*) * vb__autofree_capacity, VB_AT_AUTOFREE);
 		memcpy(new_autofree, vb__autofree, sizeof(void*) * vb__autofree_size);
-		vb__free(config, vb__autofree);
+		vb__free(config, vb__autofree, VB_AT_AUTOFREE);
 		vb__autofree = new_autofree;
 	}
 
-	void* result = vb__autofree[vb__autofree_size] = vb__alloc(config, size);
+	void* result = vb__autofree[vb__autofree_size] = vb__alloc(config, size, VB_AT_AF_ITEM);
 	vb__autofree_size += 1;
 
 	return result;
@@ -117,11 +118,11 @@ void vb__memory_copy(vb__t* dest, size_t dest_size, vb__t* src)
 {
 	vb__memory_layout(dest, dest_size);
 
-	VBAssert(dest->config.num_data_channels >= src->config.num_data_channels);
-	VBAssert(dest->config.num_data_profiles >= src->config.num_data_profiles);
-	VBAssert(dest->config.num_data_labels >= src->config.num_data_labels);
-	VBAssert(dest->config.num_data_controls >= src->config.num_data_controls);
-	VBAssert(dest->config.max_connections == src->config.max_connections);
+	VBCheck(dest->config.num_data_channels >= src->config.num_data_channels);
+	VBCheck(dest->config.num_data_profiles >= src->config.num_data_profiles);
+	VBCheck(dest->config.num_data_labels >= src->config.num_data_labels);
+	VBCheck(dest->config.num_data_controls >= src->config.num_data_controls);
+	VBCheck(dest->config.max_connections == src->config.max_connections);
 
 	dest->multicast_socket = src->multicast_socket;
 	dest->multicast_addr = src->multicast_addr;
@@ -159,7 +160,7 @@ void vb__memory_reallocate(vb2_config_t* new_config)
 
 	VBPrintf("Reallocating memory. New size: %d\n", new_memory_size);
 
-	vb__t* new_memory = vb__alloc(new_config, new_memory_size);
+	vb__t* new_memory = vb__alloc(new_config, new_memory_size, VB_AT_MAIN);
 	new_memory->config = *new_config;
 
 	vb__memory_copy(new_memory, new_memory_size, VB);
@@ -168,7 +169,7 @@ void vb__memory_reallocate(vb2_config_t* new_config)
 
 	vb__automatic_memory = VB = new_memory;
 
-	vb__free(&old_memory->config, old_memory);
+	vb__free(&old_memory->config, old_memory, VB_AT_MAIN);
 }
 
 vb_bool vb__memory_add_channel(const char* name, vb_data_type_t type)
@@ -181,7 +182,7 @@ vb_bool vb__memory_add_channel(const char* name, vb_data_type_t type)
 
 	if (!vb_data_add_channel(name, type, NULL))
 	{
-		VBAssert(0);
+		VBCheck(0);
 		return 0;
 	}
 
@@ -190,7 +191,7 @@ vb_bool vb__memory_add_channel(const char* name, vb_data_type_t type)
 	return 1;
 }
 
-vb_bool vb__memory_add_control_int(const char* name, int name_length, int initial_value)
+vb_bool vb__memory_add_control_int(const char* name, size_t name_length, int initial_value)
 {
 	vb2_config_t new_config = VB->config;
 
@@ -229,7 +230,7 @@ vb_bool vb__memory_add_control_int(const char* name, int name_length, int initia
 	return 1;
 }
 
-vb_bool vb__memory_add_control_float(const char* name, int name_length, float initial_value)
+vb_bool vb__memory_add_control_float(const char* name, size_t name_length, float initial_value)
 {
 	vb2_config_t new_config = VB->config;
 
@@ -274,6 +275,7 @@ void vb_config_initialize(vb2_config_t* config)
 
 	config->tcp_port = VB_DEFAULT_PORT;
 	config->max_connections = 4;
+	config->num_data_profiles = 1;
 }
 
 size_t vb__config_get_channel_mask_length(vb2_config_t* config)
@@ -281,7 +283,7 @@ size_t vb__config_get_channel_mask_length(vb2_config_t* config)
 	if (!config)
 		return 0;
 
-	int channels = config->num_data_channels;
+	size_t channels = config->num_data_channels;
 
 	if (channels <= 8)
 		return 1;
@@ -300,11 +302,8 @@ size_t vb__config_get_channel_mask_length(vb2_config_t* config)
 
 size_t vb_config_get_memory_required(vb2_config_t* config)
 {
-	if (!config)
-		return 0;
-
-	if (config->num_data_labels < 0)
-		return 0;
+	VBInvalidParameter(!config);
+	VBInvalidParameter(config->num_data_labels < 0);
 
 	return
 		sizeof(vb__t) +
@@ -318,25 +317,21 @@ size_t vb_config_get_memory_required(vb2_config_t* config)
 
 vb_bool vb_config_install(vb2_config_t* config, void* memory, size_t memory_size)
 {
-	if (!config)
-		return 0;
+	VBInvalidParameter(!config);
 
 	if (vb__automatic_memory)
-		vb__free(config, vb__automatic_memory);
+		vb__free(config, vb__automatic_memory, VB_AT_MAIN);
 	vb__automatic_memory = NULL;
 
 	if (!memory)
-		vb__automatic_memory = memory = vb__alloc(config, memory_size = vb_config_get_memory_required(config));
+		vb__automatic_memory = memory = vb__alloc(config, memory_size = vb_config_get_memory_required(config), VB_AT_MAIN);
 
 	/* Indicates there was a problem in vb_config_get_memory_required() which didn't get caught. */
-	if (memory_size == 0)
-		return 0;
-
-	if (memory_size < vb_config_get_memory_required(config))
-		return 0;
-
-	if (VB && VB->server_active)
-		return 0;
+	VBInvalidParameter(!memory);
+	VBInvalidParameter(memory_size == 0);
+	VBInvalidParameter(memory_size < vb_config_get_memory_required(config));
+	VBInvalidParameter(VB && VB->server_active);
+	VBInvalidParameter(config->num_data_profiles < 1);
 
 	memset(memory, 0, memory_size);
 
@@ -355,11 +350,11 @@ vb_bool vb_config_install(vb2_config_t* config, void* memory, size_t memory_size
 
 void vb_config_release()
 {
-	VBAssert(!vb_server_is_active());
+	VBCheck(!vb_server_is_active());
 
 	if (vb__automatic_memory)
 	{
-		vb__free(&VB->config, vb__automatic_memory);
+		vb__free(&VB->config, vb__automatic_memory, VB_AT_MAIN);
 		vb__automatic_memory = NULL;
 	}
 
@@ -368,29 +363,17 @@ void vb_config_release()
 
 vb_bool vb__data_is_channel_active(vb_channel_handle_t channel, size_t connection)
 {
-	if (!VB)
-		return 0;
-
-	if (!VB->server_active)
-		return 0;
+	VBInvalidParameter(!VB)
+	VBInvalidParameter(!VB->server_active)
 
 	if (channel == VB_CHANNEL_NONE)
 		return 1;
 
-	if (channel < 0)
-		return 0;
-
-	if (channel >= VB->next_channel)
-		return 0;
-
-	if (connection < 0)
-		return 0;
-
-	if (connection >= VB->config.max_connections)
-		return 0;
-
-	if (VB->connections[connection].socket == VB_INVALID_SOCKET)
-		return 0;
+	VBInvalidParameter(channel < 0)
+	VBInvalidParameter(channel >= VB->next_channel)
+	VBInvalidParameter(connection < 0)
+	VBInvalidParameter(connection >= VB->config.max_connections)
+	VBInvalidParameter(VB->connections[connection].socket == VB_INVALID_SOCKET)
 
 	char* mask = (char*)VB->connections[connection].active_channels;
 
@@ -473,17 +456,10 @@ void vb__data_channel_deactivate(vb_channel_handle_t channel, size_t connection)
 
 vb_bool vb_data_add_channel(const char* name, vb_data_type_t type, /*out*/ vb_channel_handle_t* handle)
 {
-	if (!VB)
-		return 0;
-
-	if (!name)
-		return 0;
-
-	if (!name[0])
-		return 0;
-
-	if (VB->next_channel >= VB->config.num_data_channels)
-		return 0;
+	VBInvalidParameter(!VB);
+	VBInvalidParameter(!name);
+	VBInvalidParameter(!name[0]);
+	VBInvalidParameter(VB->next_channel >= VB->config.num_data_channels);
 
 	if (handle)
 		*handle = (vb_channel_handle_t)VB->next_channel;
@@ -496,22 +472,24 @@ vb_bool vb_data_add_channel(const char* name, vb_data_type_t type, /*out*/ vb_ch
 	return 1;
 }
 
+vb_profile_handle_t vb__data_find_profile_by_name(const char* name, size_t length)
+{
+	for (size_t i = 0; i < VB->next_profile; i++)
+	{
+		if (vb__strcmp(VB->profiles[i].name, name, strlen(VB->profiles[i].name), length) == 0)
+			return (vb_profile_handle_t)i;
+	}
+
+	return VB_PROFILE_NONE;
+}
+
 vb_bool vb_data_add_profile(const char* name, /*out*/ vb_profile_handle_t* handle)
 {
-	if (!VB)
-		return 0;
-
-	if (!name)
-		return 0;
-
-	if (!name[0])
-		return 0;
-
-	if (VB->next_profile >= VB->config.num_data_profiles)
-		return 0;
-
-	if (VB->server_active)
-		return 0;
+	VBInvalidParameter(!VB);
+	VBInvalidParameter(!name);
+	VBInvalidParameter(!name[0]);
+	VBInvalidParameter(VB->next_profile >= VB->config.num_data_profiles);
+	VBInvalidParameter(VB->server_active);
 
 	if (handle)
 		*handle = (vb_profile_handle_t)VB->next_profile;
@@ -525,14 +503,9 @@ vb_bool vb_data_add_profile(const char* name, /*out*/ vb_profile_handle_t* handl
 
 vb_bool vb_profile_add_channel(vb_profile_handle_t profile, vb_channel_handle_t channel)
 {
-	if (!VB)
-		return 0;
-
-	if (channel < 0 || channel >= VB->next_channel)
-		return 0;
-
-	if (profile < 0 || profile >= VB->next_profile)
-		return 0;
+	VBInvalidParameter(!VB);
+	VBInvalidParameter(channel < 0 || channel >= VB->next_channel);
+	VBInvalidParameter(profile < 0 || profile >= VB->next_profile);
 
 	VB->channels[channel].profiles |= ((vb_uint64)1 << (vb_uint64)profile);
 
@@ -541,14 +514,9 @@ vb_bool vb_profile_add_channel(vb_profile_handle_t profile, vb_channel_handle_t 
 
 vb_bool vb_profile_remove_channel(vb_profile_handle_t profile, vb_channel_handle_t channel)
 {
-	if (!VB)
-		return 0;
-
-	if (channel < 0 || channel >= VB->next_channel)
-		return 0;
-
-	if (profile < 0 || profile >= VB->next_profile)
-		return 0;
+	VBInvalidParameter(!VB);
+	VBInvalidParameter(channel < 0 || channel >= VB->next_channel);
+	VBInvalidParameter(profile < 0 || profile >= VB->next_profile);
 
 	VB->channels[channel].profiles &= ~((vb_uint64)1 << (vb_uint64)profile);
 
@@ -557,16 +525,12 @@ vb_bool vb_profile_remove_channel(vb_profile_handle_t profile, vb_channel_handle
 
 vb_bool vb_profile_add_control(vb_profile_handle_t profile, const char* control)
 {
-	if (!VB)
-		return 0;
+	VBInvalidParameter(!VB);
 
 	vb__control_handle_t control_handle = vb__data_find_control_by_name(control, strlen(control));
 
-	if (control_handle < 0 || control_handle >= VB->next_control)
-		return 0;
-
-	if (profile < 0 || profile >= VB->next_profile)
-		return 0;
+	VBInvalidParameter(control_handle < 0 || control_handle >= VB->next_control);
+	VBInvalidParameter(profile < 0 || profile >= VB->next_profile);
 
 	VB->controls[control_handle].profiles |= ((vb_uint64)1 << (vb_uint64)profile);
 
@@ -575,23 +539,12 @@ vb_bool vb_profile_add_control(vb_profile_handle_t profile, const char* control)
 
 vb_bool vb_data_add_label(vb_channel_handle_t handle, int value, const char* label)
 {
-	if (!VB)
-		return 0;
-
-	if (!label)
-		return 0;
-
-	if (!label[0])
-		return 0;
-
-	if (handle < 0 || handle >= VB->next_channel)
-		return 0;
-
-	if (VB->next_label >= VB->config.num_data_labels)
-		return 0;
-
-	if (VB->server_active)
-		return 0;
+	VBInvalidParameter(!VB);
+	VBInvalidParameter(!label);
+	VBInvalidParameter(!label[0]);
+	VBInvalidParameter(handle < 0 || handle >= VB->next_channel);
+	VBInvalidParameter(VB->next_label >= VB->config.num_data_labels);
+	VBInvalidParameter(VB->server_active);
 
 	VB->labels[VB->next_label].handle = handle;
 	VB->labels[VB->next_label].name = label;
@@ -604,14 +557,9 @@ vb_bool vb_data_add_label(vb_channel_handle_t handle, int value, const char* lab
 
 vb_bool vb_data_get_label(vb_channel_handle_t handle, int value, const char** label)
 {
-	if (!VB)
-		return 0;
-
-	if (handle < 0 || handle >= VB->next_channel)
-		return 0;
-
-	if (!VB->server_active)
-		return 0;
+	VBInvalidParameter(!VB);
+	VBInvalidParameter(handle < 0 || handle >= VB->next_channel);
+	VBInvalidParameter(!VB->server_active);
 
 	for (size_t i = 0; i < VB->next_label; i++)
 	{
@@ -628,14 +576,9 @@ vb_bool vb_data_get_label(vb_channel_handle_t handle, int value, const char** la
 #ifndef VB_NO_RANGE
 vb_bool vb_data_set_range(vb_channel_handle_t handle, float range_min, float range_max)
 {
-	if (!VB)
-		return 0;
-
-	if (handle < 0 || handle >= VB->next_channel)
-		return 0;
-
-	if (VB->server_active)
-		return 0;
+	VBInvalidParameter(!VB);
+	VBInvalidParameter(handle < 0 || handle >= VB->next_channel);
+	VBInvalidParameter(VB->server_active);
 
 	VB->channels[handle].range_min = range_min;
 	VB->channels[handle].range_max = range_max;
@@ -644,7 +587,7 @@ vb_bool vb_data_set_range(vb_channel_handle_t handle, float range_min, float ran
 }
 #endif
 
-vb__data_control_t* vb__data_add_control(const char* name, int name_length, vb_control_t type)
+vb__data_control_t* vb__data_add_control(const char* name, size_t name_length, vb_control_t type)
 {
 	if (!VB)
 		return NULL;
@@ -677,13 +620,11 @@ vb__data_control_t* vb__data_add_control(const char* name, int name_length, vb_c
 
 vb_bool vb_data_add_control_button(const char* name, vb_control_button_callback callback)
 {
-	if (!callback)
-		return 0;
+	VBInvalidParameter(!callback);
 
 	vb__data_control_t* control = vb__data_add_control(name, strlen(name), VB_CONTROL_BUTTON);
 
-	if (!control)
-		return 0;
+	VBInvalidParameter(!control);
 
 	control->button_callback = callback;
 
@@ -692,19 +633,13 @@ vb_bool vb_data_add_control_button(const char* name, vb_control_button_callback 
 
 vb_bool vb_data_add_control_slider_float(const char* name, float range_min, float range_max, int steps, vb_control_slider_float_callback callback)
 {
-	if (!callback)
-		return 0;
-
-	if (steps < 0)
-		return 0;
-
-	if (range_max <= range_min)
-		return 0;
+	VBInvalidParameter(!callback);
+	VBInvalidParameter(steps < 0);
+	VBInvalidParameter(range_max <= range_min);
 
 	vb__data_control_t* control = vb__data_add_control(name, strlen(name), VB_CONTROL_SLIDER_FLOAT);
 
-	if (!control)
-		return 0;
+	VBInvalidParameter(!control);
 
 	control->slider_float_callback = callback;
 	control->slider_float.range_min = range_min;
@@ -716,19 +651,13 @@ vb_bool vb_data_add_control_slider_float(const char* name, float range_min, floa
 
 vb_bool vb_data_add_control_slider_int(const char* name, int range_min, int range_max, int step_size, vb_control_slider_int_callback callback)
 {
-	if (!callback)
-		return 0;
-
-	if (step_size < 1)
-		return 0;
-
-	if (range_max <= range_min)
-		return 0;
+	VBInvalidParameter(!callback);
+	VBInvalidParameter(step_size < 1);
+	VBInvalidParameter(range_max <= range_min);
 
 	vb__data_control_t* control = vb__data_add_control(name, strlen(name), VB_CONTROL_SLIDER_INT);
 
-	if (!control)
-		return 0;
+	VBInvalidParameter(!control);
 
 	control->slider_int_callback = callback;
 	control->slider_int.range_min = range_min;
@@ -740,11 +669,8 @@ vb_bool vb_data_add_control_slider_int(const char* name, int range_min, int rang
 
 vb_bool vb_data_add_control_button_command(const char* name, const char* command)
 {
-	if (!command)
-		return 0;
-
-	if (!command[0])
-		return 0;
+	VBInvalidParameter(!command);
+	VBInvalidParameter(!command[0]);
 
 	vb__data_control_t* control = vb__data_add_control(name, strlen(name), VB_CONTROL_BUTTON);
 
@@ -755,22 +681,14 @@ vb_bool vb_data_add_control_button_command(const char* name, const char* command
 
 vb_bool vb_data_add_control_slider_float_command(const char* name, float range_min, float range_max, int steps, const char* command)
 {
-	if (!command)
-		return 0;
-
-	if (!command[0])
-		return 0;
-
-	if (steps < 0)
-		return 0;
-
-	if (range_max <= range_min)
-		return 0;
+	VBInvalidParameter(!command);
+	VBInvalidParameter(!command[0]);
+	VBInvalidParameter(steps < 0);
+	VBInvalidParameter(range_max <= range_min);
 
 	vb__data_control_t* control = vb__data_add_control(name, strlen(name), VB_CONTROL_SLIDER_FLOAT);
 
-	if (!control)
-		return 0;
+	VBInvalidParameter(!control);
 
 	control->command = command;
 	control->slider_float.range_min = range_min;
@@ -782,22 +700,14 @@ vb_bool vb_data_add_control_slider_float_command(const char* name, float range_m
 
 vb_bool vb_data_add_control_slider_int_command(const char* name, int range_min, int range_max, int step_size, const char* command)
 {
-	if (!command)
-		return 0;
-
-	if (!command[0])
-		return 0;
-
-	if (step_size < 1)
-		return 0;
-
-	if (range_max <= range_min)
-		return 0;
+	VBInvalidParameter(!command);
+	VBInvalidParameter(!command[0]);
+	VBInvalidParameter(step_size < 1);
+	VBInvalidParameter(range_max <= range_min);
 
 	vb__data_control_t* control = vb__data_add_control(name, strlen(name), VB_CONTROL_SLIDER_INT);
 
-	if (!control)
-		return 0;
+	VBInvalidParameter(!control);
 
 	control->command = command;
 	control->slider_int.range_min = range_min;
@@ -809,16 +719,12 @@ vb_bool vb_data_add_control_slider_int_command(const char* name, int range_min, 
 
 vb_bool vb_data_add_control_slider_float_address(const char* name, float range_min, float range_max, int steps, float* address)
 {
-	if (steps < 0)
-		return 0;
-
-	if (range_max <= range_min)
-		return 0;
+	VBInvalidParameter(steps < 0);
+	VBInvalidParameter(range_max <= range_min);
 
 	vb__data_control_t* control = vb__data_add_control(name, strlen(name), VB_CONTROL_SLIDER_FLOAT);
 
-	if (!control)
-		return 0;
+	VBInvalidParameter(!control);
 
 	control->slider_float.range_min = range_min;
 	control->slider_float.range_max = range_max;
@@ -833,16 +739,12 @@ vb_bool vb_data_add_control_slider_float_address(const char* name, float range_m
 
 vb_bool vb_data_add_control_slider_int_address(const char* name, int range_min, int range_max, int step_size, int* address)
 {
-	if (step_size < 1)
-		return 0;
-
-	if (range_max <= range_min)
-		return 0;
+	VBInvalidParameter(step_size < 1);
+	VBInvalidParameter(range_max <= range_min);
 
 	vb__data_control_t* control = vb__data_add_control(name, strlen(name), VB_CONTROL_SLIDER_INT);
 
-	if (!control)
-		return 0;
+	VBInvalidParameter(!control);
 
 	control->slider_int.range_min = range_min;
 	control->slider_int.range_max = range_max;
@@ -872,7 +774,7 @@ vb_bool vb__data_update_control(size_t i, vb_control_t control_type, void* value
 	switch (control_type)
 	{
 	default:
-		VBAssert(0);
+		VBCheck(0);
 		return 0;
 
 	case VB_CONTROL_SLIDER_FLOAT:
@@ -910,12 +812,12 @@ vb_bool vb__data_update_control(size_t i, vb_control_t control_type, void* value
 	return 1;
 }
 
-vb__control_handle_t vb__data_find_control_by_name(const char* name, int length)
+vb__control_handle_t vb__data_find_control_by_name(const char* name, size_t length)
 {
 	for (size_t i = 0; i < VB->next_control; i++)
 	{
-		if (vb__strncmp(VB->controls[i].name, name, strlen(VB->controls[i].name), length) == 0)
-			return i;
+		if (vb__strcmp(VB->controls[i].name, name, strlen(VB->controls[i].name), length) == 0)
+			return (vb__control_handle_t)i;
 	}
 
 	return VB_CONTROL_HANDLE_NONE;
@@ -940,7 +842,7 @@ vb_bool vb__data_set_control_slider_float_value_h(vb__control_handle_t handle, f
 		*VB->controls[handle].slider_float.address = value;
 
 	if (VB->server_active)
-		return vb__data_update_control(handle, VB->controls[handle].type, &value, -1);
+		return vb__data_update_control(handle, VB->controls[handle].type, &value, (size_t)~0);
 
 	return 1;
 }
@@ -964,7 +866,7 @@ vb_bool vb__data_set_control_slider_int_value_h(vb__control_handle_t handle, int
 		*VB->controls[handle].slider_int.address = value;
 
 	if (VB->server_active)
-		return vb__data_update_control(handle, VB->controls[handle].type, &value, -1);
+		return vb__data_update_control(handle, VB->controls[handle].type, &value, (size_t)~0);
 
 	return 1;
 }
@@ -981,17 +883,15 @@ vb_bool vb_data_set_control_slider_int_value(const char* name, int value)
 
 vb_bool vb_server_create()
 {
-	if (!VB)
-		return 0;
-
-	if (VB->server_active)
-		return 0;
+	VBInvalidParameter(!VB);
+	VBInvalidParameter(VB->server_active);
 
 	VB->multicast_socket = socket(AF_INET, SOCK_DGRAM, 0);
 
-	if (!vb__socket_valid(VB->multicast_socket))
-		// Did you call WSAStartup() first?
-		return 0;
+	// Did you call WSAStartup() first?
+	VBInvalidParameter(!vb__socket_valid(VB->multicast_socket));
+
+	VBInvalidParameter(!VB->next_profile); // You should create at least one profile.
 
 	int ttl = 10;
 	if (setsockopt(VB->multicast_socket, IPPROTO_IP, IP_TTL, (const char*)&ttl, sizeof(ttl)) != 0)
@@ -1085,8 +985,8 @@ void vb_server_shutdown()
 
 	VBUnimplemented(); // Untested.
 	for (int i = 0; i < vb__autofree_size; i++)
-		vb__free(&VB->config, vb__autofree[i]);
-	vb__free(&VB->config, vb__autofree);
+		vb__free(&VB->config, vb__autofree[i], VB_AT_AF_ITEM);
+	vb__free(&VB->config, vb__autofree, VB_AT_AUTOFREE);
 	vb__autofree = NULL;
 	vb__autofree_capacity = vb__autofree_size = 0;
 
@@ -1106,10 +1006,12 @@ vb_bool vb_server_is_active()
 
 size_t vb__write_length_prepended_message(struct vb__Packet *_Packet, void *_buffer, size_t length, size_t(*serialize)(struct vb__Packet *_Packet, void *_buffer, size_t length))
 {
-	size_t serialized_length = (*serialize)(_Packet, (void*)((size_t)_buffer + sizeof(size_t)), length);
+	VBAssert(sizeof(u_long) == 4);
 
-	/* Packet_alloca() automatically adds sizeof(size_t) bytes to the length of the packet requested, specifically to make room for this. */
-	size_t network_length = htonl(serialized_length);
+	size_t serialized_length = (*serialize)(_Packet, (void*)((size_t)_buffer + sizeof(u_long)), length);
+
+	/* Packet_alloca() automatically adds 4 bytes to the length of the packet requested, specifically to make room for this. */
+	u_long network_length = htonl((u_long)serialized_length);
 	memcpy(_buffer, &network_length, sizeof(network_length));
 
 	return serialized_length + sizeof(network_length);
@@ -1119,7 +1021,7 @@ vb_bool vb__socket_send(vb__socket_t* socket, const char* message, size_t messag
 {
 	vb__socket_set_blocking(*socket, 1);
 
-	int bytes_sent = send(*socket, message, message_length, 0);
+	int bytes_sent = send(*socket, message, (int)message_length, 0);
 	int socket_error = vb__socket_error();
 
 	vb__socket_set_blocking(*socket, 0);
@@ -1135,7 +1037,7 @@ vb_bool vb__socket_send(vb__socket_t* socket, const char* message, size_t messag
 	if (bytes_sent < 0)
 	{
 		// Should be a blocking socket.
-		VBAssert(!vb__socket_is_blocking_error(socket_error));
+		VBCheck(!vb__socket_is_blocking_error(socket_error));
 
 		VBPrintf("Error (code: %d) sending to %d, disconnected.\n", socket_error, *socket);
 		vb__socket_close(*socket);
@@ -1182,13 +1084,13 @@ void vb__send_registrations(vb__socket_t* socket)
 
 	/* Now that we know how many there are we can allocate the memory.
 	We can't just do them in a big loop because VLA's will go out of scope if they're defined in the loop. */
-	int total_length = 0;
+	size_t total_length = 0;
 	for (size_t j = 0; j < VB->next_profile; j++)
 		total_length += profiles[j]._channels_repeated_len * sizeof(*profiles[j]._channels);
 
 	vb__stack_allocate(unsigned long, group_channels, total_length);
 
-	int current_group_channel = 0;
+	size_t current_group_channel = 0;
 	for (size_t j = 0; j < VB->next_profile; j++)
 	{
 		profiles[j]._channels = &group_channels[current_group_channel];
@@ -1231,11 +1133,11 @@ void vb_server_update(vb_uint64 current_game_time)
 	if (!VB->server_active)
 		return;
 
-	// This sort of thing can happen the header is compiled with VIEWBACK_TIME_DOUBLE
+	// This sort of thing can happen if the header is compiled with VIEWBACK_TIME_DOUBLE
 	// and viewback.cpp is not
 	VBAssert(current_game_time >= VB->current_time);
 
-	// This sort of thing can happen the header is compiled with VIEWBACK_TIME_DOUBLE
+	// This sort of thing can happen if the header is compiled with VIEWBACK_TIME_DOUBLE
 	// and viewback.cpp is not.
 	if (VB->current_time)
 #ifdef VIEWBACK_TIME_DOUBLE
@@ -1258,7 +1160,7 @@ void vb_server_update(vb_uint64 current_game_time)
 
 		// 2 for "VB" + 1 for version byte + 2 for port number = 5
 		int header_length = 5;
-		int message_length = header_length + strlen(server_name) + 1; // 1 for null terminal
+		size_t message_length = header_length + strlen(server_name) + 1; // 1 for null terminal
 		vb__stack_allocate(char, message, message_length);
 		message[0] = 'V';
 		message[1] = 'B';
@@ -1270,7 +1172,7 @@ void vb_server_update(vb_uint64 current_game_time)
 		message[header_length] = '\0';
 		vb__strcat(message + header_length, message_length - header_length, server_name);
 
-		if (sendto(VB->multicast_socket, (const char*)message, message_length, 0, (struct sockaddr *)&VB->multicast_addr, sizeof(VB->multicast_addr)) < 0)
+		if (sendto(VB->multicast_socket, (const char*)message, (int)message_length, 0, (struct sockaddr *)&VB->multicast_addr, sizeof(VB->multicast_addr)) < 0)
 			VBPrintf("Multicast sendto failed, error %d\n", vb__socket_error());
 
 		VB->last_multicast = current_time;
@@ -1332,7 +1234,7 @@ void vb_server_update(vb_uint64 current_game_time)
 			{
 				if (VB->connections[i].socket == VB_INVALID_SOCKET)
 				{
-					open_socket = i;
+					open_socket = (int)i;
 					break;
 				}
 			}
@@ -1386,7 +1288,7 @@ void vb_server_update(vb_uint64 current_game_time)
 			else if (n == sizeof(mesg))
 			{
 				/* We read the whole damn thing? Shouldn't ever happen, but ignore. */
-				VBAssert(0);
+				VBCheck(0);
 				continue;
 			}
 
@@ -1421,7 +1323,7 @@ void vb_server_update(vb_uint64 current_game_time)
 					if (!(VB->channels[j].profiles & ((vb_uint64)1 << profile)))
 						continue;
 
-					vb__data_channel_activate(j, i);
+					vb__data_channel_activate((vb_channel_handle_t)j, i);
 
 #ifndef VB_NO_COMPRESSION
 					vb__data_channel_t* channel = &VB->channels[j];
@@ -1429,13 +1331,13 @@ void vb_server_update(vb_uint64 current_game_time)
 					if (channel->flags & CHANNEL_FLAG_INITIALIZED)
 					{
 						if (channel->type == VB_DATATYPE_INT)
-							vb_data_send_int(j, channel->last_int);
+							vb_data_send_int((vb_channel_handle_t)j, channel->last_int);
 						else if (channel->type == VB_DATATYPE_FLOAT)
-							vb_data_send_float(j, channel->last_float);
+							vb_data_send_float((vb_channel_handle_t)j, channel->last_float);
 						else if (channel->type == VB_DATATYPE_VECTOR)
-							vb_data_send_vector(j, channel->last_float_x, channel->last_float_y, channel->last_float_z);
+							vb_data_send_vector((vb_channel_handle_t)j, channel->last_float_x, channel->last_float_y, channel->last_float_z);
 						else
-							VBAssert(!"Unknown channel type");
+							VBCheck(!"Unknown channel type");
 					}
 #endif
 				}
@@ -1444,31 +1346,33 @@ void vb_server_update(vb_uint64 current_game_time)
 			{
 				size_t message_length = strlen(mesg);
 
-				vb_profile_handle_t profile = atoi(mesg + 21);
+				vb_profile_handle_t profile = (vb_profile_handle_t)atoi(mesg + 21);
 
 				size_t after_tag_index = 21;
 				while (after_tag_index < message_length && mesg[after_tag_index] != ' ')
 					after_tag_index++;
 
-				vb_channel_handle_t channel = atoi(&mesg[after_tag_index]);
+				vb_channel_handle_t channel = (vb_channel_handle_t)atoi(&mesg[after_tag_index]);
 
 				vb_profile_add_channel(profile, channel);
 				vb__send_registrations(NULL);
+				vb__configfile_write();
 			}
 			else if (vb__strncmp(mesg, "profile-rem-channel: ", sizeof(mesg), 21) == 0)
 			{
 				size_t message_length = strlen(mesg);
 
-				vb_profile_handle_t profile = atoi(mesg + 21);
+				vb_profile_handle_t profile = (vb_profile_handle_t)atoi(mesg + 21);
 
 				size_t after_tag_index = 21;
 				while (after_tag_index < message_length && mesg[after_tag_index] != ' ')
 					after_tag_index++;
 
-				vb_channel_handle_t channel = atoi(&mesg[after_tag_index]);
+				vb_channel_handle_t channel = (vb_channel_handle_t)atoi(&mesg[after_tag_index]);
 
 				vb_profile_remove_channel(profile, channel);
 				vb__send_registrations(NULL);
+				vb__configfile_write();
 			}
 			else if (vb__strncmp(mesg, "control: ", sizeof(mesg), 9) == 0)
 			{
@@ -1566,7 +1470,7 @@ void vb_server_update(vb_uint64 current_game_time)
 		{
 			if (*control->slider_float.address != control->slider_float.value)
 			{
-				vb__data_update_control(i, control->type, control->slider_float.address, -1);
+				vb__data_update_control(i, control->type, control->slider_float.address, (size_t)~0);
 
 				control->slider_float.value = *control->slider_float.address;
 			}
@@ -1575,7 +1479,7 @@ void vb_server_update(vb_uint64 current_game_time)
 		{
 			if (*control->slider_int.address != control->slider_int.value)
 			{
-				vb__data_update_control(i, control->type, control->slider_int.address, -1);
+				vb__data_update_control(i, control->type, control->slider_int.address, (size_t)~0);
 
 				control->slider_int.value = *control->slider_int.address;
 			}
@@ -1615,22 +1519,14 @@ to the client along with the maintain time, indicated by >.
 
 vb_bool vb_data_send_int(vb_channel_handle_t handle, int value)
 {
-	if (!VB)
-		return 0;
-
-	if (handle < 0)
-		return 0;
-
-	if (handle >= VB->next_channel)
-		return 0;
+	VBInvalidParameter(!VB);
+	VBInvalidParameter(handle < 0);
+	VBInvalidParameter(handle >= VB->next_channel);
 
 	vb__data_channel_t* channel = &VB->channels[handle];
 
-	if (channel->type != VB_DATATYPE_INT)
-		return 0;
-
-	if (!VB->server_active)
-		return 0;
+	VBInvalidParameter(channel->type != VB_DATATYPE_INT);
+	VBInvalidParameter(!VB->server_active);
 
 #ifndef VB_NO_COMPRESSION
 	if (channel->flags & CHANNEL_FLAG_INITIALIZED)
@@ -1681,22 +1577,14 @@ vb_bool vb_data_send_int(vb_channel_handle_t handle, int value)
 
 vb_bool vb_data_send_float(vb_channel_handle_t handle, float value)
 {
-	if (!VB)
-		return 0;
-
-	if (handle < 0)
-		return 0;
-
-	if (handle >= VB->next_channel)
-		return 0;
+	VBInvalidParameter(!VB);
+	VBInvalidParameter(handle < 0);
+	VBInvalidParameter(handle >= VB->next_channel);
 
 	vb__data_channel_t* channel = &VB->channels[handle];
 
-	if (channel->type != VB_DATATYPE_FLOAT)
-		return 0;
-
-	if (!VB->server_active)
-		return 0;
+	VBInvalidParameter(channel->type != VB_DATATYPE_FLOAT);
+	VBInvalidParameter(!VB->server_active);
 
 #ifndef VB_NO_COMPRESSION
 	if (channel->flags & CHANNEL_FLAG_INITIALIZED)
@@ -1748,22 +1636,14 @@ vb_bool vb_data_send_float(vb_channel_handle_t handle, float value)
 
 vb_bool vb_data_send_vector(vb_channel_handle_t handle, float x, float y, float z)
 {
-	if (!VB)
-		return 0;
-
-	if (handle < 0)
-		return 0;
-
-	if (handle >= VB->next_channel)
-		return 0;
+	VBInvalidParameter(!VB);
+	VBInvalidParameter(handle < 0);
+	VBInvalidParameter(handle >= VB->next_channel);
 
 	vb__data_channel_t* channel = &VB->channels[handle];
 
-	if (channel->type != VB_DATATYPE_VECTOR)
-		return 0;
-
-	if (!VB->server_active)
-		return 0;
+	VBInvalidParameter(channel->type != VB_DATATYPE_VECTOR);
+	VBInvalidParameter(!VB->server_active);
 
 #ifndef VB_NO_COMPRESSION
 	if (channel->flags & CHANNEL_FLAG_INITIALIZED)
@@ -1817,12 +1697,12 @@ vb_bool vb_data_send_vector(vb_channel_handle_t handle, float x, float y, float 
 	return 1;
 }
 
-vb_channel_handle_t vb__data_find_channel_by_name(const char* name, int length)
+vb_channel_handle_t vb__data_find_channel_by_name(const char* name, size_t length)
 {
 	for (size_t k = 0; k < VB->next_channel; k++)
 	{
 		if (vb__strncmp(VB->channels[k].name, name, strlen(VB->channels[k].name), length) == 0)
-			return k;
+			return (vb_channel_handle_t)k;
 	}
 
 	return VB_CHANNEL_NONE;
@@ -1830,11 +1710,8 @@ vb_channel_handle_t vb__data_find_channel_by_name(const char* name, int length)
 
 vb_bool vb_data_send_int_s(const char* channel, int value)
 {
-	if (!channel)
-		return 0;
-
-	if (!channel[0])
-		return 0;
+	VBInvalidParameter(!channel);
+	VBInvalidParameter(!channel[0]);
 
 	vb_channel_handle_t channel_handle = vb__data_find_channel_by_name(channel, strlen(channel));
 	if (channel_handle == VB_CHANNEL_NONE)
@@ -1845,6 +1722,8 @@ vb_bool vb_data_send_int_s(const char* channel, int value)
 
 		if (!vb__memory_add_channel(channel, VB_DATATYPE_INT))
 			return 0;
+
+		channel_handle = vb__data_find_channel_by_name(channel, strlen(channel));
 	}
 
 	return vb_data_send_int(channel_handle, value);
@@ -1852,11 +1731,8 @@ vb_bool vb_data_send_int_s(const char* channel, int value)
 
 vb_bool vb_data_send_float_s(const char* channel, float value)
 {
-	if (!channel)
-		return 0;
-
-	if (!channel[0])
-		return 0;
+	VBInvalidParameter(!channel);
+	VBInvalidParameter(!channel[0]);
 
 	vb_channel_handle_t channel_handle = vb__data_find_channel_by_name(channel, strlen(channel));
 	if (channel_handle == VB_CHANNEL_NONE)
@@ -1867,6 +1743,8 @@ vb_bool vb_data_send_float_s(const char* channel, float value)
 
 		if (!vb__memory_add_channel(channel, VB_DATATYPE_FLOAT))
 			return 0;
+
+		channel_handle = vb__data_find_channel_by_name(channel, strlen(channel));
 	}
 
 	return vb_data_send_float(channel_handle, value);
@@ -1874,11 +1752,8 @@ vb_bool vb_data_send_float_s(const char* channel, float value)
 
 vb_bool vb_data_send_vector_s(const char* channel, float x, float y, float z)
 {
-	if (!channel)
-		return 0;
-
-	if (!channel[0])
-		return 0;
+	VBInvalidParameter(!channel);
+	VBInvalidParameter(!channel[0]);
 
 	vb_channel_handle_t channel_handle = vb__data_find_channel_by_name(channel, strlen(channel));
 	if (channel_handle == VB_CHANNEL_NONE)
@@ -1889,18 +1764,17 @@ vb_bool vb_data_send_vector_s(const char* channel, float x, float y, float z)
 
 		if (!vb__memory_add_channel(channel, VB_DATATYPE_VECTOR))
 			return 0;
+
+		channel_handle = vb__data_find_channel_by_name(channel, strlen(channel));
 	}
 
 	return vb_data_send_vector(channel_handle, x, y, z);
 }
 
-vb__data_control_t* vb__const_float(const char* name, int name_length, float value)
+vb__data_control_t* vb__const_float(const char* name, size_t name_length, float value)
 {
-	if (!name)
-		return 0;
-
-	if (!name[0])
-		return 0;
+	VBInvalidParameter(!name);
+	VBInvalidParameter(!name[0]);
 
 	vb_control_t control_handle = vb__data_find_control_by_name(name, name_length);
 	if (control_handle == VB_CONTROL_HANDLE_NONE)
@@ -1920,13 +1794,10 @@ vb__data_control_t* vb__const_float(const char* name, int name_length, float val
 	return &VB->controls[control_handle];
 }
 
-vb__data_control_t* vb__const_int(const char* name, int name_length, int value)
+vb__data_control_t* vb__const_int(const char* name, size_t name_length, int value)
 {
-	if (!name)
-		return 0;
-
-	if (!name[0])
-		return 0;
+	VBInvalidParameter(!name);
+	VBInvalidParameter(!name[0]);
 
 	vb_control_t control_handle = vb__data_find_control_by_name(name, name_length);
 	if (control_handle == VB_CONTROL_HANDLE_NONE)
@@ -1972,11 +1843,8 @@ int vb_const_int(const char* name, int value)
 
 vb_bool vb_console_append(const char* text)
 {
-	if (!VB)
-		return 0;
-
-	if (!VB->server_active)
-		return 0;
+	VBInvalidParameter(!VB);
+	VBInvalidParameter(!VB->server_active);
 
 	struct vb__Packet packet;
 	vb__Packet_initialize(&packet);
@@ -1999,11 +1867,8 @@ vb_bool vb_console_append(const char* text)
 
 vb_bool vb_status_set(const char* text)
 {
-	if (!VB)
-		return 0;
-
-	if (!VB->server_active)
-		return 0;
+	VBInvalidParameter(!VB);
+	VBInvalidParameter(!VB->server_active);
 
 	struct vb__Packet packet;
 	vb__Packet_initialize(&packet);
@@ -2026,6 +1891,9 @@ vb_bool vb_status_set(const char* text)
 
 void vb__debug_printf(const char* format, ...)
 {
+	if (!VB)
+		return;
+
 	if (!VB->config.debug_output_callback)
 		return;
 
@@ -2040,6 +1908,18 @@ void vb__debug_printf(const char* format, ...)
 	va_end(ap);
 
 	VB->config.debug_output_callback(buf);
+}
+
+void vb_static_retrieve(void** p1, void** p2)
+{
+	*p1 = VB;
+	*p2 = vb__automatic_memory;
+}
+
+void vb_static_reset(void* p1, void* p2)
+{
+	VB = p1;
+	vb__automatic_memory = p2;
 }
 
 
@@ -2063,7 +1943,7 @@ int vb__write_raw_byte(char value, void *_buffer, int offset)
 	return ++offset;
 }
 
-int vb__write_raw_bytes(const char *bytes, int bytes_size, void *_buffer, int offset)
+int vb__write_raw_bytes(const char *bytes, size_t bytes_size, void *_buffer, int offset)
 {
 	int i; 
 	for (i = 0; i < bytes_size; ++ i)
@@ -2252,14 +2132,14 @@ int vb__DataChannel_write(struct vb__DataChannel *_DataChannel, void *_buffer, i
 	if (_DataChannel->_field_name_len != 1 || _DataChannel->_field_name[0] != '0')
 	{
 		offset = vb__write_wire_format(1, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
-		offset = vb__write_raw_varint32(_DataChannel->_field_name_len, _buffer, offset);
+		offset = vb__write_raw_varint32((unsigned long)_DataChannel->_field_name_len, _buffer, offset);
 		offset = vb__write_raw_bytes(_DataChannel->_field_name, _DataChannel->_field_name_len, _buffer, offset);
 	}
 
 	offset = vb__data_type_t_write_with_tag(&_DataChannel->_type, _buffer, offset, 2);
 
 	offset = vb__write_wire_format(3, PB_WIRE_TYPE_VARINT, _buffer, offset);
-	offset = vb__write_raw_varint32(_DataChannel->_handle, _buffer, offset);
+	offset = vb__write_raw_varint32((unsigned long)_DataChannel->_handle, _buffer, offset);
 
 #ifndef VB_NO_RANGE
 	if (_DataChannel->_min != 0 || _DataChannel->_max != 0)
@@ -2292,7 +2172,7 @@ int vb__DataGroup_write(struct vb__DataProfile *_DataProfile, void *_buffer, int
 	if (_DataProfile->_name_len != 1 || _DataProfile->_name[0] != '0')
 	{
 		offset = vb__write_wire_format(1, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
-		offset = vb__write_raw_varint32(_DataProfile->_name_len, _buffer, offset);
+		offset = vb__write_raw_varint32((unsigned long)_DataProfile->_name_len, _buffer, offset);
 		offset = vb__write_raw_bytes(_DataProfile->_name, _DataProfile->_name_len, _buffer, offset);
 	}
 
@@ -2314,7 +2194,7 @@ int vb__DataProfile_write(struct vb__DataProfile *_DataProfile, void *_buffer, i
 	if (_DataProfile->_name_len != 1 || _DataProfile->_name[0] != '0')
 	{
 		offset = vb__write_wire_format(1, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
-		offset = vb__write_raw_varint32(_DataProfile->_name_len, _buffer, offset);
+		offset = vb__write_raw_varint32((unsigned long)_DataProfile->_name_len, _buffer, offset);
 		offset = vb__write_raw_bytes(_DataProfile->_name, _DataProfile->_name_len, _buffer, offset);
 	}
 
@@ -2338,7 +2218,7 @@ int vb__DataLabel_write(struct vb__DataLabel *_DataLabel, void *_buffer, int off
 	if (_DataLabel->_field_name_len != 1 || _DataLabel->_field_name[0] != '0')
 	{
 		offset = vb__write_wire_format(3, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
-		offset = vb__write_raw_varint32(_DataLabel->_field_name_len, _buffer, offset);
+		offset = vb__write_raw_varint32((unsigned long)_DataLabel->_field_name_len, _buffer, offset);
 		offset = vb__write_raw_bytes(_DataLabel->_field_name, _DataLabel->_field_name_len, _buffer, offset);
 	}
 
@@ -2354,8 +2234,8 @@ int vb__DataControl_write(struct vb__DataControl *_DataControl, void *_buffer, i
 	if (_DataControl->_name_len != 1 || _DataControl->_name[0] != '0')
 	{
 		offset = vb__write_wire_format(1, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
-		offset = vb__write_raw_varint32(_DataControl->_name_len, _buffer, offset);
-		offset = vb__write_raw_bytes(_DataControl->_name, _DataControl->_name_len, _buffer, offset);
+		offset = vb__write_raw_varint32((unsigned long)_DataControl->_name_len, _buffer, offset);
+		offset = vb__write_raw_bytes(_DataControl->_name, (int)_DataControl->_name_len, _buffer, offset);
 	}
 
 	offset = vb__write_wire_format(2, PB_WIRE_TYPE_VARINT, _buffer, offset);
@@ -2366,7 +2246,7 @@ int vb__DataControl_write(struct vb__DataControl *_DataControl, void *_buffer, i
 		if (_DataControl->_command_len != 1 || _DataControl->_command[0] != '0')
 		{
 			offset = vb__write_wire_format(11, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
-			offset = vb__write_raw_varint32(_DataControl->_command_len, _buffer, offset);
+			offset = vb__write_raw_varint32((unsigned long)_DataControl->_command_len, _buffer, offset);
 			offset = vb__write_raw_bytes(_DataControl->_command, _DataControl->_command_len, _buffer, offset);
 		}
 	}
@@ -2563,15 +2443,15 @@ int vb__Packet_write(struct vb__Packet *_Packet, void *_buffer, int offset)
 	if (_Packet->_console_output_len && _Packet->_console_output && _Packet->_console_output[0])
 	{
 		offset = vb__write_wire_format(6, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
-		offset = vb__write_raw_varint32(_Packet->_console_output_len, _buffer, offset);
-		offset = vb__write_raw_bytes(_Packet->_console_output, _Packet->_console_output_len, _buffer, offset);
+		offset = vb__write_raw_varint32((unsigned long)_Packet->_console_output_len, _buffer, offset);
+		offset = vb__write_raw_bytes(_Packet->_console_output, (int)_Packet->_console_output_len, _buffer, offset);
 	}
 
 	if (_Packet->_status_len && _Packet->_status && _Packet->_status[0])
 	{
 		offset = vb__write_wire_format(7, PB_WIRE_TYPE_LENGTH_DELIMITED, _buffer, offset);
-		offset = vb__write_raw_varint32(_Packet->_status_len, _buffer, offset);
-		offset = vb__write_raw_bytes(_Packet->_status, _Packet->_status_len, _buffer, offset);
+		offset = vb__write_raw_varint32((unsigned long)_Packet->_status_len, _buffer, offset);
+		offset = vb__write_raw_bytes(_Packet->_status, (int)_Packet->_status_len, _buffer, offset);
 	}
 
 	offset = vb__write_wire_format(8, PB_WIRE_TYPE_VARINT, _buffer, offset);
@@ -2631,7 +2511,7 @@ void vb__Packet_initialize_registrations(struct vb__Packet* packet, struct vb__D
 	{
 		data_channels[i]._field_name = VB->channels[i].name;
 		data_channels[i]._field_name_len = strlen(VB->channels[i].name);
-		data_channels[i]._handle = i;
+		data_channels[i]._handle = (unsigned long)i;
 		data_channels[i]._type = VB->channels[i].type;
 		data_channels[i]._profiles = VB->channels[i].profiles;
 #ifndef VB_NO_RANGE
@@ -2659,7 +2539,7 @@ void vb__Packet_initialize_registrations(struct vb__Packet* packet, struct vb__D
 			if (VB->channels[i].profiles & ((vb_uint64)1 << k))
 			{
 				struct vb__DataProfile* profile = &data_profiles[k];
-				profile->_channels[profile->_channels_repeated_len] = i;
+				profile->_channels[profile->_channels_repeated_len] = (unsigned long)i;
 				profile->_channels_repeated_len++;
 			}
 		}
@@ -2829,7 +2709,7 @@ size_t vb__Packet_get_message_size(struct vb__Packet *_Packet)
 			size += _Packet->_data_profiles[i]._name_len; // Duplicate for group
 
 			// This section isn't duplicated since it only appears in the group.
-			int channels = _Packet->_data_profiles[i]._channels_repeated_len;
+			size_t channels = _Packet->_data_profiles[i]._channels_repeated_len;
 			size += 1 * channels; /* One byte for "channels" field number and wire type. */
 			size += 3 * channels; /* 3 bytes is enough for a varint-encoded unsigned short. */
 		}
@@ -2928,10 +2808,10 @@ size_t vb__Packet_serialize(struct vb__Packet *_Packet, void *_buffer, size_t le
 {
 	size_t end_offset = vb__Packet_write(_Packet, _buffer, 0);
 
-	VBAssert(end_offset < length);
+	VBAssert(end_offset <= length);
 
 	/* Uh-oh, some overwriting happened. Too late to fix it, but don't use it. */
-	if (end_offset >= length)
+	if (end_offset > length)
 		return 0;
 
 	return end_offset;

@@ -23,7 +23,6 @@ typedef enum
 	VB__TOKEN_EOF     = 0,
 	VB__TOKEN_EOL,
 	VB__TOKEN_TEXT,
-	VB__TOKEN_CONTROLS,
 	VB__TOKEN_VALUE,
 	VB__TOKEN_OPEN_CURLY,
 	VB__TOKEN_CLOSE_CURLY,
@@ -97,13 +96,16 @@ static vb__token vb__configfile_lex_next()
 	if (vb__configfile_lex_text(*vb__p))
 	{
 		vb__token_type = VB__TOKEN_TEXT;
+
+		const char* start = vb__p;
 		while (vb__configfile_lex_text(*vb__p))
 			vb__p++;
 
-		vb__token_length = vb__p - vb__token_string;
+		// Back out the white space.
+		while (vb__p >= start && *(vb__p-1) == ' ')
+			vb__p--;
 
-		if (vb__strncmp(vb__token_string, "controls", vb__token_length, 8) == 0)
-			return vb__token_type = VB__TOKEN_CONTROLS;
+		vb__token_length = vb__p - vb__token_string;
 
 		return vb__token_type;
 	}
@@ -134,7 +136,7 @@ static int vb__configfile_parse_peek(vb__token t)
 /*
 	keyvalue <- text [ ":" text ] EOL
 */
-int vb__configfile_parse_keyvalue(const char** key, int* key_len, const char** value, int* value_len)
+int vb__configfile_parse_keyvalue(const char** key, size_t* key_len, const char** value, size_t* value_len)
 {
 	*key = vb__token_string;
 	*key_len = vb__token_length;
@@ -167,15 +169,15 @@ int vb__configfile_parse_keyvalue(const char** key, int* key_len, const char** v
 int vb__configfile_parse_control()
 {
 	const char* control_name;
-	int control_name_len;
+	size_t control_name_len;
 	const char* control_value;
-	int control_value_len;
+	size_t control_value_len;
 
 	int is_const_control = 0;
 
 	int has_value = 0;
-	int int_value;
-	float float_value;
+	int int_value = 0;
+	float float_value = 0;
 
 	vb_control_t control_type = VB_CONTROL_NONE;
 
@@ -186,9 +188,9 @@ int vb__configfile_parse_control()
 
 	vb__control_handle_t handle = vb__data_find_control_by_name(control_name, control_name_len);
 
-	if (vb__strncmp(control_value, "float", 5, control_value_len) == 0)
+	if (vb__strcmp(control_value, "float", 5, control_value_len) == 0)
 		control_type = VB_CONTROL_SLIDER_FLOAT;
-	else if (vb__strncmp(control_value, "int", 3, control_value_len) == 0)
+	else if (vb__strcmp(control_value, "int", 3, control_value_len) == 0)
 		control_type = VB_CONTROL_SLIDER_INT;
 
 	if (vb__configfile->action & CONFIGFILE_ACTION_LOAD_VB && handle != VB_CONTROL_HANDLE_NONE)
@@ -202,16 +204,16 @@ int vb__configfile_parse_control()
 		while (vb__configfile_parse_peek(VB__TOKEN_TEXT))
 		{
 			const char* key;
-			int key_len;
+			size_t key_len;
 			const char* value;
-			int value_len;
+			size_t value_len;
 
 			if (!vb__configfile_parse_keyvalue(&key, &key_len, &value, &value_len))
 				return 0;
 
-			if (vb__strncmp(key, "const", key_len, 5) == 0)
+			if (vb__strcmp(key, "const", key_len, 5) == 0)
 				is_const_control = 1;
-			else if (vb__strncmp(key, "value", key_len, 5) == 0)
+			else if (vb__strcmp(key, "value", key_len, 5) == 0)
 			{
 				has_value = 1;
 				switch (control_type)
@@ -278,13 +280,88 @@ int vb__configfile_parse_control()
 int vb__configfile_parse_controls()
 {
 	while (vb__configfile_parse_peek(VB__TOKEN_TEXT))
-		vb__configfile_parse_control();
+		VB__PARSE_REQUIRE(vb__configfile_parse_control(), "control");
 
 	return 1;
 }
 
 /*
-	global <- EOL | "controls" [EOL] "{" EOL controls "}" EOL
+	profile <- text [EOL] ["{" EOL { keyvalue } "}" EOL]
+*/
+int vb__configfile_parse_profile()
+{
+	const char* profile_name = vb__token_string;
+	size_t profile_name_len = vb__token_length;
+
+	VB__PARSE_EAT(VB__TOKEN_TEXT);
+
+	if (vb__configfile_parse_peek(VB__TOKEN_EOL))
+		VB__PARSE_EAT(VB__TOKEN_EOL);
+
+	vb_profile_handle_t profile = vb__data_find_profile_by_name(profile_name, profile_name_len);
+
+	if (profile == VB_PROFILE_NONE && (vb__configfile->action & CONFIGFILE_ACTION_LOAD_VB))
+	{
+		VBUnimplemented();
+		char* profile_name_persistent = vb__alloc_autofree(vb__configfile->config, profile_name_len + 1);
+		strncpy(profile_name_persistent, profile_name, profile_name_len);
+		vb_data_add_profile(profile_name_persistent, &profile);
+	}
+
+	// Clear this profile from all channels. Only channels in this config belong in the profile.
+	if (vb__configfile->action & CONFIGFILE_ACTION_LOAD_VB)
+	{
+		for (size_t k = 0; k < VB->next_channel; k++)
+			VB->channels[k].profiles &= ~((vb_uint64)1 << profile);
+	}
+
+	if (vb__configfile_parse_peek(VB__TOKEN_OPEN_CURLY))
+	{
+		VB__PARSE_EAT(VB__TOKEN_OPEN_CURLY);
+		VB__PARSE_EAT(VB__TOKEN_EOL);
+
+		while (vb__configfile_parse_peek(VB__TOKEN_TEXT))
+		{
+			const char* key;
+			size_t key_len;
+			const char* value;
+			size_t value_len;
+
+			if (!vb__configfile_parse_keyvalue(&key, &key_len, &value, &value_len))
+				return 0;
+
+			if (!(vb__configfile->action & CONFIGFILE_ACTION_LOAD_VB))
+				continue;
+
+			if (vb__strcmp(key, "channel", key_len, 7) == 0)
+			{
+				vb_channel_handle_t channel = vb__data_find_channel_by_name(value, value_len);
+
+				if (channel != VB_CHANNEL_NONE)
+					vb_profile_add_channel(profile, channel);
+			}
+		}
+
+		VB__PARSE_EAT(VB__TOKEN_CLOSE_CURLY);
+		VB__PARSE_EAT(VB__TOKEN_EOL);
+	}
+
+	return 1;
+}
+
+/*
+	profiles <- { profile }
+*/
+int vb__configfile_parse_profiles()
+{
+	while (vb__configfile_parse_peek(VB__TOKEN_TEXT))
+		VB__PARSE_REQUIRE(vb__configfile_parse_profile(), "profile");
+
+	return 1;
+}
+
+/*
+	global <- EOL | "controls" [EOL] "{" EOL controls "}" EOL | "profiles" [EOL] "{" EOL profiles "}" EOL
 */
 int vb__configfile_parse_global()
 {
@@ -294,28 +371,50 @@ int vb__configfile_parse_global()
 		return 1;
 	}
 
-	if (vb__configfile_parse_peek(VB__TOKEN_CONTROLS))
+	if (vb__configfile_parse_peek(VB__TOKEN_TEXT))
 	{
-		VB__PARSE_EAT(VB__TOKEN_CONTROLS);
+		const char* key = vb__token_string;
+		size_t key_len = vb__token_length;
 
-		if (vb__configfile_parse_peek(VB__TOKEN_EOL))
+		if (vb__strcmp(key, "controls", key_len, 8) == 0)
+		{
+			VB__PARSE_EAT(VB__TOKEN_TEXT);
+
+			if (vb__configfile_parse_peek(VB__TOKEN_EOL))
+				VB__PARSE_EAT(VB__TOKEN_EOL);
+
+			VB__PARSE_EAT(VB__TOKEN_OPEN_CURLY);
 			VB__PARSE_EAT(VB__TOKEN_EOL);
 
-		VB__PARSE_EAT(VB__TOKEN_OPEN_CURLY);
-		VB__PARSE_EAT(VB__TOKEN_EOL);
+			VB__PARSE_REQUIRE(vb__configfile_parse_controls(), "controls list");
 
-		vb__configfile_parse_controls();
+			VB__PARSE_EAT(VB__TOKEN_CLOSE_CURLY);
+			VB__PARSE_EAT(VB__TOKEN_EOL);
+		}
 
-		VB__PARSE_EAT(VB__TOKEN_CLOSE_CURLY);
-		VB__PARSE_EAT(VB__TOKEN_EOL);
+		else if (vb__strcmp(key, "profiles", key_len, 8) == 0)
+		{
+			VB__PARSE_EAT(VB__TOKEN_TEXT);
+
+			if (vb__configfile_parse_peek(VB__TOKEN_EOL))
+				VB__PARSE_EAT(VB__TOKEN_EOL);
+
+			VB__PARSE_EAT(VB__TOKEN_OPEN_CURLY);
+			VB__PARSE_EAT(VB__TOKEN_EOL);
+
+			VB__PARSE_REQUIRE(vb__configfile_parse_profiles(), "profiles list");
+
+			VB__PARSE_EAT(VB__TOKEN_CLOSE_CURLY);
+			VB__PARSE_EAT(VB__TOKEN_EOL);
+		}
 
 		return 1;
 	}
 
-	return 1;
+	return 0;
 }
 
-int vb__configfile_parse(const char* file_contents, int file_size)
+int vb__configfile_parse(const char* file_contents, size_t file_size)
 {
 	vb__p = file_contents;
 	vb__p_end = file_contents + file_size;
@@ -357,7 +456,7 @@ void vb__configfile_load(vb__configfile_data_t* data)
 	}
 
 	fseek(fp, 0, SEEK_END);
-	long file_size = ftell(fp);
+	size_t file_size = ftell(fp);
 	fseek(fp, 0, SEEK_SET);
 
 	vb__stack_allocate(char, file_contents, file_size);
@@ -403,6 +502,26 @@ void vb__configfile_write()
 			continue;
 		}
 
+		fwrite(vb__sprintf_buffer, 1, strlen(vb__sprintf_buffer), fp);
+	}
+	fwrite("}\n\n", 1, 3, fp);
+
+	fwrite("profiles {\n", 1, 11, fp);
+	for (size_t i = 0; i < VB->next_profile; i++)
+	{
+		vb__sprintf("\t%s\n\t{\n", VB->profiles[i].name);
+		fwrite(vb__sprintf_buffer, 1, strlen(vb__sprintf_buffer), fp);
+
+		for (size_t k = 0; k < VB->next_channel; k++)
+		{
+			if (!(VB->channels[k].profiles & ((vb_uint64)1 << i)))
+				continue;
+
+			vb__sprintf("\t\tchannel: %s\n", VB->channels[k].name);
+			fwrite(vb__sprintf_buffer, 1, strlen(vb__sprintf_buffer), fp);
+		}
+
+		vb__sprintf("\t}\n", VB->profiles[i].name);
 		fwrite(vb__sprintf_buffer, 1, strlen(vb__sprintf_buffer), fp);
 	}
 	fwrite("}\n", 1, 2, fp);

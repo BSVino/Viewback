@@ -106,10 +106,10 @@ void CViewbackClient::Update()
 				{
 					auto& oChannelProtobuf = aPackets[i].data_channels(j);
 
-					VBAssert(oChannelProtobuf.has_handle());
-					VBAssert(oChannelProtobuf.has_name());
-					VBAssert(oChannelProtobuf.has_type());
-					VBAssert(oChannelProtobuf.handle() == j);
+					VBCheck(oChannelProtobuf.has_handle());
+					VBCheck(oChannelProtobuf.has_name());
+					VBCheck(oChannelProtobuf.has_type());
+					VBCheck(oChannelProtobuf.handle() == j);
 
 					auto& oChannel = m_aDataChannels[oChannelProtobuf.handle()];
 					oChannel.m_iHandle = oChannelProtobuf.handle();
@@ -133,7 +133,7 @@ void CViewbackClient::Update()
 					{
 						auto& oProfileProtobuf = aPackets[i].profiles(j);
 
-						VBAssert(oProfileProtobuf.has_name());
+						VBCheck(oProfileProtobuf.has_name());
 
 						m_aProfiles.push_back(CViewbackProfile());
 						auto& oProfile = m_aProfiles.back();
@@ -166,7 +166,7 @@ void CViewbackClient::Update()
 					{
 						auto& oGroupProtobuf = aPackets[i].data_groups(j);
 
-						VBAssert(oGroupProtobuf.has_name());
+						VBCheck(oGroupProtobuf.has_name());
 
 						m_aProfiles.push_back(CViewbackProfile());
 						auto& oProfile = m_aProfiles.back();
@@ -182,9 +182,9 @@ void CViewbackClient::Update()
 				{
 					auto& oLabelProtobuf = aPackets[i].data_labels(j);
 
-					VBAssert(oLabelProtobuf.has_label());
-					VBAssert(oLabelProtobuf.has_channel());
-					VBAssert(oLabelProtobuf.has_value());
+					VBCheck(oLabelProtobuf.has_label());
+					VBCheck(oLabelProtobuf.has_channel());
+					VBCheck(oLabelProtobuf.has_value());
 
 					auto& oChannel = m_aDataChannels[oLabelProtobuf.channel()];
 					oChannel.m_asLabels[oLabelProtobuf.value()] = oLabelProtobuf.label();
@@ -196,8 +196,8 @@ void CViewbackClient::Update()
 				{
 					auto& oControlProtobuf = aPackets[i].data_controls(j);
 
-					VBAssert(oControlProtobuf.has_name());
-					VBAssert(oControlProtobuf.has_type());
+					VBCheck(oControlProtobuf.has_name());
+					VBCheck(oControlProtobuf.has_type());
 
 					if (!oControlProtobuf.has_name())
 						continue;
@@ -277,7 +277,7 @@ void CViewbackClient::Update()
 
 			if (aPackets[i].data_controls_size())
 			{
-				VBAssert(!aPackets[i].is_registration());
+				VBCheck(!aPackets[i].is_registration());
 
 				for (size_t j = 0; j < m_aDataControls.size(); j++)
 				{
@@ -549,7 +549,7 @@ string CViewbackClient::GetLabelForValue(size_t iHandle, int iValue)
 
 void CViewbackClient::StashData(const Data* pData)
 {
-	VBAssert(pData->has_time_double() || pData->time_uint64());
+	VBCheck(pData->has_time_double() || pData->has_time_uint64());
 
 	double flTime = 0;
 
@@ -569,7 +569,7 @@ void CViewbackClient::StashData(const Data* pData)
 	{
 	case VB_DATATYPE_NONE:
 	default:
-		VBAssert(false);
+		VBCheck(false);
 		break;
 
 	case VB_DATATYPE_INT:

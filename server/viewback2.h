@@ -92,8 +92,16 @@ typedef unsigned char vb_bool;
 	vb_server_shutdown();
 */
 
-typedef void*(*vb_alloc)(size_t memory_size);
-typedef void(*vb_free)(void* memory);
+/* What kind of memory allocation is this? */
+typedef enum
+{
+	VB_AT_MAIN,     /* The main memory block that VB uses */
+	VB_AT_AUTOFREE, /* A table of items that will be automatically freed on shutdown */
+	VB_AT_AF_ITEM,  /* An item that will be automatically freed on shutdown */
+} vb_alloc_type_t;
+
+typedef void*(*vb_alloc)(size_t memory_size, vb_alloc_type_t type);
+typedef void(*vb_free)(void* memory, vb_alloc_type_t type);
 typedef void(*vb_debug_output_callback)(const char* text);
 typedef void(*vb_command_callback)(const char* text);
 typedef void(*vb_control_button_callback)();
@@ -120,7 +128,7 @@ typedef struct {
 	/*
 		Profiles are how your data will be organized in the monitor. A profile
 		is a collection of channels and controls and an arrangement of panels.
-		There is a hard maximum of 64 profiles.
+		There is a hard maximum of 64 profiles. You must have at least one.
 	*/
 	size_t num_data_profiles;
 
@@ -474,6 +482,14 @@ vb_bool vb_console_append(const char* text);
 	Returns 1 on success, 0 on failure.
 */
 vb_bool vb_status_set(const char* text);
+
+/*
+	If you had to reload the library you can use these to reset the static
+	pointers that Viewback uses internally.
+*/
+void vb_static_retrieve(void** p1, void** p2);
+void vb_static_reset(void* p1, void* p2);
+
 
 #ifdef __cplusplus
 }

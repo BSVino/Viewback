@@ -44,7 +44,7 @@ bool CViewbackDataThread::Connect(unsigned long address, unsigned short port)
 	if (s_bRunning)
 	{
 		// Another data thread is still running. That is bad. Hopefully we told it to disconnect and we're just waiting on that.
-		VBAssert(!s_bConnected);
+		VBCheck(!s_bConnected);
 
 		// If not, make sure that we do.
 		s_bDisconnect = true;
